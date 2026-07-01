@@ -1,0 +1,14 @@
+.DS_Store
+.cache
+.claude
+.env
+.env.local
+.env*.local
+.git
+.next
+coverage
+dist
+node_modules
+tsconfig.tsbuildinfo
+*.log
+*.tgz
