@@ -2738,12 +2738,12 @@ body::after {
 
 .expressive-hero-scene {
   position: relative;
-  min-height: 560px;
+  min-height: 500px;
 }
 
 .expressive-scene-panel {
   position: absolute;
-  inset: 12px 12px 92px 64px;
+  inset: 12px 12px 12px 64px;
   overflow: hidden;
   border-radius: 42px 42px 54px 42px;
   border: 1px solid rgba(81, 49, 36, 0.12);
@@ -2769,8 +2769,7 @@ body::after {
 }
 
 .expressive-scene-note,
-.expressive-scene-tag,
-.expressive-floating-card {
+.expressive-scene-tag {
   box-shadow: 0 14px 30px rgba(113, 74, 54, 0.1);
 }
 
@@ -2786,8 +2785,7 @@ body::after {
   backdrop-filter: blur(12px);
 }
 
-.expressive-note-label,
-.expressive-floating-kicker {
+.expressive-note-label {
   display: inline-flex;
   color: #9c624f;
   font-size: 12px;
@@ -2797,7 +2795,7 @@ body::after {
 }
 
 .expressive-scene-note strong,
-.expressive-floating-card h3 {
+.expressive-scene-note strong {
   display: block;
   margin-top: 10px;
   color: #281812;
@@ -2873,47 +2871,6 @@ body::after {
   top: 122px;
   left: 20px;
   transform: translate3d(calc(var(--tilt-y) * -14px), calc(var(--tilt-x) * -14px), 0) rotate(-6deg);
-}
-
-.expressive-floating-card {
-  position: absolute;
-  width: 232px;
-  padding: 16px 18px;
-  border: 1px solid rgba(81, 49, 36, 0.12);
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(12px);
-}
-
-.expressive-floating-card h3 {
-  margin: 8px 0 0;
-  font-size: 24px;
-}
-
-.expressive-floating-card p {
-  margin: 10px 0 0;
-  color: var(--md-sys-color-on-surface-variant);
-  line-height: 1.65;
-}
-
-.expressive-floating-card-about {
-  left: 0;
-  bottom: 116px;
-  border-radius: 34px 34px 34px 12px;
-  transform: translate3d(calc(var(--tilt-y) * -18px), calc(var(--tilt-x) * -16px), 0) rotate(-4deg);
-}
-
-.expressive-floating-card-learning {
-  right: 0;
-  top: 34px;
-  border-radius: 16px 34px 34px 34px;
-  transform: translate3d(calc(var(--tilt-y) * 16px), calc(var(--tilt-x) * -10px), 0) rotate(3deg);
-}
-
-.expressive-floating-card-tools {
-  right: 28px;
-  bottom: 0;
-  border-radius: 32px 16px 32px 32px;
-  transform: translate3d(calc(var(--tilt-y) * 22px), calc(var(--tilt-x) * 12px), 0) rotate(-2deg);
 }
 
 .home-expressive-page .portfolio-section {
@@ -3058,24 +3015,11 @@ body::after {
   }
 
   .expressive-hero-scene {
-    min-height: 520px;
+    min-height: 460px;
   }
 
   .expressive-scene-panel {
-    inset: 16px 28px 96px;
-  }
-
-  .expressive-floating-card-about {
-    left: 18px;
-    bottom: 118px;
-  }
-
-  .expressive-floating-card-learning {
-    right: 16px;
-  }
-
-  .expressive-floating-card-tools {
-    right: 60px;
+    inset: 16px 28px 16px;
   }
 }
 
@@ -3100,16 +3044,16 @@ body::after {
   }
 
   .expressive-hero-scene {
-    min-height: 560px;
+    min-height: 380px;
   }
 
   .expressive-scene-panel {
-    inset: 12px 0 184px;
+    inset: 12px 0 12px;
     border-radius: 32px;
   }
 
   .expressive-character-wrap {
-    inset: 34px 12px 128px;
+    inset: 34px 12px 108px;
   }
 
   .expressive-scene-note {
@@ -3121,26 +3065,6 @@ body::after {
 
   .expressive-scene-note strong {
     font-size: 24px;
-  }
-
-  .expressive-floating-card {
-    width: auto;
-    left: 0;
-    right: 0;
-    transform: none;
-  }
-
-  .expressive-floating-card-about {
-    bottom: 118px;
-  }
-
-  .expressive-floating-card-learning {
-    top: auto;
-    bottom: 58px;
-  }
-
-  .expressive-floating-card-tools {
-    display: none;
   }
 
   .home-expressive-page .portfolio-section-header {

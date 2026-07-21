@@ -10,16 +10,7 @@ export function PersonalHomePage() {
     <main className="page-shell portfolio-page home-expressive-page">
       <SiteHeader />
 
-      <ExpressiveHomeHero
-        aboutSnippet={about.prompts[0]?.body ?? about.summary}
-        aboutTitle={about.storyTitle}
-        hero={hero}
-        learningSnippet={learningPreview.summary}
-        learningTitle={learningPreview.title}
-        resumeHref={resume.viewHref}
-        toolsSnippet={toolsPreview.summary}
-        toolsTitle={toolsPreview.title}
-      />
+      <ExpressiveHomeHero hero={hero} resumeHref={resume.viewHref} />
 
       <section className="portfolio-section section" id="photos">
         <div className="section-header portfolio-section-header">

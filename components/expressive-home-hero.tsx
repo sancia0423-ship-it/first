@@ -23,12 +23,6 @@ type HeroContent = {
 type ExpressiveHomeHeroProps = {
   hero: HeroContent;
   resumeHref: string;
-  aboutTitle: string;
-  aboutSnippet: string;
-  learningTitle: string;
-  learningSnippet: string;
-  toolsTitle: string;
-  toolsSnippet: string;
 };
 
 const initialStyle = {
@@ -38,16 +32,7 @@ const initialStyle = {
   "--tilt-y": "0"
 } as CSSProperties;
 
-export function ExpressiveHomeHero({
-  aboutSnippet,
-  aboutTitle,
-  hero,
-  learningSnippet,
-  learningTitle,
-  resumeHref,
-  toolsSnippet,
-  toolsTitle
-}: ExpressiveHomeHeroProps) {
+export function ExpressiveHomeHero({ hero, resumeHref }: ExpressiveHomeHeroProps) {
   const rootRef = useRef<HTMLElement | null>(null);
 
   const setMotionVars = (xRatio: number, yRatio: number) => {
@@ -153,24 +138,6 @@ export function ExpressiveHomeHero({
               <strong>像精心做过的个人作品集，不像 AI 自动拼出来的模板。</strong>
             </div>
           </div>
-
-          <article className="expressive-floating-card expressive-floating-card-about">
-            <span className="expressive-floating-kicker">正在做什么</span>
-            <h3>{aboutTitle}</h3>
-            <p>{aboutSnippet}</p>
-          </article>
-
-          <article className="expressive-floating-card expressive-floating-card-learning">
-            <span className="expressive-floating-kicker">学习收藏</span>
-            <h3>{learningTitle}</h3>
-            <p>{learningSnippet}</p>
-          </article>
-
-          <article className="expressive-floating-card expressive-floating-card-tools">
-            <span className="expressive-floating-kicker">最近做的小东西</span>
-            <h3>{toolsTitle}</h3>
-            <p>{toolsSnippet}</p>
-          </article>
         </div>
       </div>
     </section>
