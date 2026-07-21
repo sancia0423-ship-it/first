@@ -1801,6 +1801,19 @@ body::before {
   }
 }
 
+.portfolio-link-row {
+  flex-wrap: wrap;
+}
+
+.contact-link-pill {
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-link-pill:hover {
+  transform: translateY(-1px);
+}
+
 @media (max-width: 720px) {
   .page-shell {
     width: min(100vw - 18px, 1240px);

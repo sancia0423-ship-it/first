@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { YouTubeTranslateDemo } from "@/components/youtube-translate-demo";
 
@@ -31,6 +32,15 @@ export function YouTubeProductPage() {
                 <p className="metric-value">中文朗读</p>
                 <p className="metric-note">用浏览器本地中文语音跟读</p>
               </div>
+            </div>
+
+            <div className="button-row section">
+              <a className="primary-button" href="#translator">
+                立即开始
+              </a>
+              <Link className="ghost-button" href="/portfolio">
+                看我的个人网站
+              </Link>
             </div>
           </div>
 
