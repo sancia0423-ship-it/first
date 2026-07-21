@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArtistCharacterCluster } from "@/components/artist-character-cluster";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
@@ -46,17 +47,26 @@ export function PersonalHomePage() {
             </div>
           </div>
 
-          <div className="candy-card showcase-card">
-            <div className="showcase-window">
+          <div className="candy-card showcase-card art-showcase-card">
+            <div className="showcase-window art-showcase-window">
               <div className="window-dots" aria-hidden="true">
                 <span />
                 <span />
                 <span />
               </div>
-              <div className="showcase-gradient" aria-hidden="true" />
-              <div className="showcase-script">
-                <span className="mini-label">首页概览</span>
-                <strong>这里会放自我介绍、简历、作品、AI 学习资料和我做的小工具。</strong>
+              <div className="paint-splash paint-splash-peach" aria-hidden="true" />
+              <div className="paint-splash paint-splash-gold" aria-hidden="true" />
+              <div className="paint-splash paint-splash-teal" aria-hidden="true" />
+              <div className="floating-sticker sticker-left">AI x Art</div>
+              <div className="floating-sticker sticker-right">Portfolio Mood</div>
+
+              <div className="character-stage">
+                <ArtistCharacterCluster />
+              </div>
+
+              <div className="showcase-script art-script">
+                <span className="mini-label">网站气质</span>
+                <strong>像艺术作品集一样介绍自己，同时保留资料、简历和工具的实用性。</strong>
               </div>
             </div>
 

@@ -1,13 +1,13 @@
 export const personalSiteContent = {
   site: {
     title: "夏琪",
-    subtitle: "AI 产品 / 数据分析 / 个人网站",
+    subtitle: "AI 产品 / 数据分析 / 作品集网站",
     description:
       "夏琪的个人网站，包含自我介绍、简历、数据分析与 AI 产品项目、AI 学习资料，以及自己做的小工具。"
   },
   home: {
     hero: {
-      kicker: "个人主页",
+      kicker: "作品集式个人主页",
       titleIntro: "你好，我是",
       highlightWords: {
         first: "夏琪",
