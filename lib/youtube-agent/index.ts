@@ -6,14 +6,12 @@ import he from "he";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import type {
-  YouTubeCaptionTrack,
-  YouTubeTranslatedSegment,
-  YouTubeTranslationRequest,
-  YouTubeTranslationResult
+import {
+  YouTubeCaptionTrackSchema,
+  type YouTubeTranslatedSegment,
+  type YouTubeTranslationRequest,
+  type YouTubeTranslationResult
 } from "@/lib/youtube-agent/contracts";
-
-const INNERTUBE_ENDPOINT = "https://youtubei.googleapis.com/youtubei/v1/player?prettyPrint=false";
 
 const TranslationBatchSchema = z.object({
   items: z.array(
@@ -29,41 +27,27 @@ const VideoSummarySchema = z.object({
   takeaways: z.array(z.string()).min(2).max(4)
 });
 
-type CaptionTrackPayload = {
-  baseUrl?: string;
-  name?: {
-    simpleText?: string;
-  };
-  languageCode?: string;
-  kind?: string;
-  isTranslatable?: boolean;
-  vssId?: string;
-};
-
-type PlayerPayload = {
-  playabilityStatus?: {
-    status?: string;
-    reason?: string;
-  };
-  videoDetails?: {
-    title?: string;
-    shortDescription?: string;
-  };
-  captions?: {
-    playerCaptionsTracklistRenderer?: {
-      captionTracks?: CaptionTrackPayload[];
-    };
-  };
-};
-
-type ClientProfile = {
-  name: string;
-  clientName: string;
-  clientVersion: string;
-  clientNameHeader: string;
-  userAgent: string;
-  context: Record<string, number | string>;
-};
+const TranscriptFetchResultSchema = z.object({
+  title: z.string().default(""),
+  description: z.string().default(""),
+  availableTracks: z.array(YouTubeCaptionTrackSchema).default([]),
+  selectedTrack: z.object({
+    languageCode: z.string(),
+    label: z.string(),
+    kind: z.enum(["manual", "auto"]),
+    isTranslatable: z.boolean()
+  }),
+  warnings: z.array(z.string()).default([]),
+  segments: z
+    .array(
+      z.object({
+        startMs: z.number().int().nonnegative(),
+        durationMs: z.number().int().nonnegative(),
+        sourceText: z.string()
+      })
+    )
+    .min(1)
+});
 
 type RawCaptionSegment = {
   startMs: number;
@@ -71,36 +55,6 @@ type RawCaptionSegment = {
   durationMs: number;
   sourceText: string;
 };
-
-const CLIENT_PROFILES: ClientProfile[] = [
-  {
-    name: "ios",
-    clientName: "IOS",
-    clientVersion: "20.10.4",
-    clientNameHeader: "5",
-    userAgent: "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)",
-    context: {
-      deviceMake: "Apple",
-      deviceModel: "iPhone16,2",
-      platform: "MOBILE",
-      osName: "iOS",
-      osVersion: "18.3.2.22D82"
-    }
-  },
-  {
-    name: "mweb",
-    clientName: "MWEB",
-    clientVersion: "2.20251209.01.00",
-    clientNameHeader: "2",
-    userAgent:
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
-    context: {
-      platform: "MOBILE",
-      osName: "iOS",
-      osVersion: "17.5.1"
-    }
-  }
-];
 
 function getClient() {
   if (!process.env.OPENAI_API_KEY) {
@@ -192,169 +146,54 @@ function coalesceSegments(segments: RawCaptionSegment[]) {
   return merged;
 }
 
-async function fetchPlayerWithClient(videoId: string, client: ClientProfile) {
-  const response = await fetch(INNERTUBE_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "*/*",
-      "User-Agent": client.userAgent,
-      "X-YouTube-Client-Name": client.clientNameHeader,
-      "X-YouTube-Client-Version": client.clientVersion,
-      Origin: "https://www.youtube.com"
-    },
-    body: JSON.stringify({
-      context: {
-        client: {
-          clientName: client.clientName,
-          clientVersion: client.clientVersion,
-          hl: "en",
-          gl: "US",
-          ...client.context
-        },
-        user: { lockedSafetyMode: false },
-        request: { useSsl: true }
-      },
-      videoId,
-      contentCheckOk: true,
-      racyCheckOk: true
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`InnerTube /player failed (${client.name}): ${response.status} ${response.statusText}`);
-  }
-
-  return (await response.json()) as PlayerPayload;
-}
-
-async function fetchPlayer(videoId: string) {
-  let firstPlayable: { payload: PlayerPayload; client: ClientProfile } | null = null;
-  const failures: string[] = [];
-
-  for (const client of CLIENT_PROFILES) {
-    try {
-      const payload = await fetchPlayerWithClient(videoId, client);
-      const status = payload.playabilityStatus?.status;
-
-      if (status && status !== "OK") {
-        failures.push(`${client.name}: ${status}${payload.playabilityStatus?.reason ? ` - ${payload.playabilityStatus.reason}` : ""}`);
-        continue;
-      }
-
-      if (!firstPlayable) {
-        firstPlayable = { payload, client };
-      }
-
-      const captionTracks = payload.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
-      if (captionTracks.length > 0) {
-        return { payload, client };
-      }
-
-      failures.push(`${client.name}: OK but no caption tracks`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      failures.push(`${client.name}: ${message}`);
-    }
-  }
-
-  if (firstPlayable) {
-    return firstPlayable;
-  }
-
-  throw new Error(`Video not playable on any supported client.\n${failures.join("\n")}`);
-}
-
-function buildAvailableTracks(tracks: CaptionTrackPayload[]): YouTubeCaptionTrack[] {
-  return tracks.map((track) => ({
-    languageCode: track.languageCode || "unknown",
-    label: track.name?.simpleText || track.languageCode || "Unknown track",
-    kind: track.kind === "asr" ? "auto" : "manual",
-    isTranslatable: Boolean(track.isTranslatable)
-  }));
-}
-
-function pickCaptionTrack(tracks: CaptionTrackPayload[], preferredLanguage: string) {
-  if (tracks.length === 0) {
-    return null;
-  }
-
-  const normalizedLanguage = preferredLanguage.trim().toLowerCase();
-
-  if (normalizedLanguage) {
-    return (
-      tracks.find((track) => track.vssId === `.${normalizedLanguage}`) ||
-      tracks.find((track) => track.vssId === `a.${normalizedLanguage}`) ||
-      tracks.find((track) => track.languageCode === normalizedLanguage) ||
-      tracks.find((track) => track.vssId?.includes(`.${normalizedLanguage}`)) ||
-      tracks[0]
-    );
-  }
-
-  return (
-    tracks.find((track) => track.vssId === ".en") ||
-    tracks.find((track) => track.vssId === "a.en") ||
-    tracks.find((track) => track.languageCode === "en" && track.kind !== "asr") ||
-    tracks.find((track) => track.kind !== "asr") ||
-    tracks[0]
-  );
-}
-
-async function fetchCaptionSegments(track: CaptionTrackPayload, userAgent: string) {
-  if (!track.baseUrl) {
-    return [];
-  }
-
-  const url = new URL(track.baseUrl);
-  url.searchParams.set("fmt", "json3");
-
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": userAgent
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Caption fetch failed: ${response.status}`);
-  }
-
-  const text = await response.text();
-  if (!text.trim()) {
-    return [];
-  }
-
-  const payload = JSON.parse(text) as {
-    events?: Array<{
-      segs?: Array<{ utf8?: string }>;
-      tStartMs?: number;
-      dDurationMs?: number;
-      aAppend?: number;
-    }>;
-  };
-
-  const segments: RawCaptionSegment[] = [];
-
-  for (const event of payload.events ?? []) {
-    if (!event.segs || event.aAppend === 1) {
-      continue;
-    }
-
-    const sourceText = normalizeCaptionText(event.segs.map((part) => part.utf8 ?? "").join(""));
-    if (!sourceText) {
-      continue;
-    }
-
-    const startMs = event.tStartMs ?? 0;
-    const durationMs = event.dDurationMs ?? 0;
-    segments.push({
-      startMs,
-      endMs: startMs + durationMs,
-      durationMs,
-      sourceText
+async function fetchTranscriptWithPython(videoId: string, sourceLanguage: string) {
+  const scriptPath = path.join(process.cwd(), "scripts", "youtube_fetch_transcript.py");
+  const stdout = await new Promise<string>((resolve, reject) => {
+    const child = spawn("python3", [scriptPath], {
+      stdio: ["pipe", "pipe", "pipe"]
     });
+
+    let stdoutText = "";
+    let stderrText = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdoutText += String(chunk);
+    });
+
+    child.stderr.on("data", (chunk) => {
+      stderrText += String(chunk);
+    });
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve(stdoutText);
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(stderrText) as { error?: string };
+        reject(new Error(payload.error || "读取字幕失败"));
+      } catch {
+        reject(new Error(stderrText || `Transcript fetcher exited with code ${code}`));
+      }
+    });
+
+    child.stdin.write(
+      JSON.stringify({
+        videoId,
+        sourceLanguage
+      })
+    );
+    child.stdin.end();
+  });
+
+  const parsed = TranscriptFetchResultSchema.safeParse(JSON.parse(stdout));
+  if (!parsed.success) {
+    throw new Error("字幕服务返回结构异常，请稍后再试。");
   }
 
-  return coalesceSegments(segments);
+  return parsed.data;
 }
 
 function chunkSegments(segments: RawCaptionSegment[], maxItems: number, maxChars: number) {
@@ -423,6 +262,7 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
       if (!Number.isInteger(index) || index < 0 || index >= chunk.length) {
         throw new Error("OpenAI translation returned an unexpected segment id");
       }
+
       translated.set(`${chunk[index].startMs}:${chunk[index].endMs}`, item.translatedText.trim());
     }
   }
@@ -468,6 +308,7 @@ async function translateSegmentsWithPython(segments: RawCaptionSegment[]) {
 
   const payload = JSON.parse(stdout) as { translations?: Array<string | null> };
   const translations = payload.translations ?? [];
+
   return segments.map((segment, index) => {
     const translated = translations[index];
     return typeof translated === "string" && translated.trim() ? translated.trim() : segment.sourceText;
@@ -516,34 +357,46 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
     throw new Error("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
   }
 
-  const { payload, client } = await fetchPlayer(videoId);
-  const captionTracks = payload.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
-  const availableTracks = buildAvailableTracks(captionTracks);
+  const transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
+  const rawSegments = coalesceSegments(
+    transcriptPayload.segments
+      .map((segment) => {
+        const sourceText = normalizeCaptionText(segment.sourceText);
+        if (!sourceText) {
+          return null;
+        }
 
-  if (captionTracks.length === 0) {
-    throw new Error("这个视频没有可用字幕，当前原型暂时无法翻译。建议先换一个带字幕或自动字幕的视频。");
-  }
+        const startMs = segment.startMs;
+        const durationMs = segment.durationMs;
 
-  const selectedTrack = pickCaptionTrack(captionTracks, params.sourceLanguage);
-  if (!selectedTrack?.baseUrl) {
-    throw new Error("没有找到可读取的字幕轨道。你可以尝试手动指定原字幕语言代码，例如 en、ja 或 ko。");
-  }
+        return {
+          startMs,
+          endMs: startMs + durationMs,
+          durationMs,
+          sourceText
+        };
+      })
+      .filter((segment): segment is RawCaptionSegment => Boolean(segment))
+  );
 
-  const rawSegments = await fetchCaptionSegments(selectedTrack, client.userAgent);
   if (rawSegments.length === 0) {
-    throw new Error("字幕轨道存在，但没有成功解析到正文。你可以换一个视频，或者稍后再试。");
+    throw new Error("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。");
   }
 
-  const warnings: string[] = [];
+  const warnings = [...transcriptPayload.warnings];
+  const hasOpenAI = Boolean(process.env.OPENAI_API_KEY);
   let translatedTexts: string[];
   let translationMode: YouTubeTranslationResult["translationMode"] = "google_fallback";
 
-  try {
-    translatedTexts = await translateSegmentsWithOpenAI(rawSegments);
-    translationMode = "openai";
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown error";
-    warnings.push(`OpenAI 翻译不可用，已自动切换到 Google 回退翻译。原因：${message}`);
+  if (hasOpenAI) {
+    try {
+      translatedTexts = await translateSegmentsWithOpenAI(rawSegments);
+      translationMode = "openai";
+    } catch {
+      warnings.push("增强翻译暂时不可用，已自动切换到标准翻译模式。");
+      translatedTexts = await translateSegmentsWithPython(rawSegments);
+    }
+  } else {
     translatedTexts = await translateSegmentsWithPython(rawSegments);
   }
 
@@ -561,24 +414,23 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
   if (translationMode === "openai") {
     try {
       summaryPayload = await buildSummaryIfPossible(segments.map((segment) => segment.translatedText).join(" "));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "unknown error";
-      warnings.push(`视频重点摘要生成失败，已跳过该步骤。原因：${message}`);
+    } catch {
+      summaryPayload = null;
     }
   }
 
   return {
     videoId,
     videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-    title: payload.videoDetails?.title || "Untitled video",
-    description: payload.videoDetails?.shortDescription || "",
-    sourceLanguage: selectedTrack.languageCode || "unknown",
-    sourceTrackLabel: selectedTrack.name?.simpleText || selectedTrack.languageCode || "Unknown track",
+    title: transcriptPayload.title || "Untitled video",
+    description: transcriptPayload.description || "",
+    sourceLanguage: transcriptPayload.selectedTrack.languageCode,
+    sourceTrackLabel: transcriptPayload.selectedTrack.label,
     translationMode,
     warnings,
     summary: summaryPayload?.summary,
     takeaways: summaryPayload?.takeaways ?? [],
-    availableTracks,
+    availableTracks: transcriptPayload.availableTracks,
     segments,
     srt: buildSrt(segments)
   };

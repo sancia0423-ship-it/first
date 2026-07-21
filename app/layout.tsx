@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { portfolioContent } from "@/lib/portfolio-content";
 
 export const metadata: Metadata = {
-  title: portfolioContent.site.title,
-  description: portfolioContent.site.description
+  title: "YouTube 中文翻译",
+  description: "把公开 YouTube 视频翻成中文，查看双语字幕，并用浏览器中文语音跟读。"
 };
 
 type RootLayoutProps = {

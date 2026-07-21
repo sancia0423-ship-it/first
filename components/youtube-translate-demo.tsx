@@ -35,13 +35,17 @@ const demoExamples = [
     sourceLanguage: "en"
   },
   {
-    label: "Kurzgesagt 示例",
-    url: "https://www.youtube.com/watch?v=0QdAzhh6gB8",
+    label: "OpenAI DevDay 示例",
+    url: "https://www.youtube.com/watch?v=U9mJuUkhUzk",
     sourceLanguage: "en"
   }
 ];
 
 let youTubeApiLoader: Promise<void> | null = null;
+
+function formatTranslationMode(mode: YouTubeTranslationResult["translationMode"]) {
+  return mode === "openai" ? "增强翻译" : "标准翻译";
+}
 
 function loadYouTubeIframeApi() {
   if (typeof window === "undefined") {
@@ -293,7 +297,7 @@ export function YouTubeTranslateDemo() {
           </div>
         </div>
         <p className="muted search-panel-copy">
-          这一版优先读取公开视频字幕，再同步翻译成中文字幕。打开“中文跟读”后，浏览器会用本地中文语音跟着当前字幕朗读。
+          支持大多数带公开字幕的公开视频。翻译完成后，你可以一边看视频，一边看中文字幕，也可以打开中文朗读。
         </p>
 
         <div className="search-form">
@@ -327,7 +331,7 @@ export function YouTubeTranslateDemo() {
               {isSubmitting ? "翻译中..." : "开始翻译"}
             </button>
             <span className="muted form-helper">
-              无 `OPENAI_API_KEY` 也能跑；配置后会优先用 OpenAI 翻译，并补一段中文重点速览。
+              没有 OpenAI key 也能用；如果已经配置，翻译会更自然，还会补一段中文速览。
             </span>
           </div>
 
@@ -353,9 +357,9 @@ export function YouTubeTranslateDemo() {
         </div>
 
         <div className="callout section">
-          <strong>这版原型的边界</strong>
+          <strong>支持范围</strong>
           <p className="muted">
-            当前不下载视频文件，也不直接改写 YouTube 原声轨。语音翻译采用浏览器本地中文 TTS，所以最适合边看边听中文释义。
+            当前适合带公开字幕的 YouTube 视频。翻译完成后可以下载中文字幕，也可以用浏览器自带中文语音跟着当前句子朗读。
           </p>
         </div>
       </div>
@@ -365,14 +369,18 @@ export function YouTubeTranslateDemo() {
           <div className="panel error-panel">
             <h2 className="panel-title">翻译失败</h2>
             <p className="muted">{error}</p>
+            <ul className="stack-list section">
+              <li>先试试公开视频或官方频道视频，成功率通常更高。</li>
+              <li>如果视频本身没有公开字幕，当前还不能直接生成整段翻译。</li>
+            </ul>
           </div>
         ) : null}
 
         {!result ? (
           <div className="panel empty-state">
-            <h2 className="panel-title">结果会显示在这里</h2>
+            <h2 className="panel-title">翻译结果会显示在这里</h2>
             <p className="muted">
-              你会看到播放器、同步中文字幕、可下载的 `.srt` 文件，以及一个中文跟读开关。
+              这里会出现播放器、中文字幕、原文对照、SRT 下载按钮，以及中文朗读开关。
             </p>
           </div>
         ) : (
@@ -383,17 +391,18 @@ export function YouTubeTranslateDemo() {
                   <div className="meta-row">
                     <span className="meta-pill">字幕语言：{result.sourceLanguage}</span>
                     <span className="meta-pill">轨道：{result.sourceTrackLabel}</span>
-                    <span className="meta-pill">
-                      翻译模式：{result.translationMode === "openai" ? "OpenAI" : "Google fallback"}
-                    </span>
+                    <span className="meta-pill">翻译模式：{formatTranslationMode(result.translationMode)}</span>
                   </div>
                   <h2 className="panel-title">{result.title}</h2>
                   <p className="result-summary muted">
-                    共有 {result.segments.length} 条对齐字幕。建议打开视频后先把原声调低，再开启中文跟读，体验会更自然。
+                    共有 {result.segments.length} 条对齐字幕。你可以一边播放原视频，一边看中文对照；如果想省力一点，再打开中文朗读。
                   </p>
                 </div>
 
                 <div className="button-row">
+                  <a className="ghost-button" href={result.videoUrl} rel="noreferrer" target="_blank">
+                    打开原视频
+                  </a>
                   <button className="ghost-button" onClick={downloadSrt} type="button">
                     下载中文字幕 SRT
                   </button>
@@ -424,7 +433,7 @@ export function YouTubeTranslateDemo() {
 
               {result.warnings.length > 0 ? (
                 <div className="callout section">
-                  <strong>运行提示</strong>
+                  <strong>系统提示</strong>
                   <ul className="stack-list section">
                     {result.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
@@ -442,7 +451,7 @@ export function YouTubeTranslateDemo() {
                   <div className="section-header section-header-inline">
                     <div>
                       <span className="section-kicker">Voice</span>
-                      <h3 className="panel-title">中文跟读</h3>
+                      <h3 className="panel-title">中文朗读</h3>
                     </div>
                   </div>
 
@@ -480,7 +489,7 @@ export function YouTubeTranslateDemo() {
                     </label>
 
                     <div className="callout">
-                      <strong>可用字幕轨道</strong>
+                      <strong>可选字幕语言</strong>
                       <div className="chip-row section">
                         {result.availableTracks.map((track) => (
                           <span className="chip static-chip" key={`${track.languageCode}-${track.label}`}>

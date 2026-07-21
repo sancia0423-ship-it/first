@@ -1,26 +1,27 @@
 import Link from "next/link";
-import { portfolioContent } from "@/lib/portfolio-content";
 
 export function SiteHeader() {
-  const { navItems, site } = portfolioContent;
-
   return (
     <header className="site-header">
       <Link className="brand-lockup" href="/">
-        <span className="brand-mark">{site.brandMark}</span>
+        <span className="brand-mark">YT</span>
         <span>
-          <strong className="brand-title">{site.title}</strong>
-          <span className="brand-subtitle">{site.subtitle}</span>
+          <strong className="brand-title">YouTube 中文翻译</strong>
+          <span className="brand-subtitle">中文字幕、原文对照、中文朗读</span>
         </span>
       </Link>
 
       <nav className="header-nav" aria-label="Primary">
-        {navItems.map((item) => (
-          <Link className="header-link" href={item.href} key={item.label}>
-            {item.label}
-          </Link>
-        ))}
-        <div className="header-badge">{site.headerBadge}</div>
+        <Link className="header-link" href="/">
+          YouTube 翻译
+        </Link>
+        <Link className="header-link" href="/search">
+          信息搜索
+        </Link>
+        <Link className="header-link" href="/mock">
+          模拟面试
+        </Link>
+        <div className="header-badge">Public beta</div>
       </nav>
     </header>
   );
