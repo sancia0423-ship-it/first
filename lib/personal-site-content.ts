@@ -171,41 +171,152 @@ export const personalSiteContent = {
       kicker: "AI 学习资料库",
       title: "AI 学习与文献资料",
       lead:
-        "这个页面集中放我现在正在整理的 AI 课程资料、assignment，以及以后会继续补充的学习材料。你可以把它理解成我的一个个人学习资料库。"
+        "这个页面集中放我现在学过以后觉得很好的资料、一些小练习，之后也会继续补充，希望大家可以一起学习。我打算把这里慢慢做成自己的一个知识库。"
     },
     overviewCards: [
       {
         label: "课程资料",
-        title: "COMP9208: Artificial Intelligence and Society",
-        body: "当前已整理 lecture PDF 和 assignment PDF，适合直接下载保存。"
-      },
-      {
-        label: "学习重点",
-        title: "我重点在学什么",
-        body: "AI and Society、adversarial machine learning、distributed AI、AI literacy、language models。"
+        title: "AI 基础入门文件",
+        body: "目前我在学一些 AI 通识和基础入门相关的内容。这一组文件每一个都有简单介绍，可以按照顺序慢慢看，用来建立对 AI 的基础理解。"
       },
       {
         label: "文献与笔记",
-        title: "后续会继续补充什么",
-        body: "这里后面还可以继续加入论文 PDF、读书笔记、文献综述、课堂笔记和自己整理的中文资料。"
+        title: "文献笔记",
+        body: "这里先把我整理在 Word 里的 article 清单放进来，后面也会继续补充自己看过的文献、笔记和一些想法。"
       }
     ],
+    practice: {
+      kicker: "小练习",
+      title: "小练习",
+      summary: "这个板块先留出来，后面我会慢慢把自己做过的小练习、随手实验和学习记录补进来。",
+      emptyTitle: "这个板块之后会继续补充",
+      emptyBody: "现在先把作业资料去掉，后面这里会换成更适合展示的小练习内容。"
+    },
     referenceShelf: {
-      kicker: "文献与笔记",
-      title: "以后会继续放到这里的资料",
-      summary: "除了课程讲义和作业，我也会把后续读过的论文、课程笔记和自己整理的 AI 学习内容继续放进来，慢慢把它做成一个长期更新的资料库。",
+      kicker: "文献笔记",
+      title: "Articles 文献清单",
+      summary: "这里先把 `Articles.docx` 里的文章全部整理进来。之后我会继续在这个板块补充自己看过的内容、阅读记录和简单笔记。",
+      fileHref: "/docs/ai-learning/articles/articles.docx",
       items: [
         {
-          title: "论文与文献 PDF",
-          body: "后面可以继续放课程要求阅读、自己额外看的 paper，或者做项目时参考过的关键文献。"
+          tag: "Article 01",
+          title: "Computing Machinery and Intelligence",
+          body: "Alan Turing · 1950"
         },
         {
-          title: "学习笔记与中文整理",
-          body: "适合放 lecture notes、读书笔记、知识点总结，以及自己整理过的中文版本资料。"
+          tag: "Article 02",
+          title: "A Chess-Playing Machine",
+          body: "Claude E. Shannon · 1950"
         },
         {
-          title: "项目相关资料",
-          body: "如果你之后做课程项目、论文项目或者数据分析作品，也可以把 supporting materials 放在这里统一管理。"
+          tag: "Article 03",
+          title: "Why Should Machines Learn",
+          body: "Herbert Simon · 1983"
+        },
+        {
+          tag: "Article 04",
+          title: "Flocks, Herds, and Schools: A Distributed Behavioral Model",
+          body: "Craig Reynolds · 1987"
+        },
+        {
+          tag: "Article 05",
+          title: "Elephants Don't Play Chess",
+          body: "Rodney A. Brooks · 1990"
+        },
+        {
+          tag: "Article 06",
+          title: "The Myth of the Last Metaphor",
+          body: "Joseph Weizenbaum · 1995"
+        },
+        {
+          tag: "Article 07",
+          title: "RoboCup: The Robot World Cup Initiative",
+          body: "Hiroaki Kitano et al. · 1996"
+        },
+        {
+          tag: "Article 08",
+          title: "The RoboCup Synthetic Agent Challenge",
+          body: "Hiroaki Kitano et al. · 1997"
+        },
+        {
+          tag: "Article 09",
+          title: "Perceptron, Encyclopedia of Computer Science",
+          body: "Laveen Kanal · 2003"
+        },
+        {
+          tag: "Article 10",
+          title: "Is Chess the Drosophila of Artificial Intelligence? A Social History of an Algorithm",
+          body: "Nathan Ensmenger · 2012"
+        },
+        {
+          tag: "Article 11",
+          title: "A Few Useful Things to Know About Machine Learning",
+          body: "Pedro Domingos · 2012"
+        },
+        {
+          tag: "Article 12",
+          title: "Overview on DeepMind and Its AlphaGo Zero AI",
+          body: "Sean Holcomb et al. · 2018"
+        },
+        {
+          tag: "Article 13",
+          title: "Conversations with ELIZA on Gender and Artificial Intelligence",
+          body: "Pedro Costa and Luisa Ribas · 2018"
+        },
+        {
+          tag: "Article 14",
+          title: "The Five Tribes of Machine-Learning: A Brief Overview",
+          body: "Jens Pohl · 2019"
+        },
+        {
+          tag: "Article 15",
+          title: "Deep New: The Shifting Narratives of Artificial Intelligence from Deep Blue to AlphaGo",
+          body: "Paolo Bory · 2019"
+        },
+        {
+          tag: "Article 16",
+          title: "ChatGPT Is a Blurry JPEG of the Web",
+          body: "Ted Chiang · 2023"
+        },
+        {
+          tag: "Article 17",
+          title: "Steps Toward Artificial Intelligence",
+          body: "Minsky · 1961"
+        },
+        {
+          tag: "Article 18",
+          title: "Learning Representations by Back-Propagating Errors",
+          body: "Rumelhart et al. · 1986"
+        },
+        {
+          tag: "Article 19",
+          title: "Heuristic Problem Solving The Next Advance in Operations Research",
+          body: "Simon and Newell · 1958"
+        },
+        {
+          tag: "Article 20",
+          title: "Intelligence Without Representation",
+          body: "Brooks · 1991"
+        },
+        {
+          tag: "Article 21",
+          title: "Deep Learning",
+          body: "LeCun et al. · 2015"
+        },
+        {
+          tag: "Article 22",
+          title: "ImageNet Classification with Deep Convolutional Neural Networks",
+          body: "Krizhevsky et al. · 2012"
+        },
+        {
+          tag: "Article 23",
+          title: "Datasheets for Datasets",
+          body: "Gebru et al. · 2018"
+        },
+        {
+          tag: "Article 24",
+          title: "There is a Blind Spot in AI Research",
+          body: "Crawford and Calo · 2016"
         }
       ]
     },
@@ -295,26 +406,7 @@ export const personalSiteContent = {
         metrics: ["AI Literacy", "Society"]
       }
     ],
-    assignments: [
-      {
-        tag: "作业 01",
-        title: "Article Review Report",
-        body: "围绕指定论文完成 3000 字以内的 article review，重点训练阅读、批判分析与结构化表达。",
-        href: "/docs/comp9208/assignments/assignment-01.pdf"
-      },
-      {
-        tag: "作业 02",
-        title: "AI Case Analysis",
-        body: "围绕 IBM Watson、iTutor Group recruiting AI 等案例讨论 AI 应用、伦理风险与治理问题。",
-        href: "/docs/comp9208/assignments/assignment-02.pdf"
-      },
-      {
-        tag: "作业 03",
-        title: "Adversarial ML Report",
-        body: "比较 white-box 与 black-box 攻击，并反思 adversarial attacks 对关键 AI 系统的社会影响。",
-        href: "/docs/comp9208/assignments/assignment-03.pdf"
-      }
-    ]
+    assignments: []
   },
   tools: {
     hero: {

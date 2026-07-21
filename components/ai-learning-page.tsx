@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 export function AiLearningPage() {
-  const { assignments, hero, lectures, overviewCards, referenceShelf } = personalSiteContent.learning;
+  const { hero, lectures, overviewCards, practice, referenceShelf } = personalSiteContent.learning;
 
   return (
     <main className="page-shell portfolio-page">
@@ -31,10 +31,9 @@ export function AiLearningPage() {
       <section className="portfolio-section section" id="lectures">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">课程讲义</span>
-            <h2 className="panel-title">课程讲义</h2>
+            <span className="section-kicker">文件</span>
+            <h2 className="panel-title">AI 学习文件</h2>
           </div>
-          <p className="section-copy">目前收录 lecture 1 到 10，以及 12、13 讲。Lecture 11 是展示周，所以这里没有单独 slide。</p>
         </div>
 
         <div className="project-grid">
@@ -63,31 +62,20 @@ export function AiLearningPage() {
         </div>
       </section>
 
-      <section className="portfolio-section section" id="assignments">
+      <section className="portfolio-section section" id="practice">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">作业资料</span>
-            <h2 className="panel-title">作业资料</h2>
+            <span className="section-kicker">{practice.kicker}</span>
+            <h2 className="panel-title">{practice.title}</h2>
           </div>
-          <p className="section-copy">这里保留三份 assignment PDF，方便直接下载或回看作业要求。</p>
+          <p className="section-copy">{practice.summary}</p>
         </div>
 
         <div className="article-grid">
-          {assignments.map((item) => (
-            <article className="article-card" key={item.title}>
-              <span className="story-badge">{item.tag}</span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-              <div className="button-row section portfolio-link-row">
-                <a className="ghost-button" href={item.href} rel="noreferrer" target="_blank">
-                  打开 PDF
-                </a>
-                <a className="ghost-button" download href={item.href}>
-                  下载
-                </a>
-              </div>
-            </article>
-          ))}
+          <article className="article-card">
+            <h3>{practice.emptyTitle}</h3>
+            <p>{practice.emptyBody}</p>
+          </article>
         </div>
       </section>
 
@@ -97,12 +85,20 @@ export function AiLearningPage() {
             <span className="section-kicker">{referenceShelf.kicker}</span>
             <h2 className="panel-title">{referenceShelf.title}</h2>
           </div>
-          <p className="section-copy">{referenceShelf.summary}</p>
+          <div>
+            <p className="section-copy">{referenceShelf.summary}</p>
+            <div className="button-row section portfolio-link-row">
+              <a className="ghost-button" download href={referenceShelf.fileHref}>
+                下载 Articles.docx
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="article-grid">
           {referenceShelf.items.map((item) => (
             <article className="article-card" key={item.title}>
+              <span className="story-badge">{item.tag}</span>
               <h3>{item.title}</h3>
               <p>{item.body}</p>
             </article>
