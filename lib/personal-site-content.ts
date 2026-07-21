@@ -1,13 +1,13 @@
 export const personalSiteContent = {
   site: {
     title: "夏琪",
-    subtitle: "AI 产品 / 数据分析 / 学习项目",
+    subtitle: "AI 产品 / 数据分析 / 个人网站",
     description:
       "夏琪的个人网站，包含自我介绍、简历、数据分析与 AI 产品项目、AI 学习资料，以及自己做的小工具。"
   },
   home: {
     hero: {
-      kicker: "Personal Website",
+      kicker: "个人主页",
       titleIntro: "你好，我是",
       highlightWords: {
         first: "夏琪",
@@ -19,12 +19,12 @@ export const personalSiteContent = {
       titleOutro: "做成一个会持续更新的小网站。",
       lead:
         "我目前在悉尼大学读商业数据分析硕士，主修 Python、机器学习与数据分析。做过美团和得物的 AI 产品，也做过联合国儿童基金会的数据分析项目。我希望这个网站既能快速介绍我，也能把简历、作品、AI 学习资料和工具整合在一起。",
-      badges: ["Sydney University", "Business Analytics", "Python", "SQL", "AI Product", "Open to internship"]
+      badges: ["悉尼大学", "商业数据分析", "Python", "SQL", "AI 产品", "开放实习机会"]
     },
     photos: {
-      kicker: "Photo Wall",
-      title: "这里会放我的照片、学习日常和作品瞬间",
-      summary: "我先把版式搭好，后面你可以直接把自己的照片换进去，让网站看起来更像“你”，而不是只有文字。",
+      kicker: "照片与日常",
+      title: "这里会放我的照片、学习记录和作品截图",
+      summary: "这一块我先把结构留出来。之后你只要把真实照片、活动记录或者作品截图换进去，首页就会更完整、更有个人感。",
       cards: [
         {
           label: "生活",
@@ -44,11 +44,11 @@ export const personalSiteContent = {
       ]
     },
     about: {
-      kicker: "About Me",
+      kicker: "自我介绍",
       title: "我想做能把模型能力、用户体验和业务结果连起来的工作",
       summary:
         "相比单纯讲模型，我更在意怎么把模型真正接进产品、接进流程、接进业务指标。所以我的经历会同时包含 AI 产品、数据分析和落地效果。",
-      storyBadge: "Quick intro",
+      storyBadge: "一句话介绍",
       storyTitle: "悉尼大学商分硕士在读，偏 AI 产品与数据分析。",
       storyParagraphs: [
         "在美团实习时，我参与了金融保险电销 AI 化项目，负责购买流程设计、知识库与对话链路优化，推动 AI 独立承接售卖流程后的转化率由 7.44% 提升到 12.6%。",
@@ -71,8 +71,8 @@ export const personalSiteContent = {
       ]
     },
     projects: {
-      kicker: "Projects",
-      title: "我做过的一些数据分析和 AI 产品作品",
+      kicker: "项目经历",
+      title: "我做过的一些数据分析和 AI 产品项目",
       summary: "这里先放最能代表我的几段经历，后面你也可以继续往里加 dashboard、数据作品截图或单独项目页。",
       cards: [
         {
@@ -96,7 +96,7 @@ export const personalSiteContent = {
       ]
     },
     resume: {
-      kicker: "Resume",
+      kicker: "简历",
       title: "简历与个人资料",
       previewTitle: "夏琪 Resume",
       previewHint: "AI Product / Data Analysis / Business Analytics",
@@ -110,30 +110,30 @@ export const personalSiteContent = {
       skills: ["Python", "SQL", "Machine Learning", "Prompt Design", "A/B Testing", "AI Product"]
     },
     learningPreview: {
-      kicker: "AI Learning",
+      kicker: "学习资料",
       title: "AI 学习与文献资料",
       summary:
         "我会把课程 lecture、assignment、以后自己整理的 reading notes 和想保存的资料放在这个板块里，方便下载和回看。",
       items: [
         {
-          title: "COMP9208 Lecture Library",
+          title: "COMP9208 课程讲义",
           body: "课程讲义已经整理进站内，目前收录 1 到 10，以及 12、13 讲。",
           href: "/ai-learning"
         },
         {
-          title: "Assignments",
+          title: "课程作业资料",
           body: "包含 article review、AI case analysis 和 adversarial machine learning report 三份作业资料。",
           href: "/ai-learning"
         },
         {
-          title: "未来会继续加",
+          title: "文献与学习笔记",
           body: "后面可以继续放论文、学习笔记、读书笔记和自己整理的 AI 资料。",
           href: "/ai-learning"
         }
       ]
     },
     toolsPreview: {
-      kicker: "Tools",
+      kicker: "小工具",
       title: "我做的一些小工具",
       summary: "工具页会集中放我自己做的小功能，现在先接进来 YouTube 翻译、信息搜索和模拟面试三个入口。",
       cards: [
@@ -155,7 +155,7 @@ export const personalSiteContent = {
       ]
     },
     contact: {
-      kicker: "Contact",
+      kicker: "联系与入口",
       title: "如果你想继续看资料、作品或联系我",
       summary: "这里先保留最核心的几个入口。后面如果你想加 LinkedIn、邮箱按钮或更多社交链接，也很容易继续扩展。",
       links: [
@@ -168,28 +168,47 @@ export const personalSiteContent = {
   },
   learning: {
     hero: {
-      kicker: "AI Learning Library",
+      kicker: "AI 学习资料库",
       title: "AI 学习与文献资料",
       lead:
         "这个页面集中放我现在正在整理的 AI 课程资料、assignment，以及以后会继续补充的学习材料。你可以把它理解成我的一个个人学习资料库。"
     },
     overviewCards: [
       {
-        label: "Course",
+        label: "课程资料",
         title: "COMP9208: Artificial Intelligence and Society",
         body: "当前已整理 lecture PDF 和 assignment PDF，适合直接下载保存。"
       },
       {
-        label: "Topics",
+        label: "学习重点",
         title: "我重点在学什么",
         body: "AI and Society、adversarial machine learning、distributed AI、AI literacy、language models。"
       },
       {
-        label: "Next",
-        title: "后续会继续加什么",
-        body: "可以继续加入论文、读书笔记、文献综述、读后感和自己整理的中文学习笔记。"
+        label: "文献与笔记",
+        title: "后续会继续补充什么",
+        body: "这里后面还可以继续加入论文 PDF、读书笔记、文献综述、课堂笔记和自己整理的中文资料。"
       }
     ],
+    referenceShelf: {
+      kicker: "文献与笔记",
+      title: "以后会继续放到这里的资料",
+      summary: "除了课程讲义和作业，我也会把后续读过的论文、课程笔记和自己整理的 AI 学习内容继续放进来，慢慢把它做成一个长期更新的资料库。",
+      items: [
+        {
+          title: "论文与文献 PDF",
+          body: "后面可以继续放课程要求阅读、自己额外看的 paper，或者做项目时参考过的关键文献。"
+        },
+        {
+          title: "学习笔记与中文整理",
+          body: "适合放 lecture notes、读书笔记、知识点总结，以及自己整理过的中文版本资料。"
+        },
+        {
+          title: "项目相关资料",
+          body: "如果你之后做课程项目、论文项目或者数据分析作品，也可以把 supporting materials 放在这里统一管理。"
+        }
+      ]
+    },
     lectures: [
       {
         badge: "Lecture 01",
@@ -278,19 +297,19 @@ export const personalSiteContent = {
     ],
     assignments: [
       {
-        tag: "Assignment 01",
+        tag: "作业 01",
         title: "Article Review Report",
         body: "围绕指定论文完成 3000 字以内的 article review，重点训练阅读、批判分析与结构化表达。",
         href: "/docs/comp9208/assignments/assignment-01.pdf"
       },
       {
-        tag: "Assignment 02",
+        tag: "作业 02",
         title: "AI Case Analysis",
         body: "围绕 IBM Watson、iTutor Group recruiting AI 等案例讨论 AI 应用、伦理风险与治理问题。",
         href: "/docs/comp9208/assignments/assignment-02.pdf"
       },
       {
-        tag: "Assignment 03",
+        tag: "作业 03",
         title: "Adversarial ML Report",
         body: "比较 white-box 与 black-box 攻击，并反思 adversarial attacks 对关键 AI 系统的社会影响。",
         href: "/docs/comp9208/assignments/assignment-03.pdf"
@@ -299,28 +318,28 @@ export const personalSiteContent = {
   },
   tools: {
     hero: {
-      kicker: "Tools",
+      kicker: "工具区",
       title: "我做的一些小工具",
       lead:
         "这里放我现在做过的小工具。你可以把它看成是一个实验区，一边展示我会做什么，一边也真的可以直接用。"
     },
     cards: [
       {
-        label: "Tool 01",
+        label: "工具 01",
         title: "YouTube 中文翻译",
         body: "读取公开视频字幕，生成中文字幕、原文对照和可下载 SRT，还能打开中文朗读。",
         href: "#youtube-tool",
         action: "直接试用"
       },
       {
-        label: "Tool 02",
+        label: "工具 02",
         title: "信息搜索",
         body: "适合做资料检索、内容整理和快速研究验证。",
         href: "/search",
         action: "打开搜索"
       },
       {
-        label: "Tool 03",
+        label: "工具 03",
         title: "模拟面试",
         body: "把面试问题、回答练习和反馈放在一条链路里。",
         href: "/mock",

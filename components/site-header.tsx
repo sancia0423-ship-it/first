@@ -5,7 +5,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link className="brand-lockup" href="/">
-        <span className="brand-mark">Q</span>
+        <span className="brand-mark">夏</span>
         <span>
           <strong className="brand-title">{personalSiteContent.site.title}</strong>
           <span className="brand-subtitle">{personalSiteContent.site.subtitle}</span>
@@ -22,7 +22,7 @@ export function SiteHeader() {
         <Link className="header-link" href="/tools">
           小工具
         </Link>
-        <div className="header-badge">Sydney / AI Product</div>
+        <div className="header-badge">悉尼 / AI 产品</div>
       </nav>
     </header>
   );

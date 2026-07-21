@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 export function AiLearningPage() {
-  const { assignments, hero, lectures, overviewCards } = personalSiteContent.learning;
+  const { assignments, hero, lectures, overviewCards, referenceShelf } = personalSiteContent.learning;
 
   return (
     <main className="page-shell portfolio-page">
@@ -31,7 +31,7 @@ export function AiLearningPage() {
       <section className="portfolio-section section" id="lectures">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">Lectures</span>
+            <span className="section-kicker">课程讲义</span>
             <h2 className="panel-title">课程讲义</h2>
           </div>
           <p className="section-copy">目前收录 lecture 1 到 10，以及 12、13 讲。Lecture 11 是展示周，所以这里没有单独 slide。</p>
@@ -66,7 +66,7 @@ export function AiLearningPage() {
       <section className="portfolio-section section" id="assignments">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">Assignments</span>
+            <span className="section-kicker">作业资料</span>
             <h2 className="panel-title">作业资料</h2>
           </div>
           <p className="section-copy">这里保留三份 assignment PDF，方便直接下载或回看作业要求。</p>
@@ -86,6 +86,25 @@ export function AiLearningPage() {
                   下载
                 </a>
               </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="portfolio-section section" id="references">
+        <div className="section-header portfolio-section-header">
+          <div>
+            <span className="section-kicker">{referenceShelf.kicker}</span>
+            <h2 className="panel-title">{referenceShelf.title}</h2>
+          </div>
+          <p className="section-copy">{referenceShelf.summary}</p>
+        </div>
+
+        <div className="article-grid">
+          {referenceShelf.items.map((item) => (
+            <article className="article-card" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
             </article>
           ))}
         </div>

@@ -55,22 +55,22 @@ export function PersonalHomePage() {
               </div>
               <div className="showcase-gradient" aria-hidden="true" />
               <div className="showcase-script">
-                <span className="mini-label">This website is about me</span>
-                <strong>自我介绍、简历、作品、AI 学习资料和工具都会放在这里。</strong>
+                <span className="mini-label">首页概览</span>
+                <strong>这里会放自我介绍、简历、作品、AI 学习资料和我做的小工具。</strong>
               </div>
             </div>
 
             <div className="showcase-grid">
               <article className="mini-card mini-card-sun">
-                <span className="mini-label">Self Intro</span>
+                <span className="mini-label">自我介绍</span>
                 <p>先让别人快速认识我是谁、在做什么、擅长什么。</p>
               </article>
               <article className="mini-card mini-card-mint">
-                <span className="mini-label">Study Library</span>
+                <span className="mini-label">学习资料</span>
                 <p>课程讲义、assignment 和 AI 学习资料集中管理，方便下载。</p>
               </article>
               <article className="mini-card mini-card-sky">
-                <span className="mini-label">Small Tools</span>
+                <span className="mini-label">小工具</span>
                 <p>把我做的小工具放到同一个入口，不只是展示，也可以直接试用。</p>
               </article>
             </div>
@@ -92,7 +92,7 @@ export function PersonalHomePage() {
             <article className={`candy-card ${item.className}`} key={item.label}>
               <span className="story-badge">{item.label}</span>
               <div className="photo-placeholder">
-                <span>Photo Placeholder</span>
+                <span>照片位置</span>
               </div>
               <p className="photo-caption">{item.caption}</p>
             </article>
