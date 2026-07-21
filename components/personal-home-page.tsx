@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArtistCharacterCluster } from "@/components/artist-character-cluster";
+import { ExpressiveHomeHero } from "@/components/expressive-home-hero";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
@@ -7,86 +7,19 @@ export function PersonalHomePage() {
   const { about, contact, hero, learningPreview, photos, projects, resume, toolsPreview } = personalSiteContent.home;
 
   return (
-    <main className="page-shell portfolio-page">
+    <main className="page-shell portfolio-page home-expressive-page">
       <SiteHeader />
 
-      <section className="portfolio-hero" id="top">
-        <div className="portfolio-spark portfolio-spark-left" aria-hidden="true" />
-        <div className="portfolio-spark portfolio-spark-right" aria-hidden="true" />
-
-        <div className="portfolio-hero-grid">
-          <div className="portfolio-hero-copy">
-            <span className="portfolio-kicker">{hero.kicker}</span>
-            <h1 className="portfolio-title">
-              {hero.titleIntro} <span className="word-patch patch-peach">{hero.highlightWords.first}</span>
-              {hero.titleMiddle}
-              <span className="word-patch patch-mint">{hero.highlightWords.second}</span> {hero.titleConnector}
-              <span className="word-patch patch-sky">{hero.highlightWords.third}</span>
-              {hero.titleOutro}
-            </h1>
-            <p className="portfolio-lead">{hero.lead}</p>
-
-            <div className="portfolio-badge-row">
-              {hero.badges.map((item) => (
-                <span className="sticker-pill" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-
-            <div className="button-row section">
-              <a className="primary-button portfolio-button" href={resume.viewHref} rel="noreferrer" target="_blank">
-                看简历
-              </a>
-              <Link className="ghost-button portfolio-button" href="/ai-learning">
-                AI 学习资料
-              </Link>
-              <Link className="ghost-button portfolio-button" href="/tools">
-                看小工具
-              </Link>
-            </div>
-          </div>
-
-          <div className="candy-card showcase-card art-showcase-card">
-            <div className="showcase-window art-showcase-window">
-              <div className="window-dots" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="paint-splash paint-splash-peach" aria-hidden="true" />
-              <div className="paint-splash paint-splash-gold" aria-hidden="true" />
-              <div className="paint-splash paint-splash-teal" aria-hidden="true" />
-              <div className="floating-sticker sticker-left">AI x Art</div>
-              <div className="floating-sticker sticker-right">Portfolio Mood</div>
-
-              <div className="character-stage">
-                <ArtistCharacterCluster />
-              </div>
-
-              <div className="showcase-script art-script">
-                <span className="mini-label">网站气质</span>
-                <strong>像艺术作品集一样介绍自己，同时保留资料、简历和工具的实用性。</strong>
-              </div>
-            </div>
-
-            <div className="showcase-grid">
-              <article className="mini-card mini-card-sun">
-                <span className="mini-label">自我介绍</span>
-                <p>先让别人快速认识我是谁、在做什么、擅长什么。</p>
-              </article>
-              <article className="mini-card mini-card-mint">
-                <span className="mini-label">学习资料</span>
-                <p>课程讲义、assignment 和 AI 学习资料集中管理，方便下载。</p>
-              </article>
-              <article className="mini-card mini-card-sky">
-                <span className="mini-label">小工具</span>
-                <p>把我做的小工具放到同一个入口，不只是展示，也可以直接试用。</p>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ExpressiveHomeHero
+        aboutSnippet={about.prompts[0]?.body ?? about.summary}
+        aboutTitle={about.storyTitle}
+        hero={hero}
+        learningSnippet={learningPreview.summary}
+        learningTitle={learningPreview.title}
+        resumeHref={resume.viewHref}
+        toolsSnippet={toolsPreview.summary}
+        toolsTitle={toolsPreview.title}
+      />
 
       <section className="portfolio-section section" id="photos">
         <div className="section-header portfolio-section-header">
