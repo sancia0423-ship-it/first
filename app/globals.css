@@ -1792,7 +1792,8 @@ body::before {
   .showcase-grid,
   .article-grid,
   .playlist-grid,
-  .project-grid {
+  .project-grid,
+  .photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1812,6 +1813,67 @@ body::before {
 
 .contact-link-pill:hover {
   transform: translateY(-1px);
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.photo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 320px;
+}
+
+.photo-card-peach {
+  background:
+    radial-gradient(circle at top left, rgba(255, 180, 166, 0.48), transparent 46%),
+    rgba(255, 248, 244, 0.95);
+}
+
+.photo-card-mint {
+  background:
+    radial-gradient(circle at top left, rgba(154, 233, 210, 0.44), transparent 46%),
+    rgba(246, 255, 252, 0.95);
+}
+
+.photo-card-sky {
+  background:
+    radial-gradient(circle at top left, rgba(140, 204, 255, 0.42), transparent 46%),
+    rgba(246, 251, 255, 0.95);
+}
+
+.photo-placeholder {
+  min-height: 190px;
+  border-radius: 26px;
+  border: 1px dashed rgba(126, 76, 61, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(253, 245, 240, 0.9)),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(126, 76, 61, 0.03),
+      rgba(126, 76, 61, 0.03) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+  display: grid;
+  place-items: center;
+  color: rgba(126, 76, 61, 0.6);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.photo-caption {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.tool-preview-card {
+  min-height: 220px;
 }
 
 @media (max-width: 720px) {
@@ -1842,7 +1904,8 @@ body::before {
   .showcase-grid,
   .article-grid,
   .playlist-grid,
-  .project-grid {
+  .project-grid,
+  .photo-grid {
     grid-template-columns: 1fr;
   }
 

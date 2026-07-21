@@ -1,5 +1,5 @@
-import { YouTubeProductPage } from "@/components/youtube-product-page";
+import { PersonalHomePage } from "@/components/personal-home-page";
 
 export default function HomePage() {
-  return <YouTubeProductPage />;
+  return <PersonalHomePage />;
 }

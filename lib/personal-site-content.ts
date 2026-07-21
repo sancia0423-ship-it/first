@@ -1,169 +1,195 @@
 export const personalSiteContent = {
-  hero: {
-    kicker: "AI Product Portfolio",
-    titleIntro: "把我的",
-    highlightWords: {
-      first: "AI 产品",
-      second: "数据分析",
-      third: "课程资料"
+  site: {
+    title: "夏琪",
+    subtitle: "AI 产品 / 数据分析 / 学习项目",
+    description:
+      "夏琪的个人网站，包含自我介绍、简历、数据分析与 AI 产品项目、AI 学习资料，以及自己做的小工具。"
+  },
+  home: {
+    hero: {
+      kicker: "Personal Website",
+      titleIntro: "你好，我是",
+      highlightWords: {
+        first: "夏琪",
+        second: "AI 产品",
+        third: "数据分析"
+      },
+      titleMiddle: "，正在把",
+      titleConnector: "和",
+      titleOutro: "做成一个会持续更新的小网站。",
+      lead:
+        "我目前在悉尼大学读商业数据分析硕士，主修 Python、机器学习与数据分析。做过美团和得物的 AI 产品，也做过联合国儿童基金会的数据分析项目。我希望这个网站既能快速介绍我，也能把简历、作品、AI 学习资料和工具整合在一起。",
+      badges: ["Sydney University", "Business Analytics", "Python", "SQL", "AI Product", "Open to internship"]
     },
-    titleMiddle: "、",
-    titleConnector: "和",
-    titleOutro: "整理成一个可以直接分享的网站。",
-    lead:
-      "我是夏琪，悉尼大学商业数据分析硕士在读，做过美团和得物的 AI 产品，也做过联合国儿童基金会的数据分析项目。这里集中放我的简历、课程资料、作业和在线 Demo。",
-    featureBadges: ["AI Product", "Business Analytics", "Python", "SQL", "COMP9208", "Open to internship"],
-    showcaseTitle: "既能看我的经历，也能直接打开我做过的工具和课程材料。",
-    showcaseCards: [
-      {
-        label: "Industry",
-        body: "做过美团金融 AI 销售流程、得物 AIGC 内容生产和 UNICEF 数据分析项目。",
-        className: "mini-card mini-card-sun"
-      },
-      {
-        label: "Coursework",
-        body: "把 COMP9208 Artificial Intelligence and Society 的 lecture 和 assignment 全部整理进站内。",
-        className: "mini-card mini-card-mint"
-      },
-      {
-        label: "Live Demos",
-        body: "除了 PDF，我也把自己做的 YouTube 翻译、信息搜索和模拟面试 Demo 放在同一个入口。",
-        className: "mini-card mini-card-sky"
-      }
-    ]
-  },
-  about: {
-    kicker: "About",
-    title: "我在做什么",
-    summary: "我更偏向能把模型能力、用户体验和业务结果连起来的 AI 产品与数据分析方向，也在持续把课程学习沉淀成能直接展示的作品。",
-    storyBadge: "Quick intro",
-    storyTitle: "悉尼大学商分硕士在读，主修 Python、机器学习与数据分析。",
-    storyParagraphs: [
-      "在美团实习时，我参与了金融保险电销 AI 化项目，做购买流程设计、知识库和对话链路优化，把 AI 独立承接售卖流程后的转化率从 7.44% 提升到 12.6%。",
-      "在得物实习时，我参与 AIGC 文生图能力建设，从结构化 Prompt 方案、PRD、原型到评测体系，推动能力接入内容发布与商家工具链，帮助商品内容生产效率提升 5 到 6 倍。",
-      "除了业务项目，我也在系统学习 AI and Society、adversarial machine learning、distributed AI、AI literacy 等内容，并把讲义和作业做成可公开浏览的课程资料库。"
-    ],
-    prompts: [
-      {
-        title: "当前方向",
-        body: "AI 产品、AIGC 应用、多模态工作流，以及能和真实业务指标挂钩的数据分析。"
-      },
-      {
-        title: "核心能力",
-        body: "Python、SQL、Prompt 设计、实验设计、指标分析、原型设计，以及 AI 工具辅助开发。"
-      },
-      {
-        title: "机会偏好",
-        body: "希望继续做 AI 产品或数据分析相关实习，偏向能从 0 到 1 做功能、看数据和推动上线的团队。"
-      }
-    ]
-  },
-  demos: {
-    kicker: "Demos",
-    title: "我做过的在线工具",
-    summary: "除了 PDF 材料，我把几个可以直接打开使用的 Demo 也一起放在这里，方便别人快速理解我在做什么。",
-    featuredLabel: "Featured Demo",
-    featuredTitle: "YouTube 中文翻译工具",
-    featuredBody:
-      "输入公开视频链接，读取公开字幕，生成中文字幕、原文对照和可下载 SRT，还能打开浏览器中文朗读。",
-    cards: [
-      {
-        title: "YouTube 中文翻译",
-        body: "把 YouTube 字幕翻成中文，适合边看边学英语或技术视频。",
-        href: "/",
-        action: "打开工具"
-      },
-      {
-        title: "信息搜索 Demo",
-        body: "用于检索、汇总和整理结构化信息，适合做研究类问题的快速验证。",
-        href: "/search",
-        action: "打开搜索"
-      },
-      {
-        title: "模拟面试 Demo",
-        body: "把问题、回答和评分放在同一条链路里，适合练习表达和面试反馈。",
-        href: "/mock",
-        action: "开始练习"
-      }
-    ],
-    sideBadge: "Current focus",
-    sideTitle: "我希望把课程学习和产品 Demo 一起沉淀成作品集。",
-    sideBody:
-      "这样别人点进来，不只是看到一份 PDF，而是能同时看到我做过什么、学过什么，以及我真的把这些能力做成了可以运行的东西。",
-    sideList: [
-      "业务经历强调真实转化与效率提升。",
-      "课程资料强调系统学习与 AI 基础理解。",
-      "在线 Demo 强调我有把想法快速落成产品原型的能力。"
-    ]
-  },
-  resume: {
-    kicker: "Resume",
-    title: "简历与公开资料",
-    previewTitle: "夏琪 Resume",
-    previewHint: "Sydney Business Analytics / AI Product / Data Analysis",
-    viewHref: "/docs/resume/xiaqi-resume.pdf",
-    highlights: [
-      "美团 AI 电销转化率由 7.44% 提升至 12.6%，日均新增订单稳定在 180 到 240 单。",
-      "重新设计二开与三开交互链路，把单轮操作时长从 1 分钟缩短到 20 秒，推动二开人均成单量由 2.2 提升到 2.8。",
-      "得物 AIGC 文生图项目完成 MVP 上线并接入商家工具链，功能渗透率达到 65% 以上，内容生产效率提升 5 到 6 倍。",
-      "联合国儿童基金会项目中，推动动态金额推荐策略上线，页面支付转化效率提升 4.8%，人均预期募捐收入提升 5%。"
-    ],
-    skills: ["Python", "SQL", "Machine Learning", "Prompt Design", "A/B Testing", "AI Product"],
-    publicNotes: [
-      "公开网站里我保留邮箱和简历下载，不直接展示手机号。",
-      "如果需要更完整版本，可以直接打开 PDF 查看完整经历。"
-    ]
-  },
-  assignments: [
-    {
-      tag: "Assignment 01",
-      title: "Article Review Report",
-      body: "围绕指定论文完成 3000 字以内的 article review，重点训练阅读、批判分析与结构化表达。",
-      href: "/docs/comp9208/assignments/assignment-01.pdf"
+    photos: {
+      kicker: "Photo Wall",
+      title: "这里会放我的照片、学习日常和作品瞬间",
+      summary: "我先把版式搭好，后面你可以直接把自己的照片换进去，让网站看起来更像“你”，而不是只有文字。",
+      cards: [
+        {
+          label: "生活",
+          caption: "可以放你平时的照片、城市记录或日常片段。",
+          className: "photo-card photo-card-peach"
+        },
+        {
+          label: "学习",
+          caption: "可以放上课、做作业、整理课程资料时的照片。",
+          className: "photo-card photo-card-mint"
+        },
+        {
+          label: "项目",
+          caption: "可以放数据分析作品截图、比赛现场或实习相关画面。",
+          className: "photo-card photo-card-sky"
+        }
+      ]
     },
-    {
-      tag: "Assignment 02",
-      title: "AI Case Analysis",
-      body: "围绕 IBM Watson、iTutor Group recruiting AI 等案例讨论 AI 应用、伦理风险与治理问题。",
-      href: "/docs/comp9208/assignments/assignment-02.pdf"
+    about: {
+      kicker: "About Me",
+      title: "我想做能把模型能力、用户体验和业务结果连起来的工作",
+      summary:
+        "相比单纯讲模型，我更在意怎么把模型真正接进产品、接进流程、接进业务指标。所以我的经历会同时包含 AI 产品、数据分析和落地效果。",
+      storyBadge: "Quick intro",
+      storyTitle: "悉尼大学商分硕士在读，偏 AI 产品与数据分析。",
+      storyParagraphs: [
+        "在美团实习时，我参与了金融保险电销 AI 化项目，负责购买流程设计、知识库与对话链路优化，推动 AI 独立承接售卖流程后的转化率由 7.44% 提升到 12.6%。",
+        "在得物实习时，我参与 AIGC 文生图能力建设，从结构化 Prompt 方案、PRD、原型到评测体系，推动能力接入内容发布与商家工具链，帮助商品内容生产效率提升 5 到 6 倍。",
+        "除了业务项目，我也在系统学习 AI and Society、adversarial machine learning、distributed AI、AI literacy 等内容，并把 lecture 和 assignment 整理成了可下载的资料页。"
+      ],
+      prompts: [
+        {
+          title: "我现在在做什么",
+          body: "一边做 AI 产品与数据分析相关实习，一边把课程学习和 Demo 沉淀成作品集。"
+        },
+        {
+          title: "我擅长什么",
+          body: "Python、SQL、Prompt 设计、数据分析、实验设计、原型设计，以及用 AI 工具快速搭建原型。"
+        },
+        {
+          title: "我想去哪里",
+          body: "希望继续做 AI 产品、AIGC 应用、多模态工作流或偏产品导向的数据分析岗位。"
+        }
+      ]
     },
-    {
-      tag: "Assignment 03",
-      title: "Adversarial ML Report",
-      body: "在数据分析作业中比较 white-box 与 black-box 攻击，并反思 adversarial attacks 对关键 AI 系统的社会影响。",
-      href: "/docs/comp9208/assignments/assignment-03.pdf"
+    projects: {
+      kicker: "Projects",
+      title: "我做过的一些数据分析和 AI 产品作品",
+      summary: "这里先放最能代表我的几段经历，后面你也可以继续往里加 dashboard、数据作品截图或单独项目页。",
+      cards: [
+        {
+          badge: "Meituan",
+          title: "金融保险 AI 电销流程优化",
+          body: "负责购买流程、知识库与话术策略优化，把 AI 独立售卖链路真正跑通，推动转化率和成单效率一起提升。",
+          metrics: ["AI Product", "Conversion", "Knowledge Base"]
+        },
+        {
+          badge: "Dewu",
+          title: "AIGC 文生图能力建设",
+          body: "围绕商品内容生产设计结构化 Prompt、评测体系和功能原型，把能力接入商家工具链，提升内容供给效率。",
+          metrics: ["AIGC", "Prompt", "Evaluation"]
+        },
+        {
+          badge: "UNICEF",
+          title: "募捐页面数据分析与推荐策略",
+          body: "做用户分层、捐赠预测和策略评估，推动动态金额推荐上线，为后续投放和页面配置提供依据。",
+          metrics: ["Data Analysis", "Experiment", "Impact"]
+        }
+      ]
+    },
+    resume: {
+      kicker: "Resume",
+      title: "简历与个人资料",
+      previewTitle: "夏琪 Resume",
+      previewHint: "AI Product / Data Analysis / Business Analytics",
+      viewHref: "/docs/resume/xiaqi-resume.pdf",
+      highlights: [
+        "美团 AI 电销项目中，AI 转化率由 7.44% 提升至 12.6%，日均新增订单稳定在 180 到 240 单。",
+        "二开与三开交互链路优化后，将用户单轮操作时长从 1 分钟缩短到 20 秒。",
+        "得物 AIGC 项目完成 MVP 上线并接入商家工具链，内容生产效率提升 5 到 6 倍。",
+        "联合国儿童基金会项目推动动态金额推荐上线，页面支付转化效率提升 4.8%。"
+      ],
+      skills: ["Python", "SQL", "Machine Learning", "Prompt Design", "A/B Testing", "AI Product"]
+    },
+    learningPreview: {
+      kicker: "AI Learning",
+      title: "AI 学习与文献资料",
+      summary:
+        "我会把课程 lecture、assignment、以后自己整理的 reading notes 和想保存的资料放在这个板块里，方便下载和回看。",
+      items: [
+        {
+          title: "COMP9208 Lecture Library",
+          body: "课程讲义已经整理进站内，目前收录 1 到 10，以及 12、13 讲。",
+          href: "/ai-learning"
+        },
+        {
+          title: "Assignments",
+          body: "包含 article review、AI case analysis 和 adversarial machine learning report 三份作业资料。",
+          href: "/ai-learning"
+        },
+        {
+          title: "未来会继续加",
+          body: "后面可以继续放论文、学习笔记、读书笔记和自己整理的 AI 资料。",
+          href: "/ai-learning"
+        }
+      ]
+    },
+    toolsPreview: {
+      kicker: "Tools",
+      title: "我做的一些小工具",
+      summary: "工具页会集中放我自己做的小功能，现在先接进来 YouTube 翻译、信息搜索和模拟面试三个入口。",
+      cards: [
+        {
+          title: "YouTube 中文翻译",
+          body: "把公开视频字幕翻成中文，支持原文对照、SRT 下载和中文朗读。",
+          href: "/tools"
+        },
+        {
+          title: "信息搜索",
+          body: "适合做研究和资料整理，帮助快速收集和总结信息。",
+          href: "/search"
+        },
+        {
+          title: "模拟面试",
+          body: "用于练习表达、模拟问答和拿到结构化反馈。",
+          href: "/mock"
+        }
+      ]
+    },
+    contact: {
+      kicker: "Contact",
+      title: "如果你想继续看资料、作品或联系我",
+      summary: "这里先保留最核心的几个入口。后面如果你想加 LinkedIn、邮箱按钮或更多社交链接，也很容易继续扩展。",
+      links: [
+        { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
+        { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" },
+        { label: "AI 学习资料", href: "/ai-learning" },
+        { label: "小工具", href: "/tools" }
+      ]
     }
-  ],
-  experiences: {
-    kicker: "Experience",
-    title: "项目与实习经历",
-    summary: "我希望别人看到的不是“做过 AI”，而是做过哪些产品、看过哪些数据、把哪些结果做了出来。",
-    cards: [
-      {
-        badge: "Meituan",
-        title: "AI 电销保险流程优化",
-        body: "负责购买流程设计、知识库与话术策略优化、产品页面承接逻辑，把 AI 独立售卖链路真正跑通。",
-        metrics: ["AI Product", "Conversion", "Knowledge Base"]
-      },
-      {
-        badge: "Dewu",
-        title: "AIGC 文生图能力建设",
-        body: "围绕商品内容生产做结构化 Prompt 方案、评测体系和多轮模型调优，推动能力接入发布与商家工具链。",
-        metrics: ["AIGC", "Prompt", "Evaluation"]
-      },
-      {
-        badge: "UNICEF",
-        title: "募捐页面数据分析",
-        body: "做用户分层、捐赠预测与策略评估，推动动态金额推荐上线，为后续投放与页面配置提供依据。",
-        metrics: ["Data Analysis", "Experiment", "Impact"]
-      }
-    ]
   },
-  coursework: {
-    kicker: "Coursework",
-    title: "COMP9208: Artificial Intelligence and Society",
-    summary:
-      "我把这门课的 lecture PDF 和 assignment PDF 都整理进来了。Lecture 11 是组内展示周，没有单独的 slide deck，所以这里主要收录 1 到 10，以及 12、13 讲。",
+  learning: {
+    hero: {
+      kicker: "AI Learning Library",
+      title: "AI 学习与文献资料",
+      lead:
+        "这个页面集中放我现在正在整理的 AI 课程资料、assignment，以及以后会继续补充的学习材料。你可以把它理解成我的一个个人学习资料库。"
+    },
+    overviewCards: [
+      {
+        label: "Course",
+        title: "COMP9208: Artificial Intelligence and Society",
+        body: "当前已整理 lecture PDF 和 assignment PDF，适合直接下载保存。"
+      },
+      {
+        label: "Topics",
+        title: "我重点在学什么",
+        body: "AI and Society、adversarial machine learning、distributed AI、AI literacy、language models。"
+      },
+      {
+        label: "Next",
+        title: "后续会继续加什么",
+        body: "可以继续加入论文、读书笔记、文献综述、读后感和自己整理的中文学习笔记。"
+      }
+    ],
     lectures: [
       {
         badge: "Lecture 01",
@@ -249,17 +275,60 @@ export const personalSiteContent = {
         href: "/docs/comp9208/lectures/lecture-13.pdf",
         metrics: ["AI Literacy", "Society"]
       }
+    ],
+    assignments: [
+      {
+        tag: "Assignment 01",
+        title: "Article Review Report",
+        body: "围绕指定论文完成 3000 字以内的 article review，重点训练阅读、批判分析与结构化表达。",
+        href: "/docs/comp9208/assignments/assignment-01.pdf"
+      },
+      {
+        tag: "Assignment 02",
+        title: "AI Case Analysis",
+        body: "围绕 IBM Watson、iTutor Group recruiting AI 等案例讨论 AI 应用、伦理风险与治理问题。",
+        href: "/docs/comp9208/assignments/assignment-02.pdf"
+      },
+      {
+        tag: "Assignment 03",
+        title: "Adversarial ML Report",
+        body: "比较 white-box 与 black-box 攻击，并反思 adversarial attacks 对关键 AI 系统的社会影响。",
+        href: "/docs/comp9208/assignments/assignment-03.pdf"
+      }
     ]
   },
-  contact: {
-    kicker: "Contact",
-    title: "可以从这里联系我或继续看资料",
-    summary: "如果你是想看完整经历、课程资料，或者直接试用我做的 AI 工具，都可以从这里继续点进去。",
-    links: [
-      { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
-      { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" },
-      { label: "COMP9208 Course Library", href: "#coursework" },
-      { label: "YouTube Translator Demo", href: "/" }
-    ]
+  tools: {
+    hero: {
+      kicker: "Tools",
+      title: "我做的一些小工具",
+      lead:
+        "这里放我现在做过的小工具。你可以把它看成是一个实验区，一边展示我会做什么，一边也真的可以直接用。"
+    },
+    cards: [
+      {
+        label: "Tool 01",
+        title: "YouTube 中文翻译",
+        body: "读取公开视频字幕，生成中文字幕、原文对照和可下载 SRT，还能打开中文朗读。",
+        href: "#youtube-tool",
+        action: "直接试用"
+      },
+      {
+        label: "Tool 02",
+        title: "信息搜索",
+        body: "适合做资料检索、内容整理和快速研究验证。",
+        href: "/search",
+        action: "打开搜索"
+      },
+      {
+        label: "Tool 03",
+        title: "模拟面试",
+        body: "把面试问题、回答练习和反馈放在一条链路里。",
+        href: "/mock",
+        action: "开始练习"
+      }
+    ],
+    noteTitle: "之后这里还可以继续加",
+    noteBody:
+      "如果你后面还想放更多功能，比如简历分析器、论文摘要器、课程问答助手、数据作品展示小组件，都可以继续接进这个工具页。"
   }
-};
+} as const;

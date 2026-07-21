@@ -1,5 +1,5 @@
-import { YouTubeProductPage } from "@/components/youtube-product-page";
+import { redirect } from "next/navigation";
 
 export default function YouTubePage() {
-  return <YouTubeProductPage />;
+  redirect("/tools");
 }

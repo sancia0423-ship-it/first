@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { personalSiteContent } from "@/lib/personal-site-content";
 
 export const metadata: Metadata = {
-  title: "YouTube 中文翻译",
-  description: "把公开 YouTube 视频翻成中文，查看双语字幕，并用浏览器中文语音跟读。"
+  title: personalSiteContent.site.title,
+  description: personalSiteContent.site.description
 };
 
 type RootLayoutProps = {

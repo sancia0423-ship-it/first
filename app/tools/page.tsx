@@ -1,5 +1,5 @@
 import { ToolsPage } from "@/components/tools-page";
 
-export function YouTubeProductPage() {
+export default function ToolsRoute() {
   return <ToolsPage />;
 }
