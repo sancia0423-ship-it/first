@@ -1,25 +1,25 @@
 export const personalSiteContent = {
   site: {
-    title: "夏琪",
+    title: "萨奇",
     subtitle: "AI 产品 / 数据分析 / 作品集网站",
     description:
-      "夏琪的个人网站，包含自我介绍、简历、数据分析与 AI 产品项目、AI 学习资料，以及自己做的小工具。"
+      "萨奇的个人网站，包含简历、AI 学习资料，以及自己做的小工具。"
   },
   home: {
     hero: {
       kicker: "作品集式个人主页",
-      titleIntro: "你好，我是",
+      titleIntro: "你好，我是萨奇",
       highlightWords: {
-        first: "夏琪",
-        second: "AI 产品",
-        third: "数据分析"
+        first: "",
+        second: "",
+        third: ""
       },
-      titleMiddle: "，正在把",
-      titleConnector: "和",
-      titleOutro: "做成一个会持续更新的小网站。",
+      titleMiddle: "",
+      titleConnector: "",
+      titleOutro: "",
       lead:
         "我目前在悉尼大学读商业数据分析硕士，主修 Python、机器学习与数据分析。做过美团和得物的 AI 产品，也做过联合国儿童基金会的数据分析项目。我希望这个网站既能快速介绍我，也能把简历、作品、AI 学习资料和工具整合在一起。",
-      badges: ["悉尼大学", "商业数据分析", "Python", "SQL", "AI 产品", "开放实习机会"]
+      badges: []
     },
     photos: {
       kicker: "照片与日常",
@@ -98,7 +98,7 @@ export const personalSiteContent = {
     resume: {
       kicker: "简历",
       title: "简历与个人资料",
-      previewTitle: "夏琪 Resume",
+      previewTitle: "萨奇 Resume",
       previewHint: "AI Product / Data Analysis / Business Analytics",
       viewHref: "/docs/resume/xiaqi-resume.pdf",
       highlights: [
@@ -111,23 +111,23 @@ export const personalSiteContent = {
     },
     learningPreview: {
       kicker: "学习资料",
-      title: "AI 学习与文献资料",
+      title: "AI 学习文献资料",
       summary:
-        "我会把课程 lecture、assignment、以后自己整理的 reading notes 和想保存的资料放在这个板块里，方便下载和回看。",
+        "这里会放我学过以后觉得很好的资料、小练习和文献笔记。后面也会继续补充，慢慢把它整理成自己的知识库。",
       items: [
         {
-          title: "COMP9208 课程讲义",
-          body: "课程讲义已经整理进站内，目前收录 1 到 10，以及 12、13 讲。",
+          title: "AI 学习文件",
+          body: "这一组文件偏 AI 通识和基础入门，每个文件都有简单介绍，可以按顺序慢慢看。",
           href: "/ai-learning"
         },
         {
-          title: "课程作业资料",
-          body: "包含 article review、AI case analysis 和 adversarial machine learning report 三份作业资料。",
+          title: "小练习",
+          body: "这个板块先留着，后面会继续补我做过的小练习、随手实验和学习记录。",
           href: "/ai-learning"
         },
         {
-          title: "文献与学习笔记",
-          body: "后面可以继续放论文、学习笔记、读书笔记和自己整理的 AI 资料。",
+          title: "Articles 文献清单",
+          body: "这里已经接进了 `Articles.docx` 的文献列表，后面会继续补阅读记录和文献笔记。",
           href: "/ai-learning"
         }
       ]

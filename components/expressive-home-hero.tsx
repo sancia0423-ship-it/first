@@ -78,25 +78,8 @@ export function ExpressiveHomeHero({ hero, resumeHref }: ExpressiveHomeHeroProps
       <div className="expressive-hero-spotlight" aria-hidden="true" />
       <div className="expressive-hero-grid">
         <div className="expressive-hero-copy">
-          <span className="expressive-overline">{hero.kicker}</span>
-          <h1 className="expressive-display">
-            {hero.titleIntro}
-            <span className="expressive-highlight expressive-highlight-peach">{hero.highlightWords.first}</span>
-            {hero.titleMiddle}
-            <span className="expressive-highlight expressive-highlight-violet">{hero.highlightWords.second}</span>
-            {hero.titleConnector}
-            <span className="expressive-highlight expressive-highlight-mint">{hero.highlightWords.third}</span>
-            {hero.titleOutro}
-          </h1>
+          <h1 className="expressive-display">{hero.titleIntro}</h1>
           <p className="expressive-body">{hero.lead}</p>
-
-          <div className="expressive-chip-row">
-            {hero.badges.map((item) => (
-              <span className="expressive-chip" key={item}>
-                {item}
-              </span>
-            ))}
-          </div>
 
           <div className="expressive-button-row">
             <a className="expressive-button expressive-button-primary" href={resumeHref} rel="noreferrer" target="_blank">
@@ -109,18 +92,6 @@ export function ExpressiveHomeHero({ hero, resumeHref }: ExpressiveHomeHeroProps
               小工具
             </Link>
           </div>
-
-          <div className="expressive-anchor-row">
-            <a className="expressive-anchor-chip" href="#about">
-              自我介绍
-            </a>
-            <a className="expressive-anchor-chip" href="#projects">
-              项目经历
-            </a>
-            <a className="expressive-anchor-chip" href="#resume">
-              简历入口
-            </a>
-          </div>
         </div>
 
         <div className="expressive-hero-scene">
@@ -128,14 +99,8 @@ export function ExpressiveHomeHero({ hero, resumeHref }: ExpressiveHomeHeroProps
             <div className="expressive-paint expressive-paint-one" aria-hidden="true" />
             <div className="expressive-paint expressive-paint-two" aria-hidden="true" />
             <div className="expressive-paint expressive-paint-three" aria-hidden="true" />
-            <div className="expressive-scene-tag expressive-scene-tag-left">欢迎来逛</div>
-            <div className="expressive-scene-tag expressive-scene-tag-right">可爱但认真</div>
             <div className="expressive-character-wrap">
               <ArtistCharacterCluster />
-            </div>
-            <div className="expressive-scene-note">
-              <span className="expressive-note-label">主页氛围</span>
-              <strong>像精心做过的个人作品集，不像 AI 自动拼出来的模板。</strong>
             </div>
           </div>
         </div>
