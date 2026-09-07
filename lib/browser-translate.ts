@@ -127,8 +127,12 @@ export function storeSettings(settings: AiSettings) {
  * 当前模型的上下文窗口远大于此，大批次不会有问题。
  */
 const BATCH_SIZE = 40;
-/** 同时在飞的请求数。再高容易撞上服务商的速率限制。 */
-const CONCURRENCY = 4;
+/**
+ * 同时在飞的请求数。
+ * 实测一批 40 条约 9-10 秒，一部 1300 条的访谈按并发 4 要跑 9 轮、约一分半。
+ * 提到 8 之后约五轮。再高就要看服务商的速率限制了。
+ */
+const CONCURRENCY = 8;
 
 export type TranslatableSegment = {
   id: string;

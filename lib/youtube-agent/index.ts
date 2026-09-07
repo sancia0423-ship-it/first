@@ -15,7 +15,14 @@ import {
 } from "@/lib/config";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { runPythonScript } from "@/lib/youtube-agent/python";
-import { fetchTranscriptFromSupadata, hasSupadataKey } from "@/lib/youtube-agent/supadata";
+import {
+  fetchTranscriptFromSupadata,
+  hasSupadataKey,
+  recordPrimaryFailure,
+  recordPrimarySuccess,
+  shouldTryPrimarySource,
+  type SupadataTranscript
+} from "@/lib/youtube-agent/supadata";
 import { buildSrt } from "@/lib/srt";
 import {
   YouTubeCaptionTrackSchema,
@@ -306,57 +313,32 @@ async function buildSummaryIfPossible(text: string) {
  * 翻译流程和「浏览器自带 key」流程共用这一步：抓字幕需要服务端的 yt-dlp，
  * 但不需要任何 AI key，所以它可以独立对外提供。
  */
-async function loadTranscript(params: YouTubeTranslationRequest) {
-  const videoId = parseYouTubeVideoId(params.url);
-  if (!videoId) {
-    throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
-  }
+/** 把备用源的结果整理成和主源一致的结构。 */
+function buildFallbackPayload(fallback: SupadataTranscript) {
+  const label = fallback.languageCode || "备用字幕源";
+  const track = {
+    languageCode: fallback.languageCode,
+    label,
+    kind: "auto" as const,
+    isTranslatable: true
+  };
 
-  let transcriptPayload: Awaited<ReturnType<typeof fetchTranscriptWithPython>>;
+  return {
+    title: "",
+    description: "",
+    availableTracks: [track],
+    selectedTrack: track,
+    warnings: ["主字幕源不可用，本次通过备用服务读取。"],
+    segments: fallback.segments
+  };
+}
 
-  try {
-    transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
-  } catch (ytdlpError) {
-    // yt-dlp 从机房 IP 抓字幕会被 YouTube 间歇拦截。配了备用源就改走那条路。
-    if (!hasSupadataKey()) {
-      throw ytdlpError;
-    }
-
-    console.warn("[youtube] yt-dlp failed, falling back to supadata", ytdlpError);
-
-    try {
-      const fallback = await fetchTranscriptFromSupadata(videoId, params.sourceLanguage);
-      const label = fallback.languageCode || "备用字幕源";
-
-      transcriptPayload = {
-        title: "",
-        description: "",
-        availableTracks: [
-          {
-            languageCode: fallback.languageCode,
-            label,
-            kind: "auto" as const,
-            isTranslatable: true
-          }
-        ],
-        selectedTrack: {
-          languageCode: fallback.languageCode,
-          label,
-          kind: "auto" as const,
-          isTranslatable: true
-        },
-        warnings: ["主字幕源不可用，本次通过备用服务读取。"],
-        segments: fallback.segments
-      };
-    } catch (fallbackError) {
-      console.error("[youtube] supadata fallback also failed", fallbackError);
-      // 报原始错误：备用源的失败对访客没有意义。
-      throw ytdlpError;
-    }
-  }
-
-  const allSegments = coalesceSegments(
-    transcriptPayload.segments
+/** 清洗并合并相邻字幕。空字幕会被丢掉，所以结果可能为空。 */
+function normalizeSegments(
+  segments: Array<{ startMs: number; durationMs: number; sourceText: string }>
+) {
+  const cleaned = coalesceSegments(
+    segments
       .map((segment) => {
         const sourceText = normalizeCaptionText(segment.sourceText);
         if (!sourceText) {
@@ -373,11 +355,55 @@ async function loadTranscript(params: YouTubeTranslationRequest) {
       .filter((segment): segment is RawCaptionSegment => Boolean(segment))
   );
 
-  if (allSegments.length === 0) {
+  if (cleaned.length === 0) {
     throw new PublicError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。");
   }
 
-  return { videoId, transcriptPayload, allSegments };
+  return cleaned;
+}
+
+async function loadTranscript(params: YouTubeTranslationRequest) {
+  const videoId = parseYouTubeVideoId(params.url);
+  if (!videoId) {
+    throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
+  }
+
+  let transcriptPayload: Awaited<ReturnType<typeof fetchTranscriptWithPython>>;
+
+  // 主源正处在熔断冷却期时直接走备用源，省下必然失败的十几秒。
+  if (!shouldTryPrimarySource()) {
+    const fallback = await fetchTranscriptFromSupadata(videoId, params.sourceLanguage);
+    return {
+      videoId,
+      transcriptPayload: buildFallbackPayload(fallback),
+      allSegments: normalizeSegments(fallback.segments)
+    };
+  }
+
+  try {
+    transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
+    recordPrimarySuccess();
+  } catch (ytdlpError) {
+    recordPrimaryFailure();
+    // yt-dlp 从机房 IP 抓字幕会被 YouTube 间歇拦截。配了备用源就改走那条路。
+    if (!hasSupadataKey()) {
+      throw ytdlpError;
+    }
+
+    console.warn("[youtube] yt-dlp failed, falling back to supadata", ytdlpError);
+
+    try {
+      transcriptPayload = buildFallbackPayload(
+        await fetchTranscriptFromSupadata(videoId, params.sourceLanguage)
+      );
+    } catch (fallbackError) {
+      console.error("[youtube] supadata fallback also failed", fallbackError);
+      // 报原始错误：备用源的失败对访客没有意义。
+      throw ytdlpError;
+    }
+  }
+
+  return { videoId, transcriptPayload, allSegments: normalizeSegments(transcriptPayload.segments) };
 }
 
 /** 只返回原文字幕，交给调用方自己翻译。 */

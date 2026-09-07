@@ -35,6 +35,44 @@ export function hasSupadataKey() {
   return Boolean(process.env.SUPADATA_API_KEY);
 }
 
+/* --------------------------------------------------------------------------
+   主源熔断
+   --------------------------------------------------------------------------
+   YouTube 一旦开始拦这台服务器，通常会持续一段时间。这期间每个请求都先把
+   yt-dlp 的五个 player client 全试一遍再失败，白白多花十几秒。
+   连续失败若干次后直接走备用源，冷却期过了再试一次主源，以便及时恢复。
+   -------------------------------------------------------------------------- */
+
+const FAILURES_BEFORE_SKIP = 3;
+const COOLDOWN_MS = 10 * 60 * 1000;
+
+let consecutiveFailures = 0;
+let skipUntil = 0;
+
+/** yt-dlp 当前是否值得一试。 */
+export function shouldTryPrimarySource() {
+  if (!hasSupadataKey()) {
+    // 没有备用源时永远要试主源，否则就彻底没得用了。
+    return true;
+  }
+
+  return Date.now() >= skipUntil;
+}
+
+export function recordPrimarySuccess() {
+  consecutiveFailures = 0;
+  skipUntil = 0;
+}
+
+export function recordPrimaryFailure() {
+  consecutiveFailures += 1;
+
+  if (consecutiveFailures >= FAILURES_BEFORE_SKIP) {
+    skipUntil = Date.now() + COOLDOWN_MS;
+    consecutiveFailures = 0;
+  }
+}
+
 export type SupadataTranscript = {
   languageCode: string;
   segments: Array<{ startMs: number; durationMs: number; sourceText: string }>;
