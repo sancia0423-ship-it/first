@@ -9,7 +9,46 @@ import {
 type YouTubePlayer = {
   destroy: () => void;
   getCurrentTime: () => number;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  playVideo: () => void;
 };
+
+/** 字幕区的三种阅读方式。 */
+type CaptionView = "both" | "zh" | "source";
+
+type SavedNote = {
+  id: string;
+  startMs: number;
+  zh: string;
+  source: string;
+};
+
+const NOTES_STORAGE_PREFIX = "youtube-digest-notes:";
+
+/** 读取某个视频已保存的笔记。localStorage 在无痕窗口或禁用站点数据时会抛错。 */
+function readStoredNotes(key: string): SavedNote[] {
+  if (!key || typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as SavedNote[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 把毫秒格式化成 mm:ss，超过一小时补上小时位。 */
+function formatTimestamp(ms: number) {
+  const total = Math.floor(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
+}
 
 type YouTubeNamespace = {
   Player: new (
@@ -92,6 +131,13 @@ export function YouTubeTranslateDemo() {
   const [playerVersion, setPlayerVersion] = useState(0);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceName, setSelectedVoiceName] = useState("");
+  const [captionView, setCaptionView] = useState<CaptionView>("both");
+  const [query, setQuery] = useState("");
+  const [matchCursor, setMatchCursor] = useState(0);
+  const [notesState, setNotesState] = useState<{ key: string; items: SavedNote[] }>({
+    key: "",
+    items: []
+  });
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
@@ -292,6 +338,127 @@ export function YouTubeTranslateDemo() {
       window.speechSynthesis.cancel();
     }
   }, [autoSpeak]);
+
+  // --- 字幕搜索 ---------------------------------------------------------
+  const normalizedQuery = query.trim().toLowerCase();
+  const matches = normalizedQuery
+    ? (result?.segments ?? []).reduce<number[]>((acc, segment, index) => {
+        const haystack = `${segment.translatedText} ${segment.sourceText}`.toLowerCase();
+        if (haystack.includes(normalizedQuery)) {
+          acc.push(index);
+        }
+        return acc;
+      }, [])
+    : [];
+
+  function scrollToSegment(index: number) {
+    const segment = result?.segments[index];
+    if (!segment) {
+      return;
+    }
+
+    document.getElementById(segment.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function stepMatch(delta: number) {
+    if (matches.length === 0) {
+      return;
+    }
+
+    const next = (matchCursor + delta + matches.length) % matches.length;
+    setMatchCursor(next);
+    scrollToSegment(matches[next]);
+  }
+
+  // --- 点击字幕跳转视频 --------------------------------------------------
+  function seekToSegment(startMs: number) {
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+
+    player.seekTo(startMs / 1000, true);
+    player.playVideo();
+  }
+
+  // --- 时间戳笔记 --------------------------------------------------------
+  const notesKey = result ? `${NOTES_STORAGE_PREFIX}${result.videoId}` : "";
+
+  // 换视频时在渲染期直接派生新状态，而不是用 effect 事后同步 —— 后者会多一次
+  // 级联渲染，还会先闪一帧上一个视频的笔记。
+  if (notesState.key !== notesKey) {
+    setNotesState({ key: notesKey, items: readStoredNotes(notesKey) });
+  }
+
+  const notes = notesState.items;
+
+  function persistNotes(next: SavedNote[]) {
+    setNotesState({ key: notesKey, items: next });
+
+    if (!notesKey) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(notesKey, JSON.stringify(next));
+    } catch {
+      // 存不下就只保留在本次会话里，不打断使用。
+    }
+  }
+
+  function toggleNote(segmentId: string) {
+    const segment = result?.segments.find((item) => item.id === segmentId);
+    if (!segment) {
+      return;
+    }
+
+    const existing = notes.find((note) => note.id === segmentId);
+    persistNotes(
+      existing
+        ? notes.filter((note) => note.id !== segmentId)
+        : [
+            ...notes,
+            {
+              id: segment.id,
+              startMs: segment.startMs,
+              zh: segment.translatedText,
+              source: segment.sourceText
+            }
+          ].sort((left, right) => left.startMs - right.startMs)
+    );
+  }
+
+  function exportNotes() {
+    if (!result || notes.length === 0) {
+      return;
+    }
+
+    const lines = [
+      `# ${result.title}`,
+      "",
+      result.videoUrl,
+      "",
+      ...notes.flatMap((note) => [
+        `## ${formatTimestamp(note.startMs)}`,
+        "",
+        note.zh,
+        "",
+        `> ${note.source}`,
+        ""
+      ])
+    ];
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = `${result.videoId}-notes.md`;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
 
   const canSubmit = url.trim().length > 0;
 
@@ -515,26 +682,167 @@ export function YouTubeTranslateDemo() {
               <div className="section-header section-header-inline">
                 <div>
                   <span className="section-kicker">Captions</span>
-                  <h2 className="panel-title">同步双语字幕</h2>
+                  <h2 className="panel-title">字幕</h2>
                 </div>
               </div>
 
-              <div className="caption-scroller">
-                {result.segments.map((segment, index) => (
-                  <article
-                    className={`caption-card ${index === activeSegmentIndex ? "caption-card-active" : ""}`}
-                    id={segment.id}
-                    key={segment.id}
+              <div className="caption-toolbar">
+                <div className="view-switch" role="group" aria-label="字幕显示方式">
+                  {(
+                    [
+                      ["both", "双语"],
+                      ["zh", "中文"],
+                      ["source", "原文"]
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      aria-pressed={captionView === value}
+                      className={`view-switch-option ${captionView === value ? "is-active" : ""}`}
+                      key={value}
+                      onClick={() => setCaptionView(value)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="caption-search">
+                  <label className="visually-hidden" htmlFor="caption-search-input">
+                    搜索字幕
+                  </label>
+                  <input
+                    id="caption-search-input"
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      // 换了搜索词，游标必须回到第一条，否则会停在越界位置。
+                      setMatchCursor(0);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        stepMatch(event.shiftKey ? -1 : 1);
+                      }
+                    }}
+                    placeholder="搜索字幕内容"
+                    type="search"
+                    value={query}
+                  />
+                  {normalizedQuery ? (
+                    <span className="caption-search-status muted">
+                      {matches.length > 0 ? `${matchCursor + 1} / ${matches.length}` : "无匹配"}
+                    </span>
+                  ) : null}
+                  <button
+                    className="ghost-button"
+                    disabled={matches.length === 0}
+                    onClick={() => stepMatch(-1)}
+                    type="button"
                   >
-                    <div className="caption-time">
-                      {Math.floor(segment.startMs / 1000)}s - {Math.floor(segment.endMs / 1000)}s
-                    </div>
-                    <p className="caption-zh">{segment.translatedText}</p>
-                    <p className="caption-source">{segment.sourceText}</p>
-                  </article>
-                ))}
+                    上一个
+                  </button>
+                  <button
+                    className="ghost-button"
+                    disabled={matches.length === 0}
+                    onClick={() => stepMatch(1)}
+                    type="button"
+                  >
+                    下一个
+                  </button>
+                </div>
+              </div>
+
+              <p className="muted form-helper">点击任意一条字幕可以跳到视频对应位置。</p>
+
+              <div className="caption-scroller">
+                {result.segments.map((segment, index) => {
+                  const isMatch = matches.includes(index);
+                  const isCurrentMatch = matches[matchCursor] === index;
+                  const isSaved = notes.some((note) => note.id === segment.id);
+
+                  return (
+                    <article
+                      className={[
+                        "caption-card",
+                        index === activeSegmentIndex ? "caption-card-active" : "",
+                        isMatch ? "caption-card-match" : "",
+                        isCurrentMatch ? "caption-card-current-match" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      id={segment.id}
+                      key={segment.id}
+                    >
+                      <div className="caption-row">
+                        <button
+                          className="caption-seek"
+                          onClick={() => seekToSegment(segment.startMs)}
+                          title="跳到这一句"
+                          type="button"
+                        >
+                          <span className="caption-time">{formatTimestamp(segment.startMs)}</span>
+                          {captionView !== "source" ? (
+                            <span className="caption-zh">{segment.translatedText}</span>
+                          ) : null}
+                          {captionView !== "zh" ? (
+                            <span className="caption-source">{segment.sourceText}</span>
+                          ) : null}
+                        </button>
+
+                        <button
+                          aria-pressed={isSaved}
+                          className="caption-note-toggle"
+                          onClick={() => toggleNote(segment.id)}
+                          title={isSaved ? "从笔记中移除" : "保存为笔记"}
+                          type="button"
+                        >
+                          {isSaved ? "★" : "☆"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </div>
+
+            {notes.length > 0 ? (
+              <div className="panel">
+                <div className="section-header section-header-inline">
+                  <div>
+                    <span className="section-kicker">Notes</span>
+                    <h2 className="panel-title">我的笔记（{notes.length}）</h2>
+                  </div>
+                </div>
+
+                <p className="muted form-helper">
+                  笔记只保存在这台设备的浏览器里，换设备或清除站点数据会丢失。
+                </p>
+
+                <div className="stack-list section">
+                  {notes.map((note) => (
+                    <div key={note.id}>
+                      <button
+                        className="caption-seek"
+                        onClick={() => seekToSegment(note.startMs)}
+                        type="button"
+                      >
+                        <span className="caption-time">{formatTimestamp(note.startMs)}</span>
+                        <span className="caption-zh">{note.zh}</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="button-row section portfolio-link-row">
+                  <button className="ghost-button" onClick={exportNotes} type="button">
+                    导出 Markdown
+                  </button>
+                  <button className="ghost-button" onClick={() => persistNotes([])} type="button">
+                    清空笔记
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

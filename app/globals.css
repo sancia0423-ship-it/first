@@ -1060,6 +1060,145 @@ code {
   gap: 2px;
 }
 
+/* ---- caption toolbar ---- */
+
+.caption-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-xs);
+}
+
+/* Segmented control: the selected option is the one in ink. */
+.view-switch {
+  display: flex;
+  border: 1px solid var(--rule);
+}
+
+.view-switch-option {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: var(--size-meta);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.view-switch-option:last-child {
+  border-right: 0;
+}
+
+.view-switch-option.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.caption-search {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  flex: 1 1 260px;
+}
+
+.caption-search input {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+.caption-search-status {
+  font-size: var(--size-meta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.caption-search .ghost-button:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* ---- caption rows ---- */
+
+.caption-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gap-xs);
+  align-items: start;
+}
+
+/* The whole line is the seek target, so it is a button rather than a row with
+   a small link in it — easier to hit, and correct for keyboard users. */
+.caption-seek {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  width: 100%;
+}
+
+.caption-seek:hover .caption-zh {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.caption-note-toggle {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0 2px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.caption-note-toggle[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.caption-note-toggle:hover {
+  color: var(--ink);
+}
+
+/* Search hits: a left rule marks every match, ink marks the current one. */
+.caption-card-match {
+  box-shadow: inset 2px 0 0 var(--rule-2, var(--ink-faint));
+  padding-left: var(--gap-xs);
+}
+
+.caption-card-current-match {
+  box-shadow: inset 2px 0 0 var(--ink);
+}
+
+/* Visually hidden but still read by screen readers. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .caption-time {
   font-size: var(--size-meta);
   color: var(--ink-faint);
