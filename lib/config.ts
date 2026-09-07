@@ -26,6 +26,18 @@ export function getOpenAIModel() {
   return process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL;
 }
 
+/**
+ * 字幕翻译单独一个模型。
+ *
+ * 翻译是机械转换且调用量最大，跟出题、抽取这些判断任务共用一个中档模型，
+ * 等于每条字幕都多付二十倍的钱。
+ */
+export const DEFAULT_TRANSLATE_MODEL = "gpt-4o-mini";
+
+export function getTranslateModel() {
+  return process.env.OPENAI_TRANSLATE_MODEL || DEFAULT_TRANSLATE_MODEL;
+}
+
 export function hasOpenAIKey() {
   return Boolean(process.env.OPENAI_API_KEY);
 }

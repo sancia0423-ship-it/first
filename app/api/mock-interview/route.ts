@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitGuard } from "@/lib/api/guards";
+import { consumeTrial } from "@/lib/api/trial";
 import { z } from "zod";
 import { evaluateInterviewAnswer, createInterviewSession, summarizeInterview } from "@/lib/mock-interview";
 import {
@@ -59,17 +60,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 额度用尽不拦人，改走本地题库与规则评分。
+  const allowAi = parsed.data.action === "summary" ? false : consumeTrial(request);
+
   try {
     switch (parsed.data.action) {
       case "start":
-        return NextResponse.json(await createInterviewSession(parsed.data.setup));
+        return NextResponse.json(await createInterviewSession(parsed.data.setup, allowAi));
       case "evaluate":
         return NextResponse.json(
-          await evaluateInterviewAnswer({
-            setup: parsed.data.setup,
-            question: parsed.data.question,
-            answer: parsed.data.answer
-          })
+          await evaluateInterviewAnswer(
+            {
+              setup: parsed.data.setup,
+              question: parsed.data.question,
+              answer: parsed.data.answer
+            },
+            allowAi
+          )
         );
       case "summary":
         return NextResponse.json(summarizeInterview(parsed.data.records));

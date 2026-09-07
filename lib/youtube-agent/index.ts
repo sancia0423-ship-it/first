@@ -10,6 +10,7 @@ import {
   OPENAI_MAX_RETRIES,
   OPENAI_REQUEST_TIMEOUT_MS,
   getOpenAIModel,
+  getTranslateModel,
   hasOpenAIKey
 } from "@/lib/config";
 import { mapWithConcurrency } from "@/lib/concurrency";
@@ -218,7 +219,7 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
 
   await mapWithConcurrency(chunks, TRANSLATION_CONCURRENCY, async (chunk) => {
     const response = await client.responses.parse({
-      model: getOpenAIModel(),
+      model: getTranslateModel(),
       instructions:
         "你是一个视频字幕翻译器。把每条字幕自然地翻译成简体中文，保留原始顺序和 id，不要总结，不要合并条目，不要补充解释。",
       input: JSON.stringify(

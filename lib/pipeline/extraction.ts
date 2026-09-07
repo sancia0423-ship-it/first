@@ -336,13 +336,15 @@ async function extractWithOpenAI(document: SourceDocument, input: SearchInput) {
 export async function extractInterviewSignals(params: {
   input: SearchInput;
   candidates: SourceCandidate[];
+  /** 额度用尽时传 false —— 走规则抽取而不是报错。 */
+  allowAi?: boolean;
 }): Promise<ExtractionBundle> {
   const candidates = params.candidates.slice(0, MAX_EXTRACTED_DOCUMENTS);
   const warnings: string[] = [];
   const documents = await mapWithConcurrency(candidates, DOCUMENT_CONCURRENCY, (candidate) =>
     fetchSourceDocument(candidate)
   );
-  const useOpenAI = hasOpenAIKey();
+  const useOpenAI = hasOpenAIKey() && params.allowAi !== false;
 
   // Each document is an independent model call, so they run together instead of
   // adding up one round trip at a time.

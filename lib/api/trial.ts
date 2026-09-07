@@ -23,8 +23,13 @@ function readNumber(name: string, fallback: number) {
 
 /** 单个 IP 每天可以试用几次。 */
 const PER_IP_DAILY = readNumber("TRIAL_PER_IP_DAILY", 3);
-/** 全站每天总次数 —— 这一条才是支出的硬上限。 */
-const TOTAL_DAILY = readNumber("TRIAL_TOTAL_DAILY", 100);
+/**
+ * 全站每天总次数 —— 这一条才是支出的硬上限。
+ *
+ * 单次成本按端点不同：字幕翻译约 $0.003（有条数上限），模拟面试出题约 $0.02，
+ * 面经抽取约 $0.05（要抽取四篇正文，是最贵的一个）。按最贵的算，60 次约 $3/天。
+ */
+const TOTAL_DAILY = readNumber("TRIAL_TOTAL_DAILY", 60);
 /** 试用最多翻译多少条字幕，用来封死单次成本。 */
 export const TRIAL_MAX_SEGMENTS = readNumber("TRIAL_MAX_SEGMENTS", 150);
 

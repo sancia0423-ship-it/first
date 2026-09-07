@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { ResultsView } from "@/components/results-view";
 import { SearchForm } from "@/components/search-form";
 import { SiteHeader } from "@/components/site-header";
+import { consumeTrial } from "@/lib/api/trial";
 import { runSearchPipeline } from "@/lib/pipeline/orchestrator";
 import { SearchInputSchema, type SearchInput } from "@/lib/schemas";
 
@@ -10,7 +12,10 @@ export const dynamic = "force-dynamic";
 
 async function loadPipelineResult(input: SearchInput) {
   try {
-    return { result: await runSearchPipeline(input) } as const;
+    // 这个页面在服务端渲染时就会调用 AI 抽取，所以和 API 路径受同一套配额约束。
+    // 额度用尽降级为规则抽取，页面照常出结果。
+    const allowAi = consumeTrial({ headers: await headers() });
+    return { result: await runSearchPipeline(input, { allowAi }) } as const;
   } catch (error) {
     // Upstream messages can leak internal detail, so log them and show a
     // generic recovery hint instead.

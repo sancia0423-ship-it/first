@@ -641,7 +641,15 @@ export function summarizeInterview(records: MockInterviewAnswerRecord[]): MockIn
   });
 }
 
-export async function createInterviewSession(setup: MockInterviewSetup) {
+/**
+ * @param allowAi 额度用尽时传 false —— 走本地题库而不是报错。
+ *   这条链路本来就设计成无 key 可用，降级比拦住用户好得多。
+ */
+export async function createInterviewSession(setup: MockInterviewSetup, allowAi = true) {
+  if (!allowAi) {
+    return buildFallbackInterviewSession(setup);
+  }
+
   try {
     const aiSession = await withTimeout(buildOpenAIInterviewSession(setup), OPENAI_STEP_TIMEOUT_MS);
     if (aiSession) {
@@ -654,11 +662,18 @@ export async function createInterviewSession(setup: MockInterviewSetup) {
   return buildFallbackInterviewSession(setup);
 }
 
-export async function evaluateInterviewAnswer(params: {
-  question: MockInterviewQuestion;
-  answer: string;
-  setup: MockInterviewSetup;
-}) {
+export async function evaluateInterviewAnswer(
+  params: {
+    question: MockInterviewQuestion;
+    answer: string;
+    setup: MockInterviewSetup;
+  },
+  allowAi = true
+) {
+  if (!allowAi) {
+    return evaluateAnswerHeuristically({ question: params.question, answer: params.answer });
+  }
+
   try {
     const aiEvaluation = await withTimeout(evaluateAnswerWithOpenAI(params), OPENAI_STEP_TIMEOUT_MS);
     if (aiEvaluation) {

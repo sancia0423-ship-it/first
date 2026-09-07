@@ -4,7 +4,7 @@ import { expandQuery } from "@/lib/pipeline/query-expansion";
 import { retrieveCandidateSources, retrieveMockSignals } from "@/lib/pipeline/retrieval";
 import type { SearchInput } from "@/lib/schemas";
 
-export async function runSearchPipeline(input: SearchInput) {
+export async function runSearchPipeline(input: SearchInput, options: { allowAi?: boolean } = {}) {
   const expansion = expandQuery(input);
   const warnings: string[] = [];
 
@@ -12,7 +12,8 @@ export async function runSearchPipeline(input: SearchInput) {
     const candidates = await retrieveCandidateSources(input, expansion);
     const extraction = await extractInterviewSignals({
       input,
-      candidates
+      candidates,
+      allowAi: options.allowAi
     });
 
     warnings.push(...extraction.warnings);
