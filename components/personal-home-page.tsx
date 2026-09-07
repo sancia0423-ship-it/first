@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { publicFileExists } from "@/lib/media";
@@ -6,18 +7,13 @@ import { personalSiteContent } from "@/lib/personal-site-content";
 export function PersonalHomePage() {
   const { about, contact, hero, learningPreview, projects, resume, toolsPreview } =
     personalSiteContent.home;
-  const { video } = personalSiteContent.media;
-
-  // 文件还没放进 public/ 时，整块不渲染。
-  const hasVideo = publicFileExists(video.src);
-  const hasPoster = publicFileExists(video.poster);
 
   return (
     <main className="page-shell">
       <SiteHeader />
 
       <section id="top">
-        <h1 className="page-title">{hero.titleIntro}</h1>
+        <h1 className="page-title page-title-brush">{hero.titleIntro}</h1>
         <p className="hero-copy section">{hero.lead}</p>
 
         <div className="button-row section">
@@ -35,26 +31,6 @@ export function PersonalHomePage() {
           </a>
         </div>
       </section>
-
-      {hasVideo ? (
-        <section id="video">
-          <div className="section-header">
-            <h2 className="section-title">{video.title}</h2>
-            {video.summary ? <p className="section-lede">{video.summary}</p> : null}
-          </div>
-
-          <video
-            className="intro-video"
-            controls
-            preload="metadata"
-            poster={hasPoster ? video.poster : undefined}
-          >
-            <source src={video.src} type="video/mp4" />
-            你的浏览器不支持内嵌视频，可以
-            <a href={video.src}>直接下载观看</a>。
-          </video>
-        </section>
-      ) : null}
 
       <section id="about">
         <div className="section-header">
@@ -101,6 +77,17 @@ export function PersonalHomePage() {
                   </span>
                 ))}
               </div>
+              {"image" in item && publicFileExists(item.image) ? (
+                <figure className="project-figure">
+                  <Image
+                    alt={item.imageAlt}
+                    height={900}
+                    sizes="(max-width: 860px) 100vw, 620px"
+                    src={item.image}
+                    width={1600}
+                  />
+                </figure>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -185,7 +172,13 @@ export function PersonalHomePage() {
 
         <div className="contact-pill-row">
           {contact.links.map((item) => (
-            <a className="contact-pill" href={item.href} key={item.label}>
+            <a
+              className="contact-pill"
+              href={item.href}
+              key={item.label}
+              rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+              target={item.href.startsWith("http") ? "_blank" : undefined}
+            >
               {item.label}
             </a>
           ))}

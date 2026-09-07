@@ -181,11 +181,22 @@ img {
   display: none;
 }
 
+.brand-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .brand-title {
-  display: block;
-  font-weight: 400;
+  font-weight: 500;
   font-size: var(--size-body);
   line-height: var(--leading-tight);
+}
+
+.brand-handle {
+  font-size: var(--size-meta);
+  color: var(--ink-muted);
 }
 
 .brand-subtitle {
@@ -304,6 +315,16 @@ img {
   line-height: 1.5;
   color: var(--ink-muted);
   letter-spacing: 0.01em;
+}
+
+/* The home page greeting, set in brush calligraphy. The face is loaded as a
+   7-glyph subset, so it costs about 3KB; everything else stays in the sans. */
+.page-title-brush {
+  font-family: "Ma Shan Zheng", var(--sans);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
 }
 
 /* Page title — one per page, sits under the grey eyebrow. */
@@ -868,16 +889,18 @@ input[type="radio"]:checked {
   max-width: var(--measure);
 }
 
-/* ==========================================================================
-   Video
-   ========================================================================== */
+/* Project screenshot — full width of the text column, hairline above it so it
+   reads as evidence attached to the entry rather than decoration. */
+.project-figure {
+  margin: var(--gap-sm) 0 0;
+  max-width: var(--measure);
+}
 
-.intro-video {
+.project-figure img {
   width: 100%;
-  max-width: 720px;
+  height: auto;
   display: block;
-  background: #d8d8d8;
-  border-radius: 0;
+  border: 1px solid var(--rule-soft);
 }
 
 /* ==========================================================================
@@ -1068,6 +1091,10 @@ code {
    ========================================================================== */
 
 @media (max-width: 860px) {
+  .page-title-brush {
+    font-size: 34px;
+  }
+
   .page-shell {
     grid-template-columns: minmax(0, 1fr);
     padding: 24px 20px 120px;

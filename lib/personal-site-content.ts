@@ -9,19 +9,6 @@ export const personalSiteContent = {
     description:
       "这个网站有我的介绍和学习资料，有自己做的工具，做得很简单。"
   },
-  /**
-   * 视频。文件不在 public/ 里时对应版块整块不渲染。
-   */
-  media: {
-    video: {
-      kicker: "个人视频",
-      title: "个人视频",
-      // 留空则不渲染说明文字。
-      summary: "",
-      src: "/videos/intro.mp4",
-      poster: "/images/intro-poster.jpg"
-    }
-  },
   home: {
     hero: {
       kicker: "",
@@ -109,6 +96,16 @@ export const personalSiteContent = {
           title: "募捐页面数据分析与推荐策略",
           body: "做用户分层、捐赠预测和策略评估，推动动态金额推荐上线，为后续投放和页面配置提供依据。",
           metrics: ["Data Analysis", "Experiment", "Impact"]
+        },
+        {
+          badge: "NSW Government",
+          // TODO(夏琪)：把下面这段换成你实际做的事——数据来自哪里、看板给谁用、
+          // 解决了什么问题。现在这版只写了能确认的部分，没有编造任何数字。
+          title: "NSW 政府 IDE 部门 Tableau 数据看板",
+          body: "为新南威尔士州政府 IDE 部门搭建 Tableau 数据看板，用于公开数据的整理与可视化呈现。",
+          metrics: ["Tableau", "Data Visualisation", "Public Sector"],
+          image: "/images/projects/nsw-tableau.png",
+          imageAlt: "NSW 政府 IDE 部门 Tableau 看板截图"
         }
       ]
     },
@@ -177,6 +174,7 @@ export const personalSiteContent = {
       summary: "这里先保留最核心的几个入口。后面如果你想加 LinkedIn、邮箱按钮或更多社交链接，也很容易继续扩展。",
       links: [
         { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
+        { label: "LinkedIn", href: "https://www.linkedin.com/feed/" },
         { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" },
         { label: "AI 学习资料", href: "/ai-learning" },
         { label: "小工具", href: "/tools" }

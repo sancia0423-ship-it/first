@@ -14,8 +14,10 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link className="brand-lockup" href="/">
-        <strong className="brand-title">{title}</strong>
-        <span className="brand-handle">{handle}</span>
+        <span className="brand-name-row">
+          <strong className="brand-title">{title}</strong>
+          <span className="brand-handle">{handle}</span>
+        </span>
         <span className="brand-subtitle">{subtitle}</span>
       </Link>
 
