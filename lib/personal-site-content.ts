@@ -106,7 +106,9 @@ export const personalSiteContent = {
             "各行业董事会女性比例，最后聚焦制造业细分行业的改善幅度与女性管理者占比。",
           metrics: ["Tableau", "Gender Pay Gap", "Public Sector", "Data Storytelling"],
           image: "/images/projects/nsw-tableau.png",
-          imageAlt: "澳洲职场性别平等 Tableau 看板：整体性别薪酬差距、分层与分行业下钻"
+          imageAlt: "澳洲职场性别平等 Tableau 看板：整体性别薪酬差距、分层与分行业下钻",
+          imageWidth: 1600,
+          imageHeight: 1900
         }
       ]
     },

@@ -81,10 +81,10 @@ export function PersonalHomePage() {
                 <figure className="project-figure">
                   <Image
                     alt={item.imageAlt}
-                    height={900}
+                    height={item.imageHeight}
                     sizes="(max-width: 860px) 100vw, 620px"
                     src={item.image}
-                    width={1600}
+                    width={item.imageWidth}
                   />
                 </figure>
               ) : null}
