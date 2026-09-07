@@ -9,6 +9,22 @@ export const personalSiteContent = {
     description:
       "这个网站有我的介绍和学习资料，有自己做的工具，做得很简单。"
   },
+  /**
+   * 图片与视频。src 留空时对应版块不渲染，所以文件还没放进来也不会出错。
+   */
+  media: {
+    portrait: {
+      src: "/images/profile.jpg",
+      alt: "夏琪的照片"
+    },
+    video: {
+      kicker: "个人视频",
+      title: "一段自我介绍视频",
+      summary: "比文字更直接一点。如果你只有一分钟，可以先看这个。",
+      src: "/videos/intro.mp4",
+      poster: "/images/intro-poster.jpg"
+    }
+  },
   home: {
     hero: {
       kicker: "",

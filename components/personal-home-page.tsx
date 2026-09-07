@@ -1,18 +1,43 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { publicFileExists } from "@/lib/media";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 export function PersonalHomePage() {
   const { about, contact, hero, learningPreview, projects, resume, toolsPreview } =
     personalSiteContent.home;
+  const { portrait, video } = personalSiteContent.media;
+
+  // 文件还没放进 public/ 时，整块不渲染。
+  const hasPortrait = publicFileExists(portrait.src);
+  const hasVideo = publicFileExists(video.src);
+  const hasPoster = publicFileExists(video.poster);
 
   return (
     <main className="page-shell">
       <SiteHeader />
 
       <section id="top">
-        <h1 className="page-title">{hero.titleIntro}</h1>
-        <p className="hero-copy section">{hero.lead}</p>
+        <div className={hasPortrait ? "intro-grid" : undefined}>
+          <div>
+            <h1 className="page-title">{hero.titleIntro}</h1>
+            <p className="hero-copy section">{hero.lead}</p>
+          </div>
+
+          {hasPortrait ? (
+            <figure className="portrait">
+              <Image
+                alt={portrait.alt}
+                height={880}
+                priority
+                sizes="(max-width: 860px) 100vw, 280px"
+                src={portrait.src}
+                width={720}
+              />
+            </figure>
+          ) : null}
+        </div>
 
         <div className="button-row section">
           <a className="ghost-button" href={resume.viewHref} rel="noreferrer" target="_blank">
@@ -29,6 +54,26 @@ export function PersonalHomePage() {
           </a>
         </div>
       </section>
+
+      {hasVideo ? (
+        <section id="video">
+          <div className="section-header">
+            <h2 className="section-title">{video.title}</h2>
+            <p className="section-lede">{video.summary}</p>
+          </div>
+
+          <video
+            className="intro-video"
+            controls
+            preload="metadata"
+            poster={hasPoster ? video.poster : undefined}
+          >
+            <source src={video.src} type="video/mp4" />
+            你的浏览器不支持内嵌视频，可以
+            <a href={video.src}>直接下载观看</a>。
+          </video>
+        </section>
+      ) : null}
 
       <section id="about">
         <div className="section-header">
