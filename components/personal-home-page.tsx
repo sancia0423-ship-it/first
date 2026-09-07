@@ -59,7 +59,7 @@ export function PersonalHomePage() {
         <section id="video">
           <div className="section-header">
             <h2 className="section-title">{video.title}</h2>
-            <p className="section-lede">{video.summary}</p>
+            {video.summary ? <p className="section-lede">{video.summary}</p> : null}
           </div>
 
           <video

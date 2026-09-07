@@ -19,8 +19,9 @@ export const personalSiteContent = {
     },
     video: {
       kicker: "个人视频",
-      title: "一段自我介绍视频",
-      summary: "比文字更直接一点。如果你只有一分钟，可以先看这个。",
+      title: "个人视频",
+      // 留空则不渲染说明文字。
+      summary: "",
       src: "/videos/intro.mp4",
       poster: "/images/intro-poster.jpg"
     }
