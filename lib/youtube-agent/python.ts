@@ -63,11 +63,21 @@ export async function runPythonScript<T>(scriptName: string, payload: unknown): 
           return;
         }
 
+        // yt-dlp 会把自己的日志也写到 stderr，所以只提取我们自己那一行，
+        // 否则整段解析失败，真实原因就丢了，只剩一句无用的兜底文案。
         let failure: PythonFailure = {};
-        try {
-          failure = JSON.parse(stderrText) as PythonFailure;
-        } catch {
-          // stderr was not our structured payload — keep it server-side only.
+        const marker = "__TRANSCRIPT_ERROR__";
+        const line = stderrText
+          .split("\n")
+          .reverse()
+          .find((candidate) => candidate.includes(marker));
+
+        if (line) {
+          try {
+            failure = JSON.parse(line.slice(line.indexOf(marker) + marker.length)) as PythonFailure;
+          } catch {
+            // 结构还是坏的，下面按兜底处理。
+          }
         }
 
         console.error(`[python:${scriptName}] exited ${code}`, failure.detail ?? stderrText);

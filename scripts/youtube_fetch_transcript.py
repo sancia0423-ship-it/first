@@ -201,27 +201,38 @@ def build_track_payload(track: TrackSelection) -> dict[str, Any]:
 
 
 def map_error(exc: Exception) -> str:
-    """Map an exception to a message that is safe to show a browser.
+    """把异常映射成能直接给用户看的中文。
 
-    Anything unrecognised gets a generic message — raw yt-dlp output can contain
-    local paths and internal state. The full text still goes out as `detail`,
-    which the Node layer only writes to the server log.
+    yt-dlp 的原文既是英文又带内部细节，直接抛给访客没有意义 —— 他真正需要
+    知道的是「这个视频不行」还是「这个站点暂时不行」，以及下一步该做什么。
     """
     if isinstance(exc, UserFacingError):
         return str(exc)
 
     message = str(exc)
 
-    if "Video unavailable" in message or "Private video" in message:
-        return "这个视频暂时不可用，或者被地区/年龄限制挡住了。请换一个公开视频再试。"
+    if "Private video" in message or "members-only" in message or "Join this channel" in message:
+        return "这是私享或会员专属视频，读取不到字幕。请换一个公开视频。"
 
-    if "LOGIN_REQUIRED" in message or "confirm you're not a bot" in message or "Sign in to confirm" in message:
-        return "YouTube 暂时拦截了这条视频的字幕读取。请换一个公开视频，或者换一个带公开字幕的视频再试。"
+    if "Video unavailable" in message or "This video is unavailable" in message:
+        return "这个视频不可用，可能已被删除、设为私享，或在当前地区受限。请换一个视频。"
+
+    if "age" in message.lower() and "restrict" in message.lower():
+        return "这个视频有年龄限制，无法读取字幕。请换一个视频。"
+
+    if "live" in message.lower() and "not started" in message.lower():
+        return "这是尚未开始的直播，还没有字幕。"
+
+    if is_bot_block(message):
+        return (
+            "YouTube 暂时拒绝了来自本服务器的字幕请求（机器人检测）。"
+            "这是服务器网络出口被限制，不是视频的问题，请稍后再试。"
+        )
 
     if "timed out" in message or "timeout" in message.lower():
         return "读取字幕超时了，请稍后再试或换一个更短的视频。"
 
-    return "读取 YouTube 字幕失败，请换一个公开视频再试。"
+    return "读取字幕失败，请换一个公开且带字幕的视频再试。"
 
 
 def main() -> int:
@@ -269,9 +280,10 @@ def main() -> int:
                 "YouTube 暂时拒绝了来自本服务器的字幕请求（机器人检测）。"
                 "这是服务器网络出口被限制，不是视频的问题，请稍后再试。"
             )
-        raise UserFacingError(
-            f"读取字幕失败：{last_error}" if last_error else "读取字幕失败，请稍后再试。"
-        )
+        # 交给 map_error 翻译成人话，不要把 yt-dlp 的英文原文直接抛给访客。
+        if last_error is not None:
+            raise last_error
+        raise UserFacingError("读取字幕失败，请稍后再试。")
 
     if not segments:
         raise UserFacingError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。")
@@ -295,8 +307,11 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001
+        # yt-dlp 也会往 stderr 写日志，混在一起会让上层解析不出 JSON，
+        # 真实原因就丢了。加前缀单独成行，上层按前缀提取。
         print(
-            json.dumps({"error": map_error(exc), "detail": repr(exc)}, ensure_ascii=False),
+            "__TRANSCRIPT_ERROR__"
+            + json.dumps({"error": map_error(exc), "detail": repr(exc)}, ensure_ascii=False),
             file=sys.stderr
         )
         raise SystemExit(1)
