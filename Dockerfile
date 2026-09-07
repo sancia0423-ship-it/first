@@ -15,7 +15,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+
+# The standalone bundle already carries a copy of `public`, and the runner
+# copies it explicitly as Next's docs prescribe. Dropping the bundled one keeps
+# the 60MB of PDFs out of a second image layer — overwriting a file in a later
+# layer does not reclaim the space it took in an earlier one.
+RUN npm run build && rm -rf .next/standalone/public
 
 # Python deps live in their own stage so the runtime image never carries pip,
 # build tooling, or the wheel cache.
