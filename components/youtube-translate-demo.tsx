@@ -8,12 +8,14 @@ import {
 } from "@/lib/youtube-agent/contracts";
 import {
   BrowserTranslateError,
-  DEFAULT_BYOK_MODEL,
+  PROVIDERS,
   maskKey,
   readStoredKey,
   readStoredModel,
+  readStoredProvider,
   storeKey,
   translateSegmentsInBrowser,
+  type ProviderId,
   type TranslateProgress
 } from "@/lib/browser-translate";
 import { buildSrt } from "@/lib/srt";
@@ -152,7 +154,8 @@ export function YouTubeTranslateDemo() {
   });
   // key 只存在浏览器里，首次渲染用惰性初始化读取，避免服务端渲染时访问 localStorage。
   const [apiKey, setApiKey] = useState(() => readStoredKey());
-  const [model, setModel] = useState(() => readStoredModel());
+  const [provider, setProvider] = useState<ProviderId>(() => readStoredProvider());
+  const [model, setModel] = useState(() => readStoredModel(readStoredProvider()));
   const [keyDraft, setKeyDraft] = useState("");
   const [showKeyPanel, setShowKeyPanel] = useState(false);
   const [progress, setProgress] = useState<TranslateProgress | null>(null);
@@ -183,7 +186,7 @@ export function YouTubeTranslateDemo() {
 
     const { translations, translatedCount } = await translateSegmentsInBrowser(
       transcript.segments.map((segment) => ({ id: segment.id, sourceText: segment.sourceText })),
-      { apiKey, model, onProgress: setProgress }
+      { apiKey, provider, model, onProgress: setProgress }
     );
 
     if (translatedCount === 0) {
@@ -576,7 +579,9 @@ export function YouTubeTranslateDemo() {
         <div className="byok-box">
           <div className="byok-head">
             <span className="section-kicker">
-              {apiKey ? `已启用自带 key · ${maskKey(apiKey)}` : "翻译需要你自己的 OpenAI key"}
+              {apiKey
+                ? `已启用 ${PROVIDERS[provider].label} · ${maskKey(apiKey)}`
+                : "翻译需要你自己的 API key（OpenAI 或 DeepSeek）"}
             </span>
             <button
               className="ghost-button"
@@ -593,12 +598,31 @@ export function YouTubeTranslateDemo() {
           {showKeyPanel ? (
             <div className="byok-panel">
               <p className="muted form-helper">
-                key 只保存在你这台设备的浏览器里，翻译时由你的浏览器直接请求 OpenAI，
+                key 只保存在你这台设备的浏览器里，翻译时由你的浏览器直接请求服务商，
                 <strong>不会经过这个网站的服务器</strong>。你可以打开浏览器的网络面板自己核实。
               </p>
 
               <label>
-                OpenAI API key
+                服务商
+                <select
+                  onChange={(event) => {
+                    const next = event.target.value as ProviderId;
+                    setProvider(next);
+                    // 换服务商时模型必须跟着换，否则会拿旧模型名去请求新端点。
+                    setModel(PROVIDERS[next].defaultModel);
+                  }}
+                  value={provider}
+                >
+                  {Object.entries(PROVIDERS).map(([id, config]) => (
+                    <option key={id} value={id}>
+                      {config.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                {PROVIDERS[provider].label} API key
                 <input
                   autoComplete="off"
                   onChange={(event) => setKeyDraft(event.target.value)}
@@ -613,7 +637,7 @@ export function YouTubeTranslateDemo() {
                 模型
                 <input
                   onChange={(event) => setModel(event.target.value)}
-                  placeholder={DEFAULT_BYOK_MODEL}
+                  placeholder={PROVIDERS[provider].defaultModel}
                   spellCheck={false}
                   value={model}
                 />
@@ -626,7 +650,7 @@ export function YouTubeTranslateDemo() {
                   onClick={() => {
                     const next = keyDraft.trim();
                     setApiKey(next);
-                    storeKey(next, model);
+                    storeKey(next, provider, model);
                     setKeyDraft("");
                     setShowKeyPanel(false);
                   }}
@@ -639,8 +663,8 @@ export function YouTubeTranslateDemo() {
                     className="ghost-button"
                     onClick={() => {
                       setApiKey("");
-                      storeKey("", DEFAULT_BYOK_MODEL);
-                      setModel(DEFAULT_BYOK_MODEL);
+                      storeKey("", provider, PROVIDERS[provider].defaultModel);
+                      setModel(PROVIDERS[provider].defaultModel);
                       setShowKeyPanel(false);
                     }}
                     type="button"
@@ -650,11 +674,11 @@ export function YouTubeTranslateDemo() {
                 ) : null}
                 <a
                   className="ghost-button"
-                  href="https://platform.openai.com/api-keys"
+                  href={PROVIDERS[provider].keysUrl}
                   rel="noreferrer"
                   target="_blank"
                 >
-                  去 OpenAI 创建 key
+                  去 {PROVIDERS[provider].label} 创建 key
                 </a>
               </div>
             </div>
