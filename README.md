@@ -44,6 +44,67 @@ npm run lint && npm run typecheck && npm test && npm run build
 - API 示例：`http://localhost:3000/api/search?company=字节跳动&role=产品经理实习&direction=增长`
 - 健康检查：`http://localhost:3000/api/health`
 
+## 视觉风格
+
+全站是一套极简编辑风格的设计系统，参考 willhandley.net，规则写在 `app/globals.css` 顶部：
+
+- **只有一个字号**。层级靠 `⎯` 分隔线、黑/灰对比和留白建立，不靠放大字号
+- **没有装饰**。无卡片边框、无圆角、无阴影、无填充色
+- **没有颜色**。只有纸灰 `#eee`、墨黑和两级灰
+- 左侧固定栏承载身份和导航，右侧单列正文滚动
+
+唯一偏离参考站的地方：参考站正文是 11.66px，汉字在这个尺寸下不可读，所以正文取 13px、
+拉丁文元信息取 11.5px。
+
+改样式基本只需要动 `app/globals.css` 里的 token，组件层不带任何视觉细节。
+
+## 对外 API 与 MCP
+
+三个工具都有对应的公开接口，并打包成了一个 MCP server。网页、REST API 和 MCP
+共用同一套服务端逻辑，不会出现行为分叉。
+
+| 端点 | 说明 |
+| --- | --- |
+| `GET /api/v1/health` | 服务状态、是否需要 key、是否处于增强模式 |
+| `POST /api/v1/youtube/translate` | YouTube 字幕中文翻译，返回时间轴字幕与 SRT |
+| `GET /api/v1/interview/briefing` | 按公司/岗位/方向生成结构化面经简报 |
+| `POST /api/v1/interview/mock` | 模拟面试：`start` / `evaluate` / `summary` |
+| `GET /api/openapi.json` | OpenAPI 3.1 规范，由服务端的 zod schema 直接生成 |
+
+浏览器打开 `/api-docs` 有完整说明和调用示例。
+
+鉴权由 `API_KEYS` 控制：配置后 `/api/v1/*` 需要 `Authorization: Bearer <key>`，
+不配置则开放访问（本地开发方便，公网部署前记得配上）。
+
+### MCP server
+
+`mcp/server.mjs` 是一个标准 MCP server（stdio），暴露 5 个工具：
+`check_service_status`、`translate_youtube_video`、`get_interview_briefing`、
+`start_mock_interview`、`evaluate_interview_answer`。
+
+它只是 HTTP API 的薄封装，不需要单独部署。接进 Claude Desktop：
+
+```json
+{
+  "mcpServers": {
+    "sancia-tools": {
+      "command": "node",
+      "args": ["/absolute/path/to/first/mcp/server.mjs"],
+      "env": {
+        "SANCIA_API_BASE_URL": "https://your-domain.com",
+        "SANCIA_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+自测（需要另一个终端里先 `npm run dev`）：
+
+```bash
+npm run mcp:smoke
+```
+
 ## 环境变量
 
 完整清单见 `.env.example`。最常用的三个：
@@ -86,44 +147,42 @@ NEXT_PUBLIC_SITE_URL=
 ```text
 first/
 ├─ app/
-│  ├─ api/health/route.ts          # 健康检查
-│  ├─ api/mock-interview/route.ts  # 模拟面试 API
-│  ├─ api/search/route.ts          # 面经检索 API
-│  ├─ api/youtube-translate/route.ts # 字幕翻译 API
+│  ├─ api/v1/                      # 公开 REST API（鉴权 + 限流）
+│  │  ├─ health/route.ts
+│  │  ├─ youtube/translate/route.ts
+│  │  └─ interview/{briefing,mock}/route.ts
+│  ├─ api/openapi.json/route.ts    # 由 zod schema 生成的 OpenAPI 3.1
+│  ├─ api/{health,search,mock-interview,youtube-translate}/route.ts  # 站点内部路由
+│  ├─ api-docs/page.tsx            # API 与 MCP 文档页
 │  ├─ ai-learning/page.tsx         # AI 学习资料库
 │  ├─ mock/page.tsx                # 模拟面试页
 │  ├─ search/page.tsx              # 快速准备结果页
 │  ├─ tools/page.tsx               # 小工具聚合页
 │  ├─ robots.ts / sitemap.ts       # SEO 元数据
-│  ├─ globals.css                  # 全局样式
+│  ├─ globals.css                  # 极简设计系统（规则写在文件顶部）
 │  ├─ layout.tsx                   # 根布局与站点 metadata
 │  └─ page.tsx                     # 个人主页
 ├─ components/                     # 页面与交互组件
+├─ mcp/
+│  ├─ server.mjs                   # MCP server（stdio，5 个工具）
+│  └─ smoke-test.mjs               # 端到端自测
 ├─ lib/
 │  ├─ config.ts                    # 模型、超时、限流等统一配置
 │  ├─ concurrency.ts               # 有上限的并发执行器
-│  ├─ api/guards.ts                # 限流与对外错误信息处理
+│  ├─ api/
+│  │  ├─ auth.ts                   # API key 校验
+│  │  ├─ contracts.ts              # 共享请求契约
+│  │  ├─ guards.ts                 # 限流与对外错误信息处理
+│  │  ├─ openapi.ts                # OpenAPI 文档生成
+│  │  └─ v1.ts                     # /api/v1 公共处理流程
 │  ├─ mock-interview.ts            # 面试题库、评分与总结
 │  ├─ personal-site-content.ts     # 个人站点文案
-│  ├─ pipeline/
-│  │  ├─ aggregation.ts            # 聚合逻辑
-│  │  ├─ cache.ts                  # 本地文件缓存（带过期清理）
-│  │  ├─ extraction.ts             # AI/规则双通道抽取
-│  │  ├─ http.ts                   # 服务端抓取工具
-│  │  ├─ juejin.ts                 # 掘金搜索与详情解析
-│  │  ├─ nowcoder.ts               # 牛客搜索与详情解析
-│  │  ├─ orchestrator.ts           # 主流程编排
-│  │  ├─ query-expansion.ts        # 查询扩展
-│  │  ├─ rate-limit.ts             # 内存滑动窗口限流
-│  │  ├─ relevance.ts              # 来源相关性过滤
-│  │  ├─ retrieval.ts              # 真实召回 + 回退样本
-│  │  ├─ scoring.ts                # 候选打分、去重与容错聚合
-│  │  └─ text.ts                   # 文本清洗与格式转换
+│  ├─ pipeline/                    # 检索、抽取、聚合、缓存、限流
 │  ├─ schemas.ts                   # 类型和 schema
 │  └─ youtube-agent/               # 字幕读取、翻译与 python 调用封装
 ├─ scripts/                        # yt-dlp / 翻译回退脚本
 ├─ __tests__/                      # vitest 单测
-├─ docs/                           # 产品与设计文档
+├─ docs/                           # 产品、设计与部署文档
 ├─ .github/workflows/ci.yml        # lint / typecheck / test / build
 ├─ Dockerfile
 ├─ eslint.config.mjs

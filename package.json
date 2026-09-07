@@ -9,9 +9,12 @@
     "docker:build": "docker build -t interview-intel-mvp .",
     "docker:run": "docker run --rm -p 3000:3000 --env-file .env.local interview-intel-mvp",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "mcp": "node mcp/server.mjs",
+    "mcp:smoke": "node mcp/smoke-test.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "he": "^1.2.0",
     "next": "^16.2.4",
     "openai": "^6.34.0",
