@@ -35,7 +35,7 @@ type SavedNote = {
   source: string;
 };
 
-const NOTES_STORAGE_PREFIX = "youtube-digest-notes:";
+const NOTES_STORAGE_PREFIX = "caption-notes:";
 
 /** 读取某个视频已保存的笔记。localStorage 在无痕窗口或禁用站点数据时会抛错。 */
 function readStoredNotes(key: string): SavedNote[] {
