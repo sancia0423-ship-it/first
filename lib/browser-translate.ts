@@ -116,10 +116,14 @@ export function storeSettings(settings: AiSettings) {
   }
 }
 
-/** 一次请求塞多少条字幕。太多会超时，太少会浪费往返。 */
-const BATCH_SIZE = 20;
-/** 同时在飞的请求数，避免触发速率限制。 */
-const CONCURRENCY = 3;
+/**
+ * 一次请求塞多少条字幕。
+ * 一部 1.5 小时访谈约 1500 条：每批 20 条要发 77 次，每批 40 条只要 39 次。
+ * 当前模型的上下文窗口远大于此，大批次不会有问题。
+ */
+const BATCH_SIZE = 40;
+/** 同时在飞的请求数。再高容易撞上服务商的速率限制。 */
+const CONCURRENCY = 4;
 
 export type TranslatableSegment = {
   id: string;
@@ -270,6 +274,9 @@ export type TranslateProgress = {
   total: number;
 };
 
+/** 每批完成后回传的新译文，key 是字幕 id。 */
+export type PartialTranslations = Record<string, string>;
+
 /**
  * 翻译全部字幕。返回按输入顺序对应的译文数组，翻译失败的条目保留原文。
  */
@@ -278,9 +285,11 @@ export async function translateSegmentsInBrowser(
   options: CallConfig & {
     signal?: AbortSignal;
     onProgress?: (progress: TranslateProgress) => void;
+    /** 每批完成就回传，让界面可以边翻边显示，而不是全部翻完才出现。 */
+    onPartial?: (partial: PartialTranslations) => void;
   }
 ): Promise<{ translations: string[]; translatedCount: number }> {
-  const { signal, onProgress, ...config } = options;
+  const { signal, onProgress, onPartial, ...config } = options;
 
   if (!config.apiKey) {
     throw new BrowserTranslateError("还没有填写 API key。");
@@ -310,10 +319,17 @@ export async function translateSegmentsInBrowser(
           signal
         );
 
+        const fresh: PartialTranslations = {};
         for (const item of result.items ?? []) {
           if (item.id && typeof item.text === "string" && item.text.trim()) {
-            merged.set(item.id, item.text.trim());
+            const text = item.text.trim();
+            merged.set(item.id, text);
+            fresh[item.id] = text;
           }
+        }
+
+        if (Object.keys(fresh).length > 0) {
+          onPartial?.(fresh);
         }
 
         completed += batch.length;
@@ -355,8 +371,12 @@ const OVERVIEW_PROMPT =
   "章节必须覆盖整个视频、按时间顺序、不重叠。startMs 必须是给定字幕中真实出现过的时间戳。" +
   "全部使用简体中文。只返回 JSON。";
 
-/** 字幕可能很长，超过这个字符数就按比例抽样，保证覆盖整段而不是只看开头。 */
-const OVERVIEW_CHAR_BUDGET = 12000;
+/**
+ * 章节划分一次能读多少字符。
+ * 一部 1.5 小时访谈约 14 万字符（约 3.6 万 token），当前模型的上下文窗口装得下，
+ * 所以预算给足 —— 抽样太稀会让章节分界判断得很粗。超过预算才按比例抽样。
+ */
+const OVERVIEW_CHAR_BUDGET = 80000;
 
 function sampleForOverview(segments: Array<{ startMs: number; text: string }>) {
   const total = segments.reduce((sum, item) => sum + item.text.length, 0);

@@ -91,24 +91,40 @@ describe("buildVideoOverview", () => {
     expect(overview.quotes).toHaveLength(0);
   });
 
-  it("samples long transcripts across the whole video, not just the start", async () => {
-    const long = Array.from({ length: 4000 }, (_, index) => ({
+  it("sends a whole interview-length transcript without sampling", async () => {
+    // 一部 1.5 小时访谈约 14 万字符。抽样是给更长的视频兜底的，这个长度应当完整送出。
+    const interview = Array.from({ length: 1500 }, (_, index) => ({
+      startMs: index * 4000,
+      text: "这是一句访谈字幕"
+    }));
+
+    const fetchMock = mockCompletion({ summary: "", chapters: [], quotes: [] });
+    vi.stubGlobal("fetch", fetchMock);
+    await buildVideoOverview(interview, config);
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(JSON.parse(init.body as string).messages[1].content).captions;
+
+    expect(sent.length).toBe(interview.length);
+  });
+
+  it("samples across the whole video once past the budget", async () => {
+    const huge = Array.from({ length: 20000 }, (_, index) => ({
       startMs: index * 1000,
       text: "这是一句足够长的字幕内容用来撑开字符预算"
     }));
 
     const fetchMock = mockCompletion({ summary: "", chapters: [], quotes: [] });
     vi.stubGlobal("fetch", fetchMock);
-
-    await buildVideoOverview(long, config);
+    await buildVideoOverview(huge, config);
 
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
-    const body = JSON.parse(init.body as string);
-    const sent = JSON.parse(body.messages[1].content).captions as Array<{ startMs: number }>;
+    const sent = JSON.parse(JSON.parse(init.body as string).messages[1].content)
+      .captions as Array<{ startMs: number }>;
 
-    expect(sent.length).toBeLessThan(long.length);
+    expect(sent.length).toBeLessThan(huge.length);
     // 关键：抽样必须覆盖到结尾，截断的话章节就只会集中在开头。
-    expect(sent[sent.length - 1].startMs).toBeGreaterThan(long[long.length - 1].startMs * 0.9);
+    expect(sent[sent.length - 1].startMs).toBeGreaterThan(huge[huge.length - 1].startMs * 0.9);
   });
 
   it("reports a readable error when the key is rejected", async () => {
@@ -188,5 +204,55 @@ describe("explainSelection", () => {
     );
 
     expect(result.notes).toEqual(["ok"]);
+  });
+});
+
+describe("incremental translation", () => {
+  it("reports each batch as it lands, so long videos can render progressively", async () => {
+    // 一部 1.5 小时的访谈约 1500 条；等全部翻完再显示要好几分钟。
+    const segments = Array.from({ length: 90 }, (_, index) => ({
+      id: `seg-${index + 1}`,
+      sourceText: `line ${index + 1}`
+    }));
+
+    let call = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        const sent = JSON.parse(JSON.parse(init.body as string).messages[1].content);
+        call += 1;
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    items: sent.items.map((item: { id: string }) => ({
+                      id: item.id,
+                      text: `译-${item.id}`
+                    }))
+                  })
+                }
+              }
+            ]
+          }),
+          { status: 200 }
+        );
+      })
+    );
+
+    const partials: number[] = [];
+    const { translations, translatedCount } = await translateSegmentsInBrowser(segments, {
+      ...config,
+      onPartial: (partial) => partials.push(Object.keys(partial).length)
+    });
+
+    expect(translatedCount).toBe(90);
+    expect(translations[0]).toBe("译-seg-1");
+    expect(translations[89]).toBe("译-seg-90");
+    // 90 条 / 每批 40 条 = 3 批，所以应当分三次回传而不是最后一次性给出。
+    expect(partials.length).toBe(3);
+    expect(partials.reduce((sum, n) => sum + n, 0)).toBe(90);
+    expect(call).toBe(3);
   });
 });

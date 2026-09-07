@@ -175,7 +175,12 @@ export function YouTubeTranslateDemo() {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
 
-  /** 有自带 key 时：服务端只取原文，翻译在浏览器里用访客自己的 key 完成。 */
+  /**
+   * 有自带 key 时：服务端只取原文，翻译在浏览器里用访客自己的 key 完成。
+   *
+   * 字幕一到就先渲染出来，译文逐批填进去。一部 1.5 小时的访谈要翻好几分钟，
+   * 让人对着白屏等完是不可接受的。
+   */
   async function translateWithOwnKey(nextUrl: string, nextSourceLanguage: string) {
     const response = await fetch("/api/v1/youtube/transcript", {
       method: "POST",
@@ -194,11 +199,48 @@ export function YouTubeTranslateDemo() {
     }
 
     const transcript = parsed.data;
+
+    // 先把原文摆出来，用户马上能看、能搜、能跳转。
+    const base: YouTubeTranslationResult = YouTubeTranslationResultSchema.parse({
+      videoId: transcript.videoId,
+      videoUrl: transcript.videoUrl,
+      title: transcript.title,
+      description: transcript.description,
+      sourceLanguage: transcript.sourceLanguage,
+      sourceTrackLabel: transcript.sourceTrackLabel,
+      translationMode: "openai",
+      warnings: transcript.warnings,
+      takeaways: [],
+      availableTracks: transcript.availableTracks,
+      segments: transcript.segments.map((segment) => ({
+        ...segment,
+        translatedText: segment.sourceText
+      })),
+      srt: ""
+    });
+
+    setResult(base);
     setProgress({ done: 0, total: transcript.segments.length });
 
     const { translations, translatedCount } = await translateSegmentsInBrowser(
       transcript.segments.map((segment) => ({ id: segment.id, sourceText: segment.sourceText })),
-      { ...translateConfig(settings), onProgress: setProgress }
+      {
+        ...translateConfig(settings),
+        onProgress: setProgress,
+        onPartial: (partial) =>
+          setResult((current) =>
+            current
+              ? {
+                  ...current,
+                  segments: current.segments.map((segment) =>
+                    partial[segment.id]
+                      ? { ...segment, translatedText: partial[segment.id] }
+                      : segment
+                  )
+                }
+              : current
+          )
+      }
     );
 
     if (translatedCount === 0) {
@@ -220,16 +262,8 @@ export function YouTubeTranslateDemo() {
     }
 
     return YouTubeTranslationResultSchema.parse({
-      videoId: transcript.videoId,
-      videoUrl: transcript.videoUrl,
-      title: transcript.title,
-      description: transcript.description,
-      sourceLanguage: transcript.sourceLanguage,
-      sourceTrackLabel: transcript.sourceTrackLabel,
-      translationMode: "openai",
+      ...base,
       warnings,
-      takeaways: [],
-      availableTracks: transcript.availableTracks,
       segments,
       srt: buildSrt(segments)
     });
@@ -278,7 +312,8 @@ export function YouTubeTranslateDemo() {
       );
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "未知错误";
-      setResult(null);
+      // 字幕已经渲染出来时不要清空：长视频翻到一半失败，用户至少还能看原文和已翻的部分。
+      setResult((current) => current);
       setError(message);
     } finally {
       setIsSubmitting(false);

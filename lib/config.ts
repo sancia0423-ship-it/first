@@ -39,8 +39,13 @@ export const OPENAI_MAX_RETRIES = 1;
 /** Budget for a python helper (yt-dlp / deep-translator) invocation. */
 export const PYTHON_SCRIPT_TIMEOUT_MS = readNumber("PYTHON_SCRIPT_TIMEOUT_MS", 90_000);
 
-/** Upper bound on caption segments we will translate for one video. */
-export const MAX_CAPTION_SEGMENTS = readNumber("MAX_CAPTION_SEGMENTS", 900);
+/**
+ * 单个视频最多处理多少条字幕。
+ *
+ * 实测密度约每分钟 16 条，所以 3000 条覆盖到三小时左右。原来的 900 是按短视频
+ * 定的，会把一部 1.5 小时访谈截掉四成 —— 而访谈正是这个工具的主要用途。
+ */
+export const MAX_CAPTION_SEGMENTS = readNumber("MAX_CAPTION_SEGMENTS", 3000);
 
 export const RATE_LIMIT_WINDOW_MS = readNumber("RATE_LIMIT_WINDOW_MS", 60_000);
 export const RATE_LIMIT_MAX_HITS = readNumber("RATE_LIMIT_MAX_HITS", 10);
