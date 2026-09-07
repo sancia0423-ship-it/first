@@ -256,3 +256,71 @@ describe("incremental translation", () => {
     expect(call).toBe(3);
   });
 });
+
+describe("temperature compatibility", () => {
+  it("retries without temperature when the model rejects it", async () => {
+    // 较新的模型只接受默认温度，传 0 会直接 400 —— 但确定性对翻译有价值，
+    // 所以先带上，被拒后重试，而不是一律不传。
+    const bodies: string[] = [];
+    let call = 0;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        bodies.push(init.body as string);
+        call += 1;
+
+        if (call === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message:
+                  "Unsupported value: 'temperature' does not support 0 with this model. Only the default (1) value is supported."
+              }
+            }),
+            { status: 400 }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: JSON.stringify({ meaning: "意思", notes: [] }) } }]
+          }),
+          { status: 200 }
+        );
+      })
+    );
+
+    const result = await explainSelection(
+      { selection: "x", context: "y" },
+      { ...config, model: "picky-model" }
+    );
+
+    expect(result.meaning).toBe("意思");
+    expect(call).toBe(2);
+    expect(JSON.parse(bodies[0])).toHaveProperty("temperature", 0);
+    expect(JSON.parse(bodies[1])).not.toHaveProperty("temperature");
+  });
+
+  it("skips temperature on later calls to a model already known to reject it", async () => {
+    const bodies: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        bodies.push(init.body as string);
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: JSON.stringify({ meaning: "m", notes: [] }) } }]
+          }),
+          { status: 200 }
+        );
+      })
+    );
+
+    // 上一个用例已经把 picky-model 记下了，这次应当一次就成功且不带 temperature。
+    await explainSelection({ selection: "x", context: "y" }, { ...config, model: "picky-model" });
+
+    expect(bodies).toHaveLength(1);
+    expect(JSON.parse(bodies[0])).not.toHaveProperty("temperature");
+  });
+});

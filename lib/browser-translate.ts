@@ -141,6 +141,19 @@ export type TranslatableSegment = {
 
 export class BrowserTranslateError extends Error {}
 
+/**
+ * 记住哪些模型拒绝 temperature。
+ *
+ * 较新的模型只接受默认温度，传 0 会直接 400。但确定性对翻译是有价值的，
+ * 所以不一刀切地不传 —— 先带上，被拒绝后记下来并重试一次，之后对这个模型
+ * 就不再带。这样支持的模型保留确定性，不支持的也能用。
+ */
+const modelsRejectingTemperature = new Set<string>();
+
+function isTemperatureRejection(message: string) {
+  return message.includes("temperature") && message.includes("does not support");
+}
+
 /** 只显示首尾，中间打码，避免在界面上完整暴露 key。 */
 export function maskKey(key: string) {
   if (key.length <= 12) return "••••";
@@ -197,28 +210,42 @@ async function callChatJson<T>(
     throw new BrowserTranslateError("还没有填写模型名。");
   }
 
-  try {
-    response = await fetch(endpoint, {
+  const buildBody = (withTemperature: boolean) =>
+    JSON.stringify({
+      model: config.model,
+      ...(withTemperature ? { temperature: 0 } : {}),
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: typeof userPayload === "string" ? userPayload : JSON.stringify(userPayload)
+        }
+      ]
+    });
+
+  const send = (withTemperature: boolean) =>
+    fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.apiKey}`
       },
       signal,
-      body: JSON.stringify({
-        model: config.model,
-        temperature: 0,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content:
-              typeof userPayload === "string" ? userPayload : JSON.stringify(userPayload)
-          }
-        ]
-      })
+      body: buildBody(withTemperature)
     });
+
+  try {
+    response = await send(!modelsRejectingTemperature.has(config.model));
+
+    // 模型拒绝 temperature 时记下来并立刻重试，用户不会看到这次失败。
+    if (response.status === 400 && !modelsRejectingTemperature.has(config.model)) {
+      const detail = await response.clone().text();
+      if (isTemperatureRejection(detail)) {
+        modelsRejectingTemperature.add(config.model);
+        response = await send(false);
+      }
+    }
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw error;

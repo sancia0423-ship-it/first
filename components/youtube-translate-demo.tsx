@@ -634,13 +634,26 @@ export function YouTubeTranslateDemo() {
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }
 
+  const captionAreaRef = useRef<HTMLDivElement | null>(null);
+
   /** 记录用户在字幕区选中的文本，供解释功能使用。 */
   function captureSelection() {
-    const text = window.getSelection()?.toString().trim() ?? "";
+    const active = window.getSelection();
+    const text = active?.toString().trim() ?? "";
+
     // 单个字符多半是误触，不值得提示可以解释。
-    if (text.length > 1) {
-      setSelection(text);
+    if (text.length <= 1) {
+      return;
     }
+
+    // getSelection 返回的是整个文档的选区，可能落在字幕区之外（比如旁边的
+    // 说明文字）。只接受确实在字幕里的选择，否则会去解释无关的界面文案。
+    const anchor = active?.anchorNode;
+    if (!anchor || !captionAreaRef.current?.contains(anchor)) {
+      return;
+    }
+
+    setSelection(text);
   }
 
   async function explainCurrentSelection() {
@@ -1260,6 +1273,7 @@ export function YouTubeTranslateDemo() {
                 className="caption-scroller"
                 onMouseUp={captureSelection}
                 onTouchEnd={captureSelection}
+                ref={captionAreaRef}
               >
                 {result.segments.map((segment, index) => {
                   const isMatch = matches.includes(index);
