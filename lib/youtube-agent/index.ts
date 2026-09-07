@@ -14,6 +14,7 @@ import {
 } from "@/lib/config";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { runPythonScript } from "@/lib/youtube-agent/python";
+import { fetchTranscriptFromSupadata, hasSupadataKey } from "@/lib/youtube-agent/supadata";
 import { buildSrt } from "@/lib/srt";
 import {
   YouTubeCaptionTrackSchema,
@@ -310,7 +311,49 @@ async function loadTranscript(params: YouTubeTranslationRequest) {
     throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
   }
 
-  const transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
+  let transcriptPayload: Awaited<ReturnType<typeof fetchTranscriptWithPython>>;
+
+  try {
+    transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
+  } catch (ytdlpError) {
+    // yt-dlp 从机房 IP 抓字幕会被 YouTube 间歇拦截。配了备用源就改走那条路。
+    if (!hasSupadataKey()) {
+      throw ytdlpError;
+    }
+
+    console.warn("[youtube] yt-dlp failed, falling back to supadata", ytdlpError);
+
+    try {
+      const fallback = await fetchTranscriptFromSupadata(videoId, params.sourceLanguage);
+      const label = fallback.languageCode || "备用字幕源";
+
+      transcriptPayload = {
+        title: "",
+        description: "",
+        availableTracks: [
+          {
+            languageCode: fallback.languageCode,
+            label,
+            kind: "auto" as const,
+            isTranslatable: true
+          }
+        ],
+        selectedTrack: {
+          languageCode: fallback.languageCode,
+          label,
+          kind: "auto" as const,
+          isTranslatable: true
+        },
+        warnings: ["主字幕源不可用，本次通过备用服务读取。"],
+        segments: fallback.segments
+      };
+    } catch (fallbackError) {
+      console.error("[youtube] supadata fallback also failed", fallbackError);
+      // 报原始错误：备用源的失败对访客没有意义。
+      throw ytdlpError;
+    }
+  }
+
   const allSegments = coalesceSegments(
     transcriptPayload.segments
       .map((segment) => {
