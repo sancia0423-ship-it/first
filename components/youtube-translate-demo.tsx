@@ -13,8 +13,10 @@ import {
   readStoredKey,
   readStoredModel,
   readStoredProvider,
+  buildVideoOverview,
   storeKey,
   translateSegmentsInBrowser,
+  type VideoOverview,
   type ProviderId,
   type TranslateProgress
 } from "@/lib/browser-translate";
@@ -159,6 +161,9 @@ export function YouTubeTranslateDemo() {
   const [keyDraft, setKeyDraft] = useState("");
   const [showKeyPanel, setShowKeyPanel] = useState(false);
   const [progress, setProgress] = useState<TranslateProgress | null>(null);
+  const [overview, setOverview] = useState<VideoOverview | null>(null);
+  const [overviewState, setOverviewState] = useState<"idle" | "loading" | "error">("idle");
+  const [overviewError, setOverviewError] = useState("");
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
@@ -249,6 +254,9 @@ export function YouTubeTranslateDemo() {
     setError("");
     setActiveSegmentIndex(-1);
     setProgress(null);
+    setOverview(null);
+    setOverviewState("idle");
+    setOverviewError("");
     lastSpokenSegmentRef.current = null;
 
     try {
@@ -545,6 +553,31 @@ export function YouTubeTranslateDemo() {
     anchor.click();
     document.body.removeChild(anchor);
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+
+  async function generateOverview() {
+    if (!result || !apiKey) {
+      return;
+    }
+
+    setOverviewState("loading");
+    setOverviewError("");
+
+    try {
+      setOverview(
+        await buildVideoOverview(
+          result.segments.map((segment) => ({
+            startMs: segment.startMs,
+            text: segment.translatedText || segment.sourceText
+          })),
+          { apiKey, provider, model }
+        )
+      );
+      setOverviewState("idle");
+    } catch (error) {
+      setOverviewState("error");
+      setOverviewError(error instanceof Error ? error.message : "生成失败");
+    }
   }
 
   const canSubmit = url.trim().length > 0;
@@ -893,6 +926,92 @@ export function YouTubeTranslateDemo() {
                 </div>
               </div>
             </div>
+
+            {apiKey ? (
+              <div className="panel">
+                <div className="section-header section-header-inline">
+                  <div>
+                    <span className="section-kicker">Overview</span>
+                    <h2 className="panel-title">章节速览</h2>
+                  </div>
+                </div>
+
+                {overview ? (
+                  <>
+                    {overview.summary ? <p className="section-lede">{overview.summary}</p> : null}
+
+                    {overview.chapters.length > 0 ? (
+                      <ul className="stack-list section">
+                        {overview.chapters.map((chapter) => (
+                          <li key={`${chapter.startMs}-${chapter.title}`}>
+                            <button
+                              className="caption-seek"
+                              onClick={() => seekToSegment(chapter.startMs)}
+                              type="button"
+                            >
+                              <span className="caption-time">{formatTimestamp(chapter.startMs)}</span>
+                              <span className="entry-title">{chapter.title}</span>
+                              {chapter.summary ? (
+                                <span className="caption-source">{chapter.summary}</span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    {overview.quotes.length > 0 ? (
+                      <div className="section">
+                        <span className="section-kicker">值得看的几句</span>
+                        <ul className="stack-list">
+                          {overview.quotes.map((quote) => (
+                            <li key={`${quote.startMs}-${quote.text.slice(0, 12)}`}>
+                              <button
+                                className="caption-seek"
+                                onClick={() => seekToSegment(quote.startMs)}
+                                type="button"
+                              >
+                                <span className="caption-time">{formatTimestamp(quote.startMs)}</span>
+                                <span className="caption-zh">{quote.text}</span>
+                                {quote.why ? (
+                                  <span className="caption-source">{quote.why}</span>
+                                ) : null}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+
+                    <div className="button-row section portfolio-link-row">
+                      <button className="ghost-button" onClick={generateOverview} type="button">
+                        重新生成
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="muted form-helper">
+                      让 AI 通读整段字幕，划出章节并挑出值得看的几句。长视频尤其有用 —— 不必从头看。
+                      这一步会消耗你自己的 API 额度。
+                    </p>
+                    {overviewState === "error" ? (
+                      <p className="muted form-helper">生成失败：{overviewError}</p>
+                    ) : null}
+                    <div className="button-row section portfolio-link-row">
+                      <button
+                        className="primary-button"
+                        disabled={overviewState === "loading"}
+                        onClick={generateOverview}
+                        type="button"
+                      >
+                        {overviewState === "loading" ? "生成中..." : "生成章节速览"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : null}
 
             <div className="panel">
               <div className="section-header section-header-inline">

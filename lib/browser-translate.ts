@@ -274,3 +274,113 @@ export async function translateSegmentsInBrowser(
   const translations = segments.map((segment) => merged.get(segment.id) ?? segment.sourceText);
   return { translations, translatedCount: merged.size };
 }
+
+/* ==========================================================================
+   章节划分与关键引用
+   ========================================================================== */
+
+export type VideoChapter = {
+  startMs: number;
+  title: string;
+  summary: string;
+};
+
+export type KeyQuote = {
+  startMs: number;
+  text: string;
+  why: string;
+};
+
+export type VideoOverview = {
+  summary: string;
+  chapters: VideoChapter[];
+  quotes: KeyQuote[];
+};
+
+const OVERVIEW_PROMPT =
+  "你是一个视频速览助手。基于带时间戳的字幕，把视频划分成若干章节，并挑出最值得看的几句话。" +
+  "章节必须覆盖整个视频、按时间顺序、不重叠。startMs 必须是给定字幕中真实出现过的时间戳。" +
+  "全部使用简体中文。只返回 JSON。";
+
+/** 字幕可能很长，超过这个字符数就按比例抽样，保证覆盖整段而不是只看开头。 */
+const OVERVIEW_CHAR_BUDGET = 12000;
+
+function sampleForOverview(segments: Array<{ startMs: number; text: string }>) {
+  const total = segments.reduce((sum, item) => sum + item.text.length, 0);
+  if (total <= OVERVIEW_CHAR_BUDGET) {
+    return segments;
+  }
+
+  // 均匀抽样而不是截断：截断会让 AI 只看到开头，划出的章节覆盖不到后半段。
+  const step = Math.ceil(total / OVERVIEW_CHAR_BUDGET);
+  return segments.filter((_, index) => index % step === 0);
+}
+
+export async function buildVideoOverview(
+  segments: Array<{ startMs: number; text: string }>,
+  options: ProviderConfig & { signal?: AbortSignal }
+): Promise<VideoOverview> {
+  const { signal, ...config } = options;
+
+  if (!config.apiKey) {
+    throw new BrowserTranslateError("还没有填写 API key。");
+  }
+
+  const sampled = sampleForOverview(segments);
+
+  const result = await callChatJson<{
+    summary?: string;
+    chapters?: Array<{ startMs?: number; title?: string; summary?: string }>;
+    quotes?: Array<{ startMs?: number; text?: string; why?: string }>;
+  }>(
+    config,
+    OVERVIEW_PROMPT,
+    {
+      instruction:
+        '返回 {"summary":"两句话的整体速览",' +
+        '"chapters":[{"startMs":<数字>,"title":"章节标题","summary":"一句话说明"}],' +
+        '"quotes":[{"startMs":<数字>,"text":"原话","why":"为什么值得看"}]}。' +
+        "章节 3 到 8 个，引用 3 到 5 条。",
+      captions: sampled.map((item) => ({ startMs: item.startMs, text: item.text }))
+    },
+    signal
+  );
+
+  const valid = new Set(segments.map((item) => item.startMs));
+  /** AI 可能给出不存在的时间戳，吸附到最近的真实字幕，避免点了跳到空白处。 */
+  const snap = (value: unknown) => {
+    const raw = typeof value === "number" && Number.isFinite(value) ? value : 0;
+    if (valid.has(raw)) return raw;
+
+    let best = segments[0]?.startMs ?? 0;
+    let bestGap = Math.abs(best - raw);
+    for (const item of segments) {
+      const gap = Math.abs(item.startMs - raw);
+      if (gap < bestGap) {
+        best = item.startMs;
+        bestGap = gap;
+      }
+    }
+    return best;
+  };
+
+  return {
+    summary: typeof result.summary === "string" ? result.summary : "",
+    chapters: (result.chapters ?? [])
+      .filter((item) => item.title)
+      .map((item) => ({
+        startMs: snap(item.startMs),
+        title: String(item.title),
+        summary: String(item.summary ?? "")
+      }))
+      .sort((left, right) => left.startMs - right.startMs),
+    quotes: (result.quotes ?? [])
+      .filter((item) => item.text)
+      .map((item) => ({
+        startMs: snap(item.startMs),
+        text: String(item.text),
+        why: String(item.why ?? "")
+      }))
+      .sort((left, right) => left.startMs - right.startMs)
+  };
+}
