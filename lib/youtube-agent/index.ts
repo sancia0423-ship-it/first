@@ -1,11 +1,19 @@
 import "server-only";
 
-import { spawn } from "node:child_process";
-import path from "node:path";
 import he from "he";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
+import { PublicError } from "@/lib/api/guards";
+import {
+  MAX_CAPTION_SEGMENTS,
+  OPENAI_MAX_RETRIES,
+  OPENAI_REQUEST_TIMEOUT_MS,
+  getOpenAIModel,
+  hasOpenAIKey
+} from "@/lib/config";
+import { mapWithConcurrency } from "@/lib/concurrency";
+import { runPythonScript } from "@/lib/youtube-agent/python";
 import {
   YouTubeCaptionTrackSchema,
   type YouTubeTranslatedSegment,
@@ -49,6 +57,9 @@ const TranscriptFetchResultSchema = z.object({
     .min(1)
 });
 
+/** Chunks are independent, so a few can be in flight without risking rate limits. */
+const TRANSLATION_CONCURRENCY = 4;
+
 type RawCaptionSegment = {
   startMs: number;
   endMs: number;
@@ -57,15 +68,23 @@ type RawCaptionSegment = {
 };
 
 function getClient() {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!hasOpenAIKey()) {
     return null;
   }
 
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 0,
-    timeout: 15_000
+    maxRetries: OPENAI_MAX_RETRIES,
+    timeout: OPENAI_REQUEST_TIMEOUT_MS
   });
+}
+
+/** YouTube video ids are exactly 11 url-safe base64 characters. */
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+
+function asVideoId(value: string | null | undefined) {
+  const candidate = (value ?? "").trim();
+  return VIDEO_ID_PATTERN.test(candidate) ? candidate : null;
 }
 
 export function parseYouTubeVideoId(input: string) {
@@ -76,17 +95,17 @@ export function parseYouTubeVideoId(input: string) {
     const host = url.hostname.replace(/^www\./, "");
 
     if (host === "youtu.be") {
-      return url.pathname.split("/").filter(Boolean)[0] ?? null;
+      return asVideoId(url.pathname.split("/").filter(Boolean)[0]);
     }
 
-    if (host === "youtube.com" || host === "m.youtube.com") {
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
       if (url.pathname === "/watch") {
-        return url.searchParams.get("v");
+        return asVideoId(url.searchParams.get("v"));
       }
 
       const [section, id] = url.pathname.split("/").filter(Boolean);
-      if (section === "embed" || section === "shorts" || section === "live") {
-        return id ?? null;
+      if (section === "embed" || section === "shorts" || section === "live" || section === "v") {
+        return asVideoId(id);
       }
     }
   } catch {
@@ -147,50 +166,14 @@ function coalesceSegments(segments: RawCaptionSegment[]) {
 }
 
 async function fetchTranscriptWithPython(videoId: string, sourceLanguage: string) {
-  const scriptPath = path.join(process.cwd(), "scripts", "youtube_fetch_transcript.py");
-  const stdout = await new Promise<string>((resolve, reject) => {
-    const child = spawn("python3", [scriptPath], {
-      stdio: ["pipe", "pipe", "pipe"]
-    });
-
-    let stdoutText = "";
-    let stderrText = "";
-
-    child.stdout.on("data", (chunk) => {
-      stdoutText += String(chunk);
-    });
-
-    child.stderr.on("data", (chunk) => {
-      stderrText += String(chunk);
-    });
-
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve(stdoutText);
-        return;
-      }
-
-      try {
-        const payload = JSON.parse(stderrText) as { error?: string };
-        reject(new Error(payload.error || "读取字幕失败"));
-      } catch {
-        reject(new Error(stderrText || `Transcript fetcher exited with code ${code}`));
-      }
-    });
-
-    child.stdin.write(
-      JSON.stringify({
-        videoId,
-        sourceLanguage
-      })
-    );
-    child.stdin.end();
+  const raw = await runPythonScript<unknown>("youtube_fetch_transcript.py", {
+    videoId,
+    sourceLanguage
   });
 
-  const parsed = TranscriptFetchResultSchema.safeParse(JSON.parse(stdout));
+  const parsed = TranscriptFetchResultSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new Error("字幕服务返回结构异常，请稍后再试。");
+    throw new PublicError("字幕服务返回结构异常，请稍后再试。");
   }
 
   return parsed.data;
@@ -230,9 +213,9 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
   const translated = new Map<string, string>();
   const chunks = chunkSegments(segments, 18, 2200);
 
-  for (const chunk of chunks) {
+  await mapWithConcurrency(chunks, TRANSLATION_CONCURRENCY, async (chunk) => {
     const response = await client.responses.parse({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: getOpenAIModel(),
       instructions:
         "你是一个视频字幕翻译器。把每条字幕自然地翻译成简体中文，保留原始顺序和 id，不要总结，不要合并条目，不要补充解释。",
       input: JSON.stringify(
@@ -265,48 +248,16 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
 
       translated.set(`${chunk[index].startMs}:${chunk[index].endMs}`, item.translatedText.trim());
     }
-  }
+  });
 
   return segments.map((segment) => translated.get(`${segment.startMs}:${segment.endMs}`) || segment.sourceText);
 }
 
 async function translateSegmentsWithPython(segments: RawCaptionSegment[]) {
-  const scriptPath = path.join(process.cwd(), "scripts", "youtube_translate_fallback.py");
-  const stdout = await new Promise<string>((resolve, reject) => {
-    const child = spawn("python3", [scriptPath], {
-      stdio: ["pipe", "pipe", "pipe"]
-    });
-
-    let stdoutText = "";
-    let stderrText = "";
-
-    child.stdout.on("data", (chunk) => {
-      stdoutText += String(chunk);
-    });
-
-    child.stderr.on("data", (chunk) => {
-      stderrText += String(chunk);
-    });
-
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve(stdoutText);
-        return;
-      }
-
-      reject(new Error(stderrText || `Fallback translator exited with code ${code}`));
-    });
-
-    child.stdin.write(
-      JSON.stringify({
-        texts: segments.map((segment) => segment.sourceText)
-      })
-    );
-    child.stdin.end();
-  });
-
-  const payload = JSON.parse(stdout) as { translations?: Array<string | null> };
+  const payload = await runPythonScript<{ translations?: Array<string | null> }>(
+    "youtube_translate_fallback.py",
+    { texts: segments.map((segment) => segment.sourceText) }
+  );
   const translations = payload.translations ?? [];
 
   return segments.map((segment, index) => {
@@ -322,7 +273,7 @@ async function buildSummaryIfPossible(text: string) {
   }
 
   const response = await client.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    model: getOpenAIModel(),
     instructions:
       "你是一个视频速览助手。基于用户给你的中文字幕，输出一段 2 句内的中文摘要，以及 2 到 4 条适合快速扫读的重点结论。",
     input: text.slice(0, 7000),
@@ -354,11 +305,11 @@ export function buildSrt(segments: Array<Pick<YouTubeTranslatedSegment, "startMs
 export async function runYouTubeTranslation(params: YouTubeTranslationRequest): Promise<YouTubeTranslationResult> {
   const videoId = parseYouTubeVideoId(params.url);
   if (!videoId) {
-    throw new Error("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
+    throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
   }
 
   const transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
-  const rawSegments = coalesceSegments(
+  const allSegments = coalesceSegments(
     transcriptPayload.segments
       .map((segment) => {
         const sourceText = normalizeCaptionText(segment.sourceText);
@@ -379,12 +330,22 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
       .filter((segment): segment is RawCaptionSegment => Boolean(segment))
   );
 
-  if (rawSegments.length === 0) {
-    throw new Error("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。");
+  if (allSegments.length === 0) {
+    throw new PublicError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。");
   }
 
   const warnings = [...transcriptPayload.warnings];
-  const hasOpenAI = Boolean(process.env.OPENAI_API_KEY);
+
+  // A three-hour video would otherwise mean hundreds of upstream calls and a
+  // response payload measured in megabytes.
+  const rawSegments = allSegments.slice(0, MAX_CAPTION_SEGMENTS);
+  if (allSegments.length > rawSegments.length) {
+    warnings.push(
+      `这个视频字幕较长，本次只翻译了前 ${rawSegments.length} 条（共 ${allSegments.length} 条）。`
+    );
+  }
+
+  const hasOpenAI = hasOpenAIKey();
   let translatedTexts: string[];
   let translationMode: YouTubeTranslationResult["translationMode"] = "google_fallback";
 

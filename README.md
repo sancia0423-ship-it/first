@@ -29,6 +29,12 @@ npm install
 npm run dev
 ```
 
+提交前建议跑一遍本地校验（CI 也跑同样这四条）：
+
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
+
 默认访问：
 
 - 首页：`http://localhost:3000`
@@ -40,11 +46,12 @@ npm run dev
 
 ## 环境变量
 
-可选环境变量如下：
+完整清单见 `.env.example`。最常用的三个：
 
 ```bash
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.2
+NEXT_PUBLIC_SITE_URL=
 ```
 
 不配置 `OPENAI_API_KEY` 时：
@@ -61,6 +68,10 @@ OPENAI_MODEL=gpt-5.2
 - 某条来源 AI 抽取失败时，会自动回退到规则解析
 - YouTube 翻译会优先走 OpenAI 字幕翻译，并补一段中文重点速览
 
+所有模型名和超时都收敛在 `lib/config.ts`，还可以按需覆盖
+`OPENAI_TIMEOUT_MS`、`PYTHON_SCRIPT_TIMEOUT_MS`、`MAX_CAPTION_SEGMENTS`、
+`RATE_LIMIT_MAX_HITS`、`CACHE_BACKEND` 等，默认值都写在 `.env.example` 里。
+
 ## 当前技术选择
 
 为了让你本地今天就能跑起来，这一版刻意选了最小可行方案：
@@ -73,45 +84,50 @@ OPENAI_MODEL=gpt-5.2
 ## 目录结构
 
 ```text
-interview-intel-mvp/
+first/
 ├─ app/
-│  ├─ api/mock-interview/route.ts # 模拟面试 API
-│  ├─ api/search/route.ts        # 对外 API
-│  ├─ mock/page.tsx              # 模拟面试页
-│  ├─ search/page.tsx            # 搜索结果页
-│  ├─ globals.css                # 全局样式
-│  ├─ layout.tsx                 # 根布局
-│  └─ page.tsx                   # 首页
-├─ components/
-│  ├─ mock-interview-demo.tsx    # 模拟面试交互
-│  ├─ results-view.tsx           # 结果页展示
-│  └─ search-form.tsx            # 查询表单
+│  ├─ api/health/route.ts          # 健康检查
+│  ├─ api/mock-interview/route.ts  # 模拟面试 API
+│  ├─ api/search/route.ts          # 面经检索 API
+│  ├─ api/youtube-translate/route.ts # 字幕翻译 API
+│  ├─ ai-learning/page.tsx         # AI 学习资料库
+│  ├─ mock/page.tsx                # 模拟面试页
+│  ├─ search/page.tsx              # 快速准备结果页
+│  ├─ tools/page.tsx               # 小工具聚合页
+│  ├─ robots.ts / sitemap.ts       # SEO 元数据
+│  ├─ globals.css                  # 全局样式
+│  ├─ layout.tsx                   # 根布局与站点 metadata
+│  └─ page.tsx                     # 个人主页
+├─ components/                     # 页面与交互组件
 ├─ lib/
-│  ├─ data/mock.ts               # 回退演示数据
-│  ├─ mock-interview.ts          # 面试题库、评分与总结
+│  ├─ config.ts                    # 模型、超时、限流等统一配置
+│  ├─ concurrency.ts               # 有上限的并发执行器
+│  ├─ api/guards.ts                # 限流与对外错误信息处理
+│  ├─ mock-interview.ts            # 面试题库、评分与总结
+│  ├─ personal-site-content.ts     # 个人站点文案
 │  ├─ pipeline/
-│  │  ├─ aggregation.ts          # 聚合逻辑
-│  │  ├─ cache.ts                # 本地文件缓存
-│  │  ├─ extraction.ts           # AI/规则双通道抽取
-│  │  ├─ http.ts                 # 服务端抓取工具
-│  │  ├─ juejin.ts               # 掘金搜索与详情解析
-│  │  ├─ nowcoder.ts             # 牛客搜索与详情解析
-│  │  ├─ orchestrator.ts         # 主流程编排
-│  │  ├─ query-expansion.ts      # 查询扩展
-│  │  ├─ relevance.ts            # 来源相关性过滤
-│  │  ├─ retrieval.ts            # 真实召回 + 回退样本
-│  │  └─ text.ts                 # 文本清洗与格式转换
-│  └─ schemas.ts                 # 类型和 schema
-├─ docs/
-│  ├─ database-design.md
-│  ├─ implementation-roadmap.md
-│  ├─ mvp-prd.md
-│  ├─ page-wireframes.md
-│  └─ prompt-design.md
-├─ .env.example
-├─ next.config.ts
-├─ package.json
-└─ tsconfig.json
+│  │  ├─ aggregation.ts            # 聚合逻辑
+│  │  ├─ cache.ts                  # 本地文件缓存（带过期清理）
+│  │  ├─ extraction.ts             # AI/规则双通道抽取
+│  │  ├─ http.ts                   # 服务端抓取工具
+│  │  ├─ juejin.ts                 # 掘金搜索与详情解析
+│  │  ├─ nowcoder.ts               # 牛客搜索与详情解析
+│  │  ├─ orchestrator.ts           # 主流程编排
+│  │  ├─ query-expansion.ts        # 查询扩展
+│  │  ├─ rate-limit.ts             # 内存滑动窗口限流
+│  │  ├─ relevance.ts              # 来源相关性过滤
+│  │  ├─ retrieval.ts              # 真实召回 + 回退样本
+│  │  ├─ scoring.ts                # 候选打分、去重与容错聚合
+│  │  └─ text.ts                   # 文本清洗与格式转换
+│  ├─ schemas.ts                   # 类型和 schema
+│  └─ youtube-agent/               # 字幕读取、翻译与 python 调用封装
+├─ scripts/                        # yt-dlp / 翻译回退脚本
+├─ __tests__/                      # vitest 单测
+├─ docs/                           # 产品与设计文档
+├─ .github/workflows/ci.yml        # lint / typecheck / test / build
+├─ Dockerfile
+├─ eslint.config.mjs
+└─ package.json
 ```
 
 ## 当前版本的真实能力

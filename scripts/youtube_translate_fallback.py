@@ -68,5 +68,11 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001
-        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        print(
+            json.dumps(
+                {"error": "翻译服务暂时不可用，请稍后再试。", "detail": repr(exc)},
+                ensure_ascii=False
+            ),
+            file=sys.stderr
+        )
         raise SystemExit(1)

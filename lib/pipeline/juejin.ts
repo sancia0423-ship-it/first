@@ -2,9 +2,10 @@ import "server-only";
 
 import { readCache, writeCache } from "@/lib/pipeline/cache";
 import { getHtml, postJsonText } from "@/lib/pipeline/http";
-import { compareCandidatePriority, isCandidateCompatible, recencyScore } from "@/lib/pipeline/relevance";
+import { compareCandidatePriority, isCandidateCompatible } from "@/lib/pipeline/relevance";
+import { collectSettled, dedupeCandidates, scoreCandidate } from "@/lib/pipeline/scoring";
 import type { SourceDocument } from "@/lib/pipeline/nowcoder";
-import { htmlToPlainText, normalizeToLower, summarizeText, uniqueStrings } from "@/lib/pipeline/text";
+import { htmlToPlainText, summarizeText, uniqueStrings } from "@/lib/pipeline/text";
 import type { QueryExpansion, SearchInput, SourceCandidate } from "@/lib/schemas";
 
 type JuejinSearchItem = Record<string, unknown>;
@@ -31,76 +32,23 @@ function computeCandidateScore(params: {
   publishedAt: string;
   expansion: QueryExpansion;
 }) {
-  const title = normalizeToLower(params.title);
-  const previewText = normalizeToLower(params.previewText);
-  const joined = `${title} ${previewText}`;
-  let score = 0;
+  return scoreCandidate(params, ({ title, previewText }) => {
+    let bonus = 0;
 
-  for (const alias of params.expansion.companyAliases) {
-    const normalized = normalizeToLower(alias);
-    if (title.includes(normalized)) {
-      score += 5;
-    } else if (joined.includes(normalized)) {
-      score += 2;
-    }
-  }
-
-  for (const alias of params.expansion.roleAliases) {
-    const normalized = normalizeToLower(alias);
-    if (title.includes(normalized)) {
-      score += 4;
-    } else if (joined.includes(normalized)) {
-      score += 2;
-    }
-  }
-
-  for (const term of params.expansion.directionTerms) {
-    const normalized = normalizeToLower(term);
-    if (!normalized) {
-      continue;
-    }
-    if (title.includes(normalized)) {
-      score += 3;
-    } else if (joined.includes(normalized)) {
-      score += 1.5;
-    }
-  }
-
-  if (title.includes("面经") || title.includes("面试")) {
-    score += 3;
-  }
-
-  if (previewText.includes("一面") || previewText.includes("二面") || previewText.includes("hr")) {
-    score += 2;
-  }
-
-  if (title.includes("复盘") || previewText.includes("复盘")) {
-    score += 1;
-  }
-
-  if (params.publishedAt !== "未知") {
-    score += 0.5;
-  }
-
-  score += recencyScore(params.publishedAt);
-
-  return score;
-}
-
-function dedupeCandidates(candidates: SourceCandidate[]) {
-  const seen = new Set<string>();
-  const results: SourceCandidate[] = [];
-
-  for (const candidate of candidates) {
-    if (seen.has(candidate.sourceUrl)) {
-      continue;
+    if (title.includes("面经") || title.includes("面试")) {
+      bonus += 3;
     }
 
-    seen.add(candidate.sourceUrl);
-    results.push(candidate);
-  }
+    if (previewText.includes("一面") || previewText.includes("二面") || previewText.includes("hr")) {
+      bonus += 2;
+    }
 
-  return results;
+    if (title.includes("复盘") || previewText.includes("复盘")) {
+      bonus += 1;
+    }
+
+    return bonus;
+  });
 }
 
 function toCandidate(item: JuejinSearchItem, input: SearchInput, expansion: QueryExpansion): SourceCandidate | null {
@@ -191,7 +139,7 @@ export async function searchJuejinCandidates(input: SearchInput, expansion: Quer
     return cached;
   }
 
-  const resultGroups = await Promise.all(
+  const resultGroups = await collectSettled(
     queries.map(async (query) => {
       const responseText = await postJsonText(
         "https://api.juejin.cn/search_api/v1/search",
@@ -212,12 +160,11 @@ export async function searchJuejinCandidates(input: SearchInput, expansion: Quer
       return (payload.data ?? [])
         .map((item) => toCandidate(item, input, expansion))
         .filter((candidate): candidate is SourceCandidate => Boolean(candidate));
-    })
+    }),
+    "juejin"
   );
 
-  const rankedCandidates = resultGroups
-    .flat()
-    .sort(compareCandidatePriority);
+  const rankedCandidates = [...resultGroups].sort(compareCandidatePriority);
 
   const strictCandidates = rankedCandidates.filter((candidate) => candidate.relevanceScore >= 8);
   const candidates = dedupeCandidates((strictCandidates.length > 0 ? strictCandidates : rankedCandidates).slice(0, 4));

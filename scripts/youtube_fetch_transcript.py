@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from yt_dlp import YoutubeDL
+
+VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{11}$")
+
+
+class UserFacingError(Exception):
+    """An error whose message is written for end users and safe to return verbatim."""
 
 
 @dataclass
@@ -23,7 +30,10 @@ def build_ydl() -> YoutubeDL:
             "skip_download": True,
             "quiet": True,
             "no_warnings": True,
-            "nocheckcertificate": True
+            # Certificate verification stays on: these requests go out over the
+            # public internet and the response is fed straight into the app.
+            "socket_timeout": 20,
+            "retries": 2
         }
     )
 
@@ -172,15 +182,27 @@ def build_track_payload(track: TrackSelection) -> dict[str, Any]:
 
 
 def map_error(exc: Exception) -> str:
+    """Map an exception to a message that is safe to show a browser.
+
+    Anything unrecognised gets a generic message — raw yt-dlp output can contain
+    local paths and internal state. The full text still goes out as `detail`,
+    which the Node layer only writes to the server log.
+    """
+    if isinstance(exc, UserFacingError):
+        return str(exc)
+
     message = str(exc)
 
-    if "Video unavailable" in message:
+    if "Video unavailable" in message or "Private video" in message:
         return "这个视频暂时不可用，或者被地区/年龄限制挡住了。请换一个公开视频再试。"
 
     if "LOGIN_REQUIRED" in message or "confirm you're not a bot" in message or "Sign in to confirm" in message:
         return "YouTube 暂时拦截了这条视频的字幕读取。请换一个公开视频，或者换一个带公开字幕的视频再试。"
 
-    return f"读取 YouTube 字幕失败：{message}"
+    if "timed out" in message or "timeout" in message.lower():
+        return "读取字幕超时了，请稍后再试或换一个更短的视频。"
+
+    return "读取 YouTube 字幕失败，请换一个公开视频再试。"
 
 
 def main() -> int:
@@ -188,21 +210,21 @@ def main() -> int:
     video_id = str(payload.get("videoId") or "").strip()
     preferred_language = str(payload.get("sourceLanguage") or "").strip()
 
-    if not video_id:
-        raise ValueError("videoId is required")
+    if not VIDEO_ID_PATTERN.match(video_id):
+        raise UserFacingError("视频 ID 不合法，请重新输入 YouTube 链接。")
 
     with build_ydl() as ydl:
         info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
 
         tracks = collect_available_tracks(info)
         if not tracks:
-            raise ValueError("这个视频当前没有可读取的公开字幕。请换一个带字幕的视频再试。")
+            raise UserFacingError("这个视频当前没有可读取的公开字幕。请换一个带字幕的视频再试。")
 
         selected_track, warnings = choose_track(tracks, preferred_language)
         segments = fetch_segments(ydl, selected_track)
 
     if not segments:
-        raise ValueError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。")
+        raise UserFacingError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。")
 
     json.dump(
         {
@@ -223,5 +245,8 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001
-        print(json.dumps({"error": map_error(exc)}, ensure_ascii=False), file=sys.stderr)
+        print(
+            json.dumps({"error": map_error(exc), "detail": repr(exc)}, ensure_ascii=False),
+            file=sys.stderr
+        )
         raise SystemExit(1)

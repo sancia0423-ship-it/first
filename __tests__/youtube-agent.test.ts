@@ -17,6 +17,20 @@ describe("parseYouTubeVideoId", () => {
   it("returns null for unsupported input", () => {
     expect(parseYouTubeVideoId("not a youtube url")).toBeNull();
   });
+
+  it("rejects ids that are not 11 url-safe characters", () => {
+    // These reach yt-dlp as part of a watch URL, so they must never pass through.
+    expect(parseYouTubeVideoId("https://youtu.be/short")).toBeNull();
+    expect(parseYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x")).toBe(
+      "dQw4w9WgXcQ"
+    );
+    expect(parseYouTubeVideoId("https://www.youtube.com/watch?v=../../etc/passwd")).toBeNull();
+    expect(parseYouTubeVideoId("https://www.youtube.com/watch?v=")).toBeNull();
+  });
+
+  it("rejects look-alike hosts", () => {
+    expect(parseYouTubeVideoId("https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ")).toBeNull();
+  });
 });
 
 describe("buildSrt", () => {

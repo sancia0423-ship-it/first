@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   YouTubeTranslationResultSchema,
   type YouTubeTranslationResult
@@ -144,11 +144,17 @@ export function YouTubeTranslateDemo() {
     const anchor = document.createElement("a");
     anchor.href = objectUrl;
     anchor.download = `${result.videoId}-zh.srt`;
+
+    // Safari and Firefox need the anchor in the document, and revoking the URL
+    // in the same tick can cancel a download that has not started yet.
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(objectUrl);
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }
 
-  function speakCurrentSegment() {
+  const speakCurrentSegment = useCallback(() => {
     if (!result || activeSegmentIndex < 0 || !("speechSynthesis" in window)) {
       return;
     }
@@ -168,7 +174,7 @@ export function YouTubeTranslateDemo() {
     utterance.pitch = 1;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
-  }
+  }, [activeSegmentIndex, result, selectedVoiceName, voices]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -193,8 +199,10 @@ export function YouTubeTranslateDemo() {
     };
   }, []);
 
+  const videoId = result?.videoId;
+
   useEffect(() => {
-    if (!result || !playerHostRef.current) {
+    if (!videoId || !playerHostRef.current) {
       return;
     }
 
@@ -213,7 +221,7 @@ export function YouTubeTranslateDemo() {
 
         playerHostRef.current.innerHTML = "";
         playerRef.current = new window.YT.Player(playerHostRef.current, {
-          videoId: result.videoId,
+          videoId,
           playerVars: {
             playsinline: 1,
             rel: 0
@@ -233,7 +241,7 @@ export function YouTubeTranslateDemo() {
         playerRef.current = null;
       }
     };
-  }, [result?.videoId]);
+  }, [videoId]);
 
   useEffect(() => {
     if (!result || !playerRef.current || playerVersion === 0) {
@@ -277,7 +285,7 @@ export function YouTubeTranslateDemo() {
 
     lastSpokenSegmentRef.current = segment.id;
     speakCurrentSegment();
-  }, [activeSegmentIndex, autoSpeak, result, selectedVoiceName, voices]);
+  }, [activeSegmentIndex, autoSpeak, result, speakCurrentSegment]);
 
   useEffect(() => {
     if (!autoSpeak && typeof window !== "undefined" && "speechSynthesis" in window) {

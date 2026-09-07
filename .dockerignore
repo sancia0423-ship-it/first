@@ -5,9 +5,13 @@
 .env.local
 .env*.local
 .git
+.github
 .next
+.venv
+__tests__
 coverage
 dist
+docs
 node_modules
 tsconfig.tsbuildinfo
 *.log

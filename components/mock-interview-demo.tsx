@@ -4,7 +4,6 @@ import { useState } from "react";
 import type {
   MockInterviewAnswerRecord,
   MockInterviewEvaluation,
-  MockInterviewQuestion,
   MockInterviewSession,
   MockInterviewSetup,
   MockInterviewSummary

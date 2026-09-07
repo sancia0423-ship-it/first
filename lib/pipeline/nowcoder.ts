@@ -2,8 +2,9 @@ import "server-only";
 
 import { readCache, writeCache } from "@/lib/pipeline/cache";
 import { getHtml } from "@/lib/pipeline/http";
-import { compareCandidatePriority, isCandidateCompatible, recencyScore } from "@/lib/pipeline/relevance";
-import { htmlToPlainText, normalizeToLower, summarizeText, textFromStructuredParts, uniqueStrings } from "@/lib/pipeline/text";
+import { compareCandidatePriority, isCandidateCompatible } from "@/lib/pipeline/relevance";
+import { collectSettled, dedupeCandidates, scoreCandidate } from "@/lib/pipeline/scoring";
+import { htmlToPlainText, summarizeText, textFromStructuredParts, uniqueStrings } from "@/lib/pipeline/text";
 import type { QueryExpansion, SearchInput, SourceCandidate } from "@/lib/schemas";
 
 type SearchRecord = Record<string, unknown>;
@@ -39,68 +40,27 @@ function extractInitialState(html: string) {
 }
 
 function computeCandidateScore(
-  params: {
-    title: string;
-    previewText: string;
-    publishedAt: string;
-  },
-  input: SearchInput,
+  params: { title: string; previewText: string; publishedAt: string },
   expansion: QueryExpansion
 ) {
-  const title = normalizeToLower(params.title);
-  const previewText = normalizeToLower(params.previewText);
-  const joined = `${title} ${previewText}`;
-  let score = 0;
+  return scoreCandidate({ ...params, expansion }, ({ title, previewText }) => {
+    let bonus = 0;
 
-  for (const alias of expansion.companyAliases) {
-    if (title.includes(normalizeToLower(alias))) {
-      score += 5;
-    } else if (joined.includes(normalizeToLower(alias))) {
-      score += 2;
-    }
-  }
-
-  for (const alias of expansion.roleAliases) {
-    if (title.includes(normalizeToLower(alias))) {
-      score += 4;
-    } else if (joined.includes(normalizeToLower(alias))) {
-      score += 2;
-    }
-  }
-
-  for (const term of expansion.directionTerms) {
-    if (!term) {
-      continue;
+    if (title.includes("面经")) {
+      bonus += 3;
     }
 
-    if (title.includes(normalizeToLower(term))) {
-      score += 3;
-    } else if (joined.includes(normalizeToLower(term))) {
-      score += 1.5;
+    if (title.includes("offer") || title.includes("oc")) {
+      bonus += 1;
     }
-  }
 
-  if (title.includes("面经")) {
-    score += 3;
-  }
+    if (previewText.includes("一面") || previewText.includes("二面") || previewText.includes("hr面")) {
+      bonus += 2;
+    }
 
-  if (title.includes("offer") || title.includes("oc")) {
-    score += 1;
-  }
-
-  if (previewText.includes("一面") || previewText.includes("二面") || previewText.includes("hr面")) {
-    score += 2;
-  }
-
-  if (params.publishedAt !== "未知") {
-    score += 0.5;
-  }
-
-  score += recencyScore(params.publishedAt);
-
-  return score;
+    return bonus;
+  });
 }
-
 
 function pickSearchAppState(initialState: Record<string, unknown>) {
   const appState = initialState.app;
@@ -186,37 +146,13 @@ function toCandidate(record: SearchRecord, input: SearchInput, expansion: QueryE
     tags: uniqueStrings([typeName, "公开面经"])
   };
 
-  const score = computeCandidateScore(
-    {
-      title,
-      previewText,
-      publishedAt
-    },
-    input,
-    expansion
-  );
+  const score = computeCandidateScore({ title, previewText, publishedAt }, expansion);
 
   return {
     ...candidate,
     relevanceScore: score,
     retrievalReason: score >= 9 ? "标题和摘要都高度匹配查询" : compatibility.reason
   };
-}
-
-function dedupeCandidates(candidates: SourceCandidate[]) {
-  const seen = new Set<string>();
-  const results: SourceCandidate[] = [];
-
-  for (const candidate of candidates) {
-    if (seen.has(candidate.sourceUrl)) {
-      continue;
-    }
-
-    seen.add(candidate.sourceUrl);
-    results.push(candidate);
-  }
-
-  return results;
 }
 
 export async function searchNowcoderCandidates(input: SearchInput, expansion: QueryExpansion) {
@@ -228,7 +164,7 @@ export async function searchNowcoderCandidates(input: SearchInput, expansion: Qu
     return cached;
   }
 
-  const candidateGroups = await Promise.all(
+  const candidateGroups = await collectSettled(
     queries.map(async (query) => {
       const searchUrl = `https://www.nowcoder.com/search/all/?query=${encodeURIComponent(query)}`;
       const html = await getHtml(searchUrl, 20);
@@ -239,12 +175,11 @@ export async function searchNowcoderCandidates(input: SearchInput, expansion: Qu
       return records
         .map((record) => toCandidate(record, input, expansion))
         .filter((candidate): candidate is SourceCandidate => Boolean(candidate));
-    })
+    }),
+    "nowcoder"
   );
 
-  const rankedCandidates = candidateGroups
-    .flat()
-    .sort(compareCandidatePriority);
+  const rankedCandidates = [...candidateGroups].sort(compareCandidatePriority);
 
   const strictCandidates = rankedCandidates.filter((candidate) => candidate.relevanceScore >= 8);
   const candidates = dedupeCandidates((strictCandidates.length > 0 ? strictCandidates : rankedCandidates).slice(0, 6));

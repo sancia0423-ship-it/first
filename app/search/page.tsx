@@ -8,21 +8,32 @@ import { SearchInputSchema, type SearchInput } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
-async function PipelineResult({ input }: { input: SearchInput }) {
+async function loadPipelineResult(input: SearchInput) {
   try {
-    const result = await runSearchPipeline(input);
-    return <ResultsView result={result} />;
+    return { result: await runSearchPipeline(input) } as const;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "未知错误";
+    // Upstream messages can leak internal detail, so log them and show a
+    // generic recovery hint instead.
+    console.error("[search] pipeline failed", error);
+    return { result: null } as const;
+  }
+}
+
+async function PipelineResult({ input }: { input: SearchInput }) {
+  const { result } = await loadPipelineResult(input);
+
+  if (!result) {
     return (
       <div className="panel empty-state">
         <h2 className="panel-title">分析过程出错</h2>
-        <p className="muted">Pipeline 执行失败：{message}</p>
+        <p className="muted">这次分析没有跑通，可能是来源站点暂时不可用。</p>
         <p className="muted">你可以稍后重试，或者换一组关键词再搜。</p>
         <Link className="ghost-button" href="/">返回首页</Link>
       </div>
     );
   }
+
+  return <ResultsView result={result} />;
 }
 
 function ResultsSkeleton() {

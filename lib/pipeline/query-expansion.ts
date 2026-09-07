@@ -85,23 +85,23 @@ function expandRole(raw: string): string[] {
   return results;
 }
 
+const DIRECTION_SYNONYMS: Record<string, string[]> = {
+  增长: ["商业化", "用户增长", "Growth"],
+  商业分析: ["经营分析", "策略分析", "商分"],
+  内容策略: ["内容生态", "创作者增长", "内容运营"],
+  搜索: ["搜索推荐", "信息检索"],
+  推荐: ["推荐系统", "搜索推荐"],
+  广告: ["广告系统", "商业化"],
+  风控: ["风险控制", "安全策略"],
+  供应链: ["物流", "仓储"],
+  国际化: ["出海", "全球化"]
+};
+
 /** Generate direction aliases using generic heuristics. */
 function expandDirection(raw: string): string[] {
   if (!raw.trim()) return [];
 
   const results = [raw];
-
-  const DIRECTION_SYNONYMS: Record<string, string[]> = {
-    增长: ["商业化", "用户增长", "Growth"],
-    商业分析: ["经营分析", "策略分析", "商分"],
-    内容策略: ["内容生态", "创作者增长", "内容运营"],
-    搜索: ["搜索推荐", "信息检索"],
-    推荐: ["推荐系统", "搜索推荐"],
-    广告: ["广告系统", "商业化"],
-    风控: ["风险控制", "安全策略"],
-    供应链: ["物流", "仓储"],
-    国际化: ["出海", "全球化"],
-  };
 
   if (DIRECTION_SYNONYMS[raw]) {
     results.push(...DIRECTION_SYNONYMS[raw]);

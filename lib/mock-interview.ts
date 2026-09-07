@@ -5,8 +5,13 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import {
+  OPENAI_MAX_RETRIES,
+  OPENAI_REQUEST_TIMEOUT_MS,
+  getOpenAIModel,
+  hasOpenAIKey
+} from "@/lib/config";
+import {
   MockInterviewEvaluationSchema,
-  MockInterviewQuestionSchema,
   MockInterviewSessionSchema,
   MockInterviewSummarySchema,
   type MockInterviewAnswerRecord,
@@ -245,23 +250,43 @@ const GeneratedSessionSchema = z.object({
 });
 
 const OpenAIEvaluationSchema = MockInterviewEvaluationSchema;
-const OPENAI_STEP_TIMEOUT_MS = 5000;
+
+/**
+ * Generating four questions or a full rubric takes well over a second; the old
+ * 5s ceiling meant the AI path almost always lost the race and silently fell
+ * back to the static question bank.
+ */
+const OPENAI_STEP_TIMEOUT_MS = OPENAI_REQUEST_TIMEOUT_MS;
 
 function getClient() {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!hasOpenAIKey()) {
     return null;
   }
 
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: OPENAI_MAX_RETRIES,
+    timeout: OPENAI_REQUEST_TIMEOUT_MS
+  });
 }
 
 async function withTimeout<T>(task: Promise<T>, timeoutMs: number) {
-  return await Promise.race<T>([
-    task,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error("timeout")), timeoutMs);
-    })
-  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  // The loser of the race must still be handled, or a late rejection surfaces
+  // as an unhandled promise rejection and can take the process down.
+  task.catch(() => undefined);
+
+  try {
+    return await Promise.race<T>([
+      task,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      })
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function getRoleDefinition(role: MockInterviewTargetRole) {
@@ -333,7 +358,7 @@ async function buildOpenAIInterviewSession(setup: MockInterviewSetup): Promise<M
   const role = getRoleDefinition(setup.targetRole);
 
   const response = await client.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-5.2",
+    model: getOpenAIModel(),
     instructions:
       "你是一位严谨但鼓励式的 AI 产品面试官。请根据候选人的目标岗位，生成 4 道中文面试题。题目必须覆盖用户价值、AI 能力边界、指标设计、落地推进与风险意识中的至少 4 个维度。dimensionTags 只能使用给定 key，不要发明新 key。",
     input: `岗位：${role.label}\n职级：${SENIORITY_LABELS[setup.seniority]}\n公司阶段：${COMPANY_STAGE_LABELS[setup.companyStage]}\n重点方向：${setup.focusArea}\n候选人背景：${setup.candidateBackground || "未提供"}\n\n评分维度：\n${DIMENSIONS.map((dimension) => `${dimension.key}: ${dimension.label} - ${dimension.description}`).join("\n")}`,
@@ -484,7 +509,9 @@ export function evaluateAnswerHeuristically(params: {
     .filter((item) => item.score <= 3)
     .slice(0, 3)
     .map((item) => `${item.label}还可以加强：${item.reason}`);
-  const weakestDimension = DIMENSIONS.find((dimension) => dimension.key === [...dimensionScores].sort((left, right) => left.score - right.score)[0]?.key) ?? DIMENSIONS[0];
+  const lowestScoringKey = [...dimensionScores].sort((left, right) => left.score - right.score)[0]?.key;
+  const weakestDimension =
+    DIMENSIONS.find((dimension) => dimension.key === lowestScoringKey) ?? DIMENSIONS[0];
 
   return MockInterviewEvaluationSchema.parse({
     overallScore,
@@ -515,7 +542,7 @@ async function evaluateAnswerWithOpenAI(params: {
   }
 
   const response = await client.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-5.2",
+    model: getOpenAIModel(),
     instructions:
       "你是一位中文 AI 产品面试官。请严格按照评分维度评价候选人的回答，既指出优点，也指出真正会被追问的漏洞。dimensionScores 必须覆盖全部维度 key，score 为 1-5 的整数。",
     input: `岗位：${getRoleDefinition(params.setup.targetRole).label}\n职级：${SENIORITY_LABELS[params.setup.seniority]}\n重点方向：${params.setup.focusArea}\n候选人背景：${params.setup.candidateBackground || "未提供"}\n\n题目：${params.question.prompt}\n题目意图：${params.question.intent}\n重点维度：${params.question.dimensionTags.join(", ")}\n优秀回答信号：${params.question.excellentSignals.join("；")}\n\n候选人回答：\n${params.answer}\n\n评分维度：\n${DIMENSIONS.map((dimension) => `${dimension.key} / ${dimension.label}: ${dimension.description}`).join("\n")}`,

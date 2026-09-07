@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitGuard } from "@/lib/api/guards";
 import { z } from "zod";
 import { evaluateInterviewAnswer, createInterviewSession, summarizeInterview } from "@/lib/mock-interview";
-import { isRateLimited } from "@/lib/pipeline/rate-limit";
 import {
   MockInterviewAnswerRecordSchema,
   MockInterviewQuestionSchema,
@@ -34,13 +34,9 @@ const MockInterviewActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(request: NextRequest) {
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-
-  if (isRateLimited(clientIp)) {
-    return NextResponse.json(
-      { error: "请求过于频繁，请稍后再试。" },
-      { status: 429 }
-    );
+  const limited = rateLimitGuard(request);
+  if (limited) {
+    return limited;
   }
 
   let payload: unknown;
@@ -63,18 +59,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  switch (parsed.data.action) {
-    case "start":
-      return NextResponse.json(await createInterviewSession(parsed.data.setup));
-    case "evaluate":
-      return NextResponse.json(
-        await evaluateInterviewAnswer({
-          setup: parsed.data.setup,
-          question: parsed.data.question,
-          answer: parsed.data.answer
-        })
-      );
-    case "summary":
-      return NextResponse.json(summarizeInterview(parsed.data.records));
+  try {
+    switch (parsed.data.action) {
+      case "start":
+        return NextResponse.json(await createInterviewSession(parsed.data.setup));
+      case "evaluate":
+        return NextResponse.json(
+          await evaluateInterviewAnswer({
+            setup: parsed.data.setup,
+            question: parsed.data.question,
+            answer: parsed.data.answer
+          })
+        );
+      case "summary":
+        return NextResponse.json(summarizeInterview(parsed.data.records));
+    }
+  } catch (error) {
+    console.error("[api/mock-interview] failed", error);
+    return NextResponse.json({ error: "面试服务暂时不可用，请稍后再试。" }, { status: 500 });
   }
 }

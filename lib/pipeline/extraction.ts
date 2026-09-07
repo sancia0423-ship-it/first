@@ -3,6 +3,13 @@ import "server-only";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
+import { mapWithConcurrency } from "@/lib/concurrency";
+import {
+  OPENAI_MAX_RETRIES,
+  OPENAI_REQUEST_TIMEOUT_MS,
+  getOpenAIModel,
+  hasOpenAIKey
+} from "@/lib/config";
 import { fetchJuejinDocument } from "@/lib/pipeline/juejin";
 import { fetchNowcoderDocument } from "@/lib/pipeline/nowcoder";
 import { normalizeWhitespace, summarizeText, uniqueStrings } from "@/lib/pipeline/text";
@@ -19,8 +26,22 @@ type SourceDocument =
   | Awaited<ReturnType<typeof fetchNowcoderDocument>>
   | Awaited<ReturnType<typeof fetchJuejinDocument>>;
 
+/** Documents are fetched independently; a handful in parallel keeps latency sane. */
+const DOCUMENT_CONCURRENCY = 4;
+
+/** Candidates beyond this are dropped before any network or model work happens. */
+const MAX_EXTRACTED_DOCUMENTS = 4;
+
+function isJuejinUrl(sourceUrl: string) {
+  try {
+    return new URL(sourceUrl).hostname.endsWith("juejin.cn");
+  } catch {
+    return false;
+  }
+}
+
 async function fetchSourceDocument(candidate: SourceCandidate): Promise<SourceDocument> {
-  if (candidate.sourceUrl.includes("juejin.cn")) {
+  if (isJuejinUrl(candidate.sourceUrl)) {
     return fetchJuejinDocument(candidate);
   }
 
@@ -44,11 +65,15 @@ const ParsedInterviewSchema = z.object({
 });
 
 function getClient() {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!hasOpenAIKey()) {
     return null;
   }
 
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: OPENAI_MAX_RETRIES,
+    timeout: OPENAI_REQUEST_TIMEOUT_MS
+  });
 }
 
 function normalizeRoundLabel(raw: string) {
@@ -77,10 +102,14 @@ function normalizeRoundLabel(raw: string) {
   return compact.replace(/视频专业面/gi, "").trim() || compact;
 }
 
+/** Round markers such as 一面 / 3面 / HR面 / 笔试. */
+const ROUND_PATTERN = /((?:[一二三四五六七八九十]|\d+)\s*面|[Hh][Rr]\s*面|leader面|总监面|终面|群面|笔试|测评)/g;
+
+/** Same markers, minus the written-exam ones that never carry questions. */
+const INTERVIEW_ROUND_PATTERN = /((?:[一二三四五六七八九十]|\d+)\s*面|[Hh][Rr]\s*面|leader面|总监面|终面|群面)/;
+
 function extractNormalizedRounds(text: string) {
-  const matches = [
-    ...text.matchAll(/((?:[一二三四五六七八九十]|\d+)\s*面|[Hh][Rr]\s*面|leader面|总监面|终面|群面|笔试|测评)/g)
-  ];
+  const matches = [...text.matchAll(ROUND_PATTERN)];
 
   return uniqueStrings(matches.map((match) => normalizeRoundLabel(match[1])));
 }
@@ -158,23 +187,6 @@ function estimateCycleDays(text: string, publishedAt: string) {
   return diff;
 }
 
-function extractProcess(lines: string[]) {
-  const rounds: string[] = [];
-
-  for (const line of lines) {
-    const matches = [...line.matchAll(/((?:[一二三四五六七八九十]|\d+)\s*面|[Hh][Rr]\s*面|leader面|总监面|终面|群面|笔试|测评)/g)];
-
-    for (const match of matches) {
-      const round = normalizeRoundLabel(match[1]);
-      if (!rounds.includes(round)) {
-        rounds.push(round);
-      }
-    }
-  }
-
-  return rounds.slice(0, 8);
-}
-
 function buildCandidateLines(text: string) {
   return text
     .replace(/((?:[一二三四五六七八九十]|\d+)\s*面)/g, "\n$1")
@@ -191,7 +203,7 @@ function extractQuestions(lines: string[]) {
   let currentRound = "未注明轮次";
 
   for (const line of lines) {
-    const roundMatch = line.match(/((?:[一二三四五六七八九十]|\d+)\s*面|[Hh][Rr]\s*面|leader面|总监面|终面|群面)/);
+    const roundMatch = line.match(INTERVIEW_ROUND_PATTERN);
     if (roundMatch) {
       currentRound = normalizeRoundLabel(roundMatch[1]);
     }
@@ -247,8 +259,8 @@ function buildNotes(lines: string[], title: string) {
 function extractHeuristically(document: SourceDocument, input: SearchInput) {
   const text = normalizeWhitespace(document.plainText);
   const lines = buildCandidateLines(text);
-  const process = extractProcess(lines);
   const questions = extractQuestions(lines);
+  const process = sanitizeProcess(lines);
 
   return {
     sourceId: document.candidate.id,
@@ -261,8 +273,8 @@ function extractHeuristically(document: SourceDocument, input: SearchInput) {
     role: input.role,
     direction: input.direction,
     process:
-      sanitizeProcess(process).length > 0
-        ? sanitizeProcess(process)
+      process.length > 0
+        ? process
         : uniqueStrings(questions.map((item) => item.roundLabel)).slice(0, 4),
     totalCycleDays: estimateCycleDays(text, document.publishedAt),
     questions,
@@ -286,7 +298,7 @@ async function extractWithOpenAI(document: SourceDocument, input: SearchInput) {
   }
 
   const response = await openai.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-5.2",
+    model: getOpenAIModel(),
     instructions:
       "你是一个面经结构化抽取器。只能基于给定文本提取信息，不要补充常识。输出面试轮次、整体周期、高频问题、观察备注和一段摘要。问题要保持接近原文措辞，每条问题必须带证据片段。",
     input: `目标公司：${input.company}\n目标岗位：${input.role}\n目标方向：${input.direction || "未指定"}\n\n原文：\n${sourceText}`,
@@ -325,43 +337,46 @@ export async function extractInterviewSignals(params: {
   input: SearchInput;
   candidates: SourceCandidate[];
 }): Promise<ExtractionBundle> {
-  const candidates = params.candidates.slice(0, 4);
+  const candidates = params.candidates.slice(0, MAX_EXTRACTED_DOCUMENTS);
   const warnings: string[] = [];
-  const documents = await Promise.all(candidates.map((candidate) => fetchSourceDocument(candidate)));
-  const signals: InterviewSignal[] = [];
-  let usedOpenAI = 0;
+  const documents = await mapWithConcurrency(candidates, DOCUMENT_CONCURRENCY, (candidate) =>
+    fetchSourceDocument(candidate)
+  );
+  const useOpenAI = hasOpenAIKey();
 
-  for (const document of documents) {
-    let signal: InterviewSignal | null = null;
+  // Each document is an independent model call, so they run together instead of
+  // adding up one round trip at a time.
+  const extracted = await mapWithConcurrency(documents, DOCUMENT_CONCURRENCY, async (document) => {
+    if (!useOpenAI) {
+      return { signal: extractHeuristically(document, params.input), usedOpenAI: false };
+    }
 
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        signal = await extractWithOpenAI(document, params.input);
-        if (signal) {
-          usedOpenAI += 1;
-        }
-      } catch {
-        warnings.push(`来源《${document.title}》的 AI 抽取失败，已自动切回规则抽取。`);
+    try {
+      const signal = await extractWithOpenAI(document, params.input);
+      if (signal) {
+        return { signal, usedOpenAI: true };
       }
+    } catch (error) {
+      console.warn(`[pipeline:extraction] AI extraction failed for ${document.candidate.sourceUrl}`, error);
+      warnings.push(`来源《${document.title}》的 AI 抽取失败，已自动切回规则抽取。`);
     }
 
-    if (!signal) {
-      signal = extractHeuristically(document, params.input);
-    }
+    return { signal: extractHeuristically(document, params.input), usedOpenAI: false };
+  });
 
-    if (signal.questions.length > 0 || signal.process.length > 0) {
-      signals.push(signal);
-    }
-  }
+  const signals = extracted
+    .map((item) => item.signal)
+    .filter((signal) => signal.questions.length > 0 || signal.process.length > 0);
+  const usedOpenAI = extracted.filter((item) => item.usedOpenAI).length;
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!useOpenAI) {
     warnings.push("当前未配置 OPENAI_API_KEY，因此正文抽取使用规则解析；配置后会自动升级为结构化 AI 抽取。");
   }
 
   return {
     signals,
     extractedCount: documents.length,
-    extractionMode: process.env.OPENAI_API_KEY
+    extractionMode: useOpenAI
       ? usedOpenAI === documents.length
         ? "AI 结构化抽取"
         : "AI + 规则回退"
