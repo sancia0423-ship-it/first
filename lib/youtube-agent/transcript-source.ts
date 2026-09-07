@@ -81,12 +81,20 @@ export async function fetchTranscript(
 
   const query = new URLSearchParams({
     url: `https://www.youtube.com/watch?v=${videoId}`,
-    text: "false"
+    text: "false",
+    // 只取视频已有的字幕。默认的 auto 会在没有字幕时转而调用 AI 转录，
+    // 那是按分钟计费的（每分钟 2 credits）—— 一部 90 分钟的访谈要 180 credits，
+    // 一次就超过整月免费额度。宁可明确告诉用户「这个视频没有字幕」。
+    mode: "native"
   });
 
   if (preferredLanguage) {
     query.set("lang", preferredLanguage);
   }
+
+  // 标题和字幕互不依赖，并行发出省一个往返。
+  // fetchTitle 自身不会 reject，所以提前发出也不会留下未处理的 rejection。
+  const titlePromise = fetchTitle(videoId);
 
   let response: Response;
   try {
@@ -109,13 +117,22 @@ export async function fetchTranscript(
       throw new PublicError("字幕服务鉴权失败，站点配置需要检查。");
     }
     if (response.status === 404) {
-      throw new PublicError("这个视频没有可读取的字幕。请换一个带字幕的视频再试。");
+      throw new PublicError(
+        "这个视频没有现成的字幕。当前只支持作者已经上传或 YouTube 自动生成了字幕的视频。"
+      );
     }
     if (response.status === 429) {
       throw new PublicError("字幕服务本月额度已用完，请稍后再试。");
     }
 
     throw new PublicError("读取字幕失败，请换一个公开且带字幕的视频再试。");
+  }
+
+  // 202 表示服务端转成了异步任务。native 模式下不该发生，真发生了说明参数没生效，
+  // 直接报错比让 schema 校验抛出一句看不懂的话要好。
+  if (response.status === 202) {
+    console.error("[transcript] unexpected async job in native mode");
+    throw new PublicError("字幕服务返回了异步任务，当前不支持。请换一个视频再试。");
   }
 
   const parsed = TranscriptSchema.safeParse(await response.json());
@@ -125,8 +142,8 @@ export async function fetchTranscript(
   }
 
   return {
-    // 标题和字幕并行取，标题失败不影响主流程。
-    title: await fetchTitle(videoId),
+    // fetchTitle 内部已吞掉所有异常，拿不到标题不会影响主流程。
+    title: await titlePromise,
     languageCode: parsed.data.lang ?? preferredLanguage ?? "",
     availableLanguages: parsed.data.availableLangs ?? [],
     segments: parsed.data.content.map((item) => ({
