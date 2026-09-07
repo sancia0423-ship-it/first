@@ -412,17 +412,25 @@ export async function fetchYouTubeTranscript(
   };
 }
 
-export async function runYouTubeTranslation(params: YouTubeTranslationRequest): Promise<YouTubeTranslationResult> {
+export async function runYouTubeTranslation(
+  params: YouTubeTranslationRequest,
+  /** 试用模式下只翻译前若干条，用来封死单次成本。 */
+  options: { maxSegments?: number } = {}
+): Promise<YouTubeTranslationResult> {
   const { videoId, transcriptPayload, allSegments } = await loadTranscript(params);
 
   const warnings = [...transcriptPayload.warnings];
 
   // A three-hour video would otherwise mean hundreds of upstream calls and a
   // response payload measured in megabytes.
-  const rawSegments = allSegments.slice(0, MAX_CAPTION_SEGMENTS);
+  const limit = Math.min(options.maxSegments ?? MAX_CAPTION_SEGMENTS, MAX_CAPTION_SEGMENTS);
+  const rawSegments = allSegments.slice(0, limit);
+
   if (allSegments.length > rawSegments.length) {
     warnings.push(
-      `这个视频字幕较长，本次只翻译了前 ${rawSegments.length} 条（共 ${allSegments.length} 条）。`
+      options.maxSegments
+        ? `试用模式只翻译前 ${rawSegments.length} 条字幕（共 ${allSegments.length} 条）。填入自己的 API key 可以翻译全片。`
+        : `这个视频字幕较长，本次只翻译了前 ${rawSegments.length} 条（共 ${allSegments.length} 条）。`
     );
   }
 

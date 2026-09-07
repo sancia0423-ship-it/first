@@ -171,6 +171,12 @@ export function YouTubeTranslateDemo() {
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [explainState, setExplainState] = useState<"idle" | "loading" | "error">("idle");
   const [explainError, setExplainError] = useState("");
+  const [trial, setTrial] = useState<{
+    enabled: boolean;
+    available: boolean;
+    remaining: number;
+    maxSegments: number;
+  } | null>(null);
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
@@ -279,13 +285,20 @@ export function YouTubeTranslateDemo() {
 
     const payload = await response.json();
     if (!response.ok) {
-      throw new Error(payload.error || "翻译请求失败");
+      throw new Error(payload.message || payload.error || "翻译请求失败");
     }
 
     const parsed = YouTubeTranslationResultSchema.safeParse(payload);
     if (!parsed.success) {
       throw new Error("服务端返回结构异常，请稍后再试。");
     }
+
+    // 用掉一次试用，刷新剩余数。
+    setTrial((current) =>
+      current
+        ? { ...current, remaining: Math.max(0, current.remaining - 1), available: current.remaining > 1 }
+        : current
+    );
 
     return parsed.data;
   }
@@ -362,6 +375,26 @@ export function YouTubeTranslateDemo() {
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }, [activeSegmentIndex, result, selectedVoiceName, voices]);
+
+  // 查一次试用额度，用来决定没有 key 时该显示什么。
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/v1/health")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!cancelled && payload?.trial) {
+          setTrial(payload.trial);
+        }
+      })
+      .catch(() => {
+        // 查不到就当没有试用额度，不影响自带 key 的使用。
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -700,7 +733,11 @@ export function YouTubeTranslateDemo() {
             <span className="section-kicker">
               {settings.apiKey
                 ? `已连接 ${PRESETS[settings.preset].label} · ${maskKey(settings.apiKey)}`
-                : "翻译与 AI 功能需要你自己的 API key"}
+                : trial?.available
+                  ? `可以直接试用，今天还剩 ${trial.remaining} 次`
+                  : trial?.enabled
+                    ? "今天的免费试用已用完，填入自己的 key 可继续使用"
+                    : "翻译与 AI 功能需要你自己的 API key"}
             </span>
             <button
               className="ghost-button"
@@ -875,8 +912,10 @@ export function YouTubeTranslateDemo() {
             </button>
             <span className="muted form-helper">
               {settings.apiKey
-                ? "翻译会用你自己的 key 在浏览器里完成，费用计入你的 OpenAI 账户。"
-                : "字幕读取不需要 key；翻译需要填写上方的 OpenAI key。"}
+                ? "翻译会用你自己的 key 在浏览器里完成，费用计入你的账户，长度不限。"
+                : trial?.available
+                  ? `免费试用会翻译前 ${trial.maxSegments} 条字幕（约 10 分钟）。想翻全片，填入自己的 API key 即可。`
+                  : "字幕读取始终免费；翻译需要填写上方的 API key。"}
             </span>
           </div>
 
