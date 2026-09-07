@@ -254,11 +254,22 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
 }
 
 async function translateSegmentsWithPython(segments: RawCaptionSegment[]) {
-  const payload = await runPythonScript<{ translations?: Array<string | null> }>(
-    "youtube_translate_fallback.py",
-    { texts: segments.map((segment) => segment.sourceText) }
-  );
+  const payload = await runPythonScript<{
+    translations?: Array<string | null>;
+    translatedCount?: number;
+    totalCount?: number;
+  }>("youtube_translate_fallback.py", {
+    texts: segments.map((segment) => segment.sourceText)
+  });
+
   const translations = payload.translations ?? [];
+
+  // The helper returns the source text for anything it could not translate. If
+  // it could not translate a single segment, the upstream service is down and
+  // handing back the original subtitles would look like a successful result.
+  if (!payload.translatedCount) {
+    throw new PublicError("字幕翻译服务暂时不可用，请稍后再试。");
+  }
 
   return segments.map((segment, index) => {
     const translated = translations[index];
@@ -359,6 +370,14 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
     }
   } else {
     translatedTexts = await translateSegmentsWithPython(rawSegments);
+  }
+
+  const untranslated = rawSegments.filter(
+    (segment, index) => translatedTexts[index].trim() === segment.sourceText.trim()
+  ).length;
+
+  if (untranslated > 0) {
+    warnings.push(`有 ${untranslated} 条字幕未能翻译，已保留原文。`);
   }
 
   const segments: YouTubeTranslatedSegment[] = rawSegments.map((segment, index) => ({

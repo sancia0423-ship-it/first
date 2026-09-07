@@ -31,7 +31,7 @@ git push origin main
 
 - `Dockerfile` — 多阶段构建，Node 22 + Python 依赖分层，非 root 用户运行
 - `railway.json` — 健康检查指向 `/api/health`
-- `requirements.txt` — yt-dlp / deep-translator
+- `requirements.txt` — yt-dlp（翻译走标准库，无额外依赖）
 - `.dockerignore`
 
 本地先验证一次镜像能起来，能省掉很多线上排查：

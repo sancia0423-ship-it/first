@@ -1,46 +1,102 @@
 from __future__ import annotations
 
 import json
-import re
 import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
-from deep_translator import GoogleTranslator
+"""
+Free-tier subtitle translation.
 
-MARKER_TEMPLATE = "[[[SEG_{:04d}]]]"
-MARKER_PATTERN = re.compile(r"\[\[\[SEG_(\d{4})\]\]\]")
+This used to call `deep_translator.GoogleTranslator`, which scrapes a web
+endpoint that now answers every request with an HTTP 500 error page. The
+library does not raise on that — it returns the error page *as the
+translation* — so the previous implementation silently handed back untranslated
+English and reported success.
+
+Two changes guard against a repeat:
+  * Talk to the translate endpoint directly, over the stdlib, so a failure is
+    an exception rather than a plausible-looking string.
+  * Report how many segments were actually translated, and let the caller treat
+    "nothing was translated" as an error instead of a result.
+
+Lines are kept aligned by translating a newline-joined batch and checking that
+the reply has the same number of lines; a mismatched batch falls back to
+translating its lines one at a time.
+"""
+
+ENDPOINT = "https://translate.googleapis.com/translate_a/single"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Safari/537.36"
+
+# Batches travel in a query string, so keep them well inside URL length limits.
+MAX_BATCH_CHARS = 1200
+MAX_ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = 0.6
+PAUSE_BETWEEN_BATCHES = 0.15
 
 
-def build_packets(texts: list[str], limit: int = 2600) -> list[str]:
-    packets: list[str] = []
-    current_parts: list[str] = []
-    current_length = 0
+class TranslationError(Exception):
+    """Raised when the upstream endpoint cannot be used at all."""
+
+
+def translate_text(text: str, target: str = "zh-CN") -> str:
+    query = urllib.parse.urlencode(
+        {"client": "gtx", "sl": "auto", "tl": target, "dt": "t", "q": text}
+    )
+    request = urllib.request.Request(f"{ENDPOINT}?{query}", headers={"User-Agent": USER_AGENT})
+
+    last_error: Exception | None = None
+
+    for attempt in range(MAX_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+
+            segments = payload[0] or []
+            return "".join(part[0] for part in segments if part and part[0])
+        except Exception as exc:  # noqa: BLE001 - retried below, re-raised at the end
+            last_error = exc
+            if attempt < MAX_ATTEMPTS - 1:
+                time.sleep(RETRY_BACKOFF_SECONDS * (attempt + 1))
+
+    raise TranslationError(f"translate endpoint unavailable: {last_error}")
+
+
+def build_batches(texts: list[str]) -> list[tuple[int, list[str]]]:
+    """Group indices into newline-joinable batches, returning (start, lines)."""
+    batches: list[tuple[int, list[str]]] = []
+    current: list[str] = []
+    start = 0
+    length = 0
 
     for index, text in enumerate(texts):
-        part = f"{MARKER_TEMPLATE.format(index)}\n{text.strip()}"
-        if current_parts and current_length + len(part) + 2 > limit:
-            packets.append("\n\n".join(current_parts))
-            current_parts = [part]
-            current_length = len(part)
-        else:
-            current_parts.append(part)
-            current_length += len(part) + (2 if len(current_parts) > 1 else 0)
+        if current and length + len(text) + 1 > MAX_BATCH_CHARS:
+            batches.append((start, current))
+            current = []
+            start = index
+            length = 0
 
-    if current_parts:
-        packets.append("\n\n".join(current_parts))
+        current.append(text)
+        length += len(text) + 1
 
-    return packets
+    if current:
+        batches.append((start, current))
+
+    return batches
 
 
-def parse_packet_translation(translated_packet: str) -> dict[int, str]:
-    parsed: dict[int, str] = {}
-    parts = MARKER_PATTERN.split(translated_packet)
+def translate_batch(lines: list[str]) -> list[str] | None:
+    """Translate lines together; None when the reply does not line up."""
+    joined = "\n".join(lines)
+    result = translate_text(joined)
+    candidate = result.split("\n")
 
-    for index in range(1, len(parts), 2):
-        marker = parts[index]
-        content = parts[index + 1].strip() if index + 1 < len(parts) else ""
-        parsed[int(marker)] = content
+    if len(candidate) == len(lines):
+        return candidate
 
-    return parsed
+    return None
 
 
 def main() -> int:
@@ -50,17 +106,48 @@ def main() -> int:
     if not isinstance(texts, list):
         raise ValueError("texts must be a list")
 
-    translator = GoogleTranslator(source="auto", target="zh-CN")
-    normalized_texts = [str(item or "").strip() for item in texts]
-    translated = normalized_texts[:]
+    # Newlines inside a segment would break line alignment.
+    sources = [" ".join(str(item or "").split()) for item in texts]
+    translations = sources[:]
+    translated_count = 0
 
-    for packet in build_packets(normalized_texts):
-        translated_packet = translator.translate(packet) or ""
-        for index, content in parse_packet_translation(translated_packet).items():
-            if 0 <= index < len(translated) and content:
-                translated[index] = content
+    for start, lines in build_batches(sources):
+        indexes = [start + offset for offset, line in enumerate(lines) if line]
+        if not indexes:
+            continue
 
-    json.dump({"translations": translated}, sys.stdout, ensure_ascii=False)
+        batch = translate_batch(lines)
+
+        if batch is None:
+            # The batch came back misaligned; translate its lines individually
+            # so one awkward line cannot corrupt the whole batch.
+            batch = []
+            for line in lines:
+                if not line:
+                    batch.append(line)
+                    continue
+                try:
+                    batch.append(translate_text(line))
+                except TranslationError:
+                    batch.append(line)
+
+        for offset, line in enumerate(batch):
+            index = start + offset
+            if line.strip() and line.strip() != sources[index]:
+                translations[index] = line.strip()
+                translated_count += 1
+
+        time.sleep(PAUSE_BETWEEN_BATCHES)
+
+    json.dump(
+        {
+            "translations": translations,
+            "translatedCount": translated_count,
+            "totalCount": len([text for text in sources if text]),
+        },
+        sys.stdout,
+        ensure_ascii=False,
+    )
     return 0
 
 
@@ -71,8 +158,8 @@ if __name__ == "__main__":
         print(
             json.dumps(
                 {"error": "翻译服务暂时不可用，请稍后再试。", "detail": repr(exc)},
-                ensure_ascii=False
+                ensure_ascii=False,
             ),
-            file=sys.stderr
+            file=sys.stderr,
         )
         raise SystemExit(1)
