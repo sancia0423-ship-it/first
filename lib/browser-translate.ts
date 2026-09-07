@@ -15,34 +15,106 @@
  * 一个实测差异：DeepSeek 在鉴权失败的响应里也带 CORS 头，浏览器能读到真实
  * 错误；OpenAI 由边缘直接拒绝，浏览器只能看到一个笼统的网络错误。
  */
-export const PROVIDERS = {
+/**
+ * 预设只是帮你把地址和模型名填好，不是限制。
+ * 任何提供 OpenAI 兼容 chat completions 接口的服务都能用 —— 选「自定义」填地址即可，
+ * 包括 Moonshot、Groq、OpenRouter，以及本机跑的 Ollama。
+ *
+ * 按任务分模型：翻译是机械转换，便宜模型足够；章节划分和选中解释是判断题，
+ * 值得用中档模型。两者单价能差十倍，而质量差异只体现在后者。
+ */
+export const PRESETS = {
   openai: {
     label: "OpenAI",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    defaultModel: "gpt-4o-mini",
+    baseUrl: "https://api.openai.com/v1",
+    translateModel: "gpt-5.6-luna",
+    analyzeModel: "gpt-5.6-terra",
     keysUrl: "https://platform.openai.com/api-keys",
+    /** 鉴权失败时响应是否带 CORS 头，决定浏览器能否读到真实错误。 */
     readableAuthError: false
   },
   deepseek: {
     label: "DeepSeek",
-    endpoint: "https://api.deepseek.com/chat/completions",
-    defaultModel: "deepseek-chat",
+    baseUrl: "https://api.deepseek.com",
+    translateModel: "deepseek-chat",
+    analyzeModel: "deepseek-chat",
     keysUrl: "https://platform.deepseek.com/api_keys",
+    readableAuthError: true
+  },
+  custom: {
+    label: "自定义",
+    baseUrl: "",
+    translateModel: "",
+    analyzeModel: "",
+    keysUrl: "",
     readableAuthError: true
   }
 } as const;
 
-export type ProviderId = keyof typeof PROVIDERS;
+export type PresetId = keyof typeof PRESETS;
 
-export function isProviderId(value: string): value is ProviderId {
-  return value in PROVIDERS;
+export function isPresetId(value: string): value is PresetId {
+  return value in PRESETS;
 }
 
-export const BYOK_STORAGE_KEY = "byok-api-key";
-export const BYOK_MODEL_STORAGE_KEY = "byok-model";
-export const BYOK_PROVIDER_STORAGE_KEY = "byok-provider";
-export const DEFAULT_PROVIDER: ProviderId = "openai";
-export const DEFAULT_BYOK_MODEL = PROVIDERS[DEFAULT_PROVIDER].defaultModel;
+export type AiSettings = {
+  apiKey: string;
+  preset: PresetId;
+  baseUrl: string;
+  translateModel: string;
+  analyzeModel: string;
+};
+
+export const DEFAULT_PRESET: PresetId = "openai";
+
+export function defaultSettings(preset: PresetId = DEFAULT_PRESET): AiSettings {
+  const config = PRESETS[preset];
+  return {
+    apiKey: "",
+    preset,
+    baseUrl: config.baseUrl,
+    translateModel: config.translateModel,
+    analyzeModel: config.analyzeModel
+  };
+}
+
+const SETTINGS_STORAGE_KEY = "ai-settings";
+
+export function readSettings(): AiSettings {
+  const fallback = defaultSettings();
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return fallback;
+
+    const stored = JSON.parse(raw) as Partial<AiSettings>;
+    const preset = isPresetId(stored.preset ?? "") ? (stored.preset as PresetId) : DEFAULT_PRESET;
+    const presetDefaults = defaultSettings(preset);
+
+    return {
+      apiKey: typeof stored.apiKey === "string" ? stored.apiKey : "",
+      preset,
+      baseUrl: stored.baseUrl || presetDefaults.baseUrl,
+      translateModel: stored.translateModel || presetDefaults.translateModel,
+      analyzeModel: stored.analyzeModel || presetDefaults.analyzeModel
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+export function storeSettings(settings: AiSettings) {
+  try {
+    if (settings.apiKey) {
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } else {
+      window.localStorage.removeItem(SETTINGS_STORAGE_KEY);
+    }
+  } catch {
+    // 无痕窗口等场景下存不住，本次会话内仍然可用。
+  }
+}
 
 /** 一次请求塞多少条字幕。太多会超时，太少会浪费往返。 */
 const BATCH_SIZE = 20;
@@ -56,83 +128,64 @@ export type TranslatableSegment = {
 
 export class BrowserTranslateError extends Error {}
 
-/** key 只在浏览器里读写，服务端渲染时直接返回空。 */
-export function readStoredKey() {
-  if (typeof window === "undefined") return "";
-  try {
-    return window.localStorage.getItem(BYOK_STORAGE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-export function readStoredProvider(): ProviderId {
-  if (typeof window === "undefined") return DEFAULT_PROVIDER;
-  try {
-    const stored = window.localStorage.getItem(BYOK_PROVIDER_STORAGE_KEY) ?? "";
-    return isProviderId(stored) ? stored : DEFAULT_PROVIDER;
-  } catch {
-    return DEFAULT_PROVIDER;
-  }
-}
-
-export function readStoredModel(provider: ProviderId = DEFAULT_PROVIDER) {
-  const fallback = PROVIDERS[provider].defaultModel;
-  if (typeof window === "undefined") return fallback;
-  try {
-    return window.localStorage.getItem(BYOK_MODEL_STORAGE_KEY) || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-export function storeKey(key: string, provider: ProviderId, model: string) {
-  try {
-    if (key) {
-      window.localStorage.setItem(BYOK_STORAGE_KEY, key);
-      window.localStorage.setItem(BYOK_PROVIDER_STORAGE_KEY, provider);
-    } else {
-      window.localStorage.removeItem(BYOK_STORAGE_KEY);
-      window.localStorage.removeItem(BYOK_PROVIDER_STORAGE_KEY);
-    }
-
-    if (model && model !== PROVIDERS[provider].defaultModel) {
-      window.localStorage.setItem(BYOK_MODEL_STORAGE_KEY, model);
-    } else {
-      window.localStorage.removeItem(BYOK_MODEL_STORAGE_KEY);
-    }
-  } catch {
-    // 无痕窗口等场景下存不住，本次会话内仍然可用。
-  }
-}
-
 /** 只显示首尾，中间打码，避免在界面上完整暴露 key。 */
 export function maskKey(key: string) {
   if (key.length <= 12) return "••••";
   return `${key.slice(0, 7)}••••${key.slice(-4)}`;
 }
 
-export type ProviderConfig = {
+/** 一次调用需要的最小配置：地址、key、这个任务用哪个模型。 */
+export type CallConfig = {
   apiKey: string;
-  provider: ProviderId;
+  baseUrl: string;
   model: string;
+  /** 只用于错误文案，让提示能说清是哪家出的问题。 */
+  label?: string;
+  readableAuthError?: boolean;
 };
+
+/** 从设置里取出「翻译」这个任务要用的调用配置。 */
+export function translateConfig(settings: AiSettings): CallConfig {
+  return {
+    apiKey: settings.apiKey,
+    baseUrl: settings.baseUrl,
+    model: settings.translateModel,
+    label: PRESETS[settings.preset].label,
+    readableAuthError: PRESETS[settings.preset].readableAuthError
+  };
+}
+
+/** 章节划分与选中解释共用「分析」模型。 */
+export function analyzeConfig(settings: AiSettings): CallConfig {
+  return {
+    apiKey: settings.apiKey,
+    baseUrl: settings.baseUrl,
+    model: settings.analyzeModel,
+    label: PRESETS[settings.preset].label,
+    readableAuthError: PRESETS[settings.preset].readableAuthError
+  };
+}
 
 /**
  * 调用一次 chat completion，要求返回 JSON 对象。
  * 翻译、章节划分、选中解释都走这里，只是 prompt 不同。
  */
 async function callChatJson<T>(
-  config: ProviderConfig,
+  config: CallConfig,
   systemPrompt: string,
   userPayload: unknown,
   signal?: AbortSignal
 ): Promise<T> {
-  const provider = PROVIDERS[config.provider];
+  const label = config.label || "AI 服务";
+  const endpoint = `${config.baseUrl.replace(/\/+$/, "")}/chat/completions`;
   let response: Response;
 
+  if (!config.model) {
+    throw new BrowserTranslateError("还没有填写模型名。");
+  }
+
   try {
-    response = await fetch(provider.endpoint, {
+    response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -140,7 +193,7 @@ async function callChatJson<T>(
       },
       signal,
       body: JSON.stringify({
-        model: config.model || provider.defaultModel,
+        model: config.model,
         temperature: 0,
         response_format: { type: "json_object" },
         messages: [
@@ -161,9 +214,9 @@ async function callChatJson<T>(
     // OpenAI 在鉴权失败时由边缘直接拒绝，响应里没有 CORS 头，浏览器只能抛出一个
     // 笼统的网络错误。DeepSeek 会带 CORS 头，所以那边能读到真实原因。
     throw new BrowserTranslateError(
-      provider.readableAuthError
-        ? `无法连接 ${provider.label}，请检查网络后重试。`
-        : `无法连接 ${provider.label}。通常是 API key 不正确，也可能是网络或浏览器插件拦截了请求。`
+      config.readableAuthError
+        ? `无法连接 ${label}，请检查接口地址和网络后重试。`
+        : `无法连接 ${label}。通常是 API key 不正确，也可能是接口地址填错或被浏览器插件拦截。`
     );
   }
 
@@ -178,17 +231,17 @@ async function callChatJson<T>(
 
     if (response.status === 401) {
       throw new BrowserTranslateError(
-        detail || `${provider.label} 的 API key 无效，请检查后重新填写。`
+        detail || `${label} 的 API key 无效，请检查后重新填写。`
       );
     }
     if (response.status === 429) {
       throw new BrowserTranslateError(
-        detail || `触发了 ${provider.label} 的速率限制或余额不足，请稍后再试。`
+        detail || `触发了 ${label} 的速率限制或余额不足，请稍后再试。`
       );
     }
 
     throw new BrowserTranslateError(
-      detail || `${provider.label} 返回错误（HTTP ${response.status}）。`
+      detail || `${label} 返回错误（HTTP ${response.status}）。`
     );
   }
 
@@ -198,13 +251,13 @@ async function callChatJson<T>(
   const content = payload.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new BrowserTranslateError(`${provider.label} 没有返回可用内容。`);
+    throw new BrowserTranslateError(`${label} 没有返回可用内容。`);
   }
 
   try {
     return JSON.parse(content) as T;
   } catch {
-    throw new BrowserTranslateError(`${provider.label} 返回的内容不是合法 JSON。`);
+    throw new BrowserTranslateError(`${label} 返回的内容不是合法 JSON。`);
   }
 }
 
@@ -222,7 +275,7 @@ export type TranslateProgress = {
  */
 export async function translateSegmentsInBrowser(
   segments: TranslatableSegment[],
-  options: ProviderConfig & {
+  options: CallConfig & {
     signal?: AbortSignal;
     onProgress?: (progress: TranslateProgress) => void;
   }
@@ -318,7 +371,7 @@ function sampleForOverview(segments: Array<{ startMs: number; text: string }>) {
 
 export async function buildVideoOverview(
   segments: Array<{ startMs: number; text: string }>,
-  options: ProviderConfig & { signal?: AbortSignal }
+  options: CallConfig & { signal?: AbortSignal }
 ): Promise<VideoOverview> {
   const { signal, ...config } = options;
 
@@ -406,7 +459,7 @@ const EXPLAIN_PROMPT =
  */
 export async function explainSelection(
   params: { selection: string; context: string },
-  options: ProviderConfig & { signal?: AbortSignal }
+  options: CallConfig & { signal?: AbortSignal }
 ): Promise<Explanation> {
   const { signal, ...config } = options;
 

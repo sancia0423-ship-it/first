@@ -16,7 +16,11 @@ function readNumber(name: string, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export const DEFAULT_OPENAI_MODEL = "gpt-5.2";
+/**
+ * 服务端默认模型。这里跑的是模拟面试出题、点评和面经抽取 —— 都是判断题，
+ * 值得用中档模型；旗舰档在这些任务上买不到对应的价值。
+ */
+export const DEFAULT_OPENAI_MODEL = "gpt-5.6-terra";
 
 export function getOpenAIModel() {
   return process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL;

@@ -8,19 +8,21 @@ import {
 } from "@/lib/youtube-agent/contracts";
 import {
   BrowserTranslateError,
-  PROVIDERS,
-  maskKey,
-  readStoredKey,
-  readStoredModel,
-  readStoredProvider,
+  PRESETS,
+  analyzeConfig,
   buildVideoOverview,
+  defaultSettings,
   explainSelection,
-  storeKey,
+  maskKey,
+  readSettings,
+  storeSettings,
+  translateConfig,
   translateSegmentsInBrowser,
-  type VideoOverview,
+  type AiSettings,
   type Explanation,
-  type ProviderId,
-  type TranslateProgress
+  type PresetId,
+  type TranslateProgress,
+  type VideoOverview
 } from "@/lib/browser-translate";
 import { buildSrt } from "@/lib/srt";
 
@@ -157,10 +159,9 @@ export function YouTubeTranslateDemo() {
     items: []
   });
   // key 只存在浏览器里，首次渲染用惰性初始化读取，避免服务端渲染时访问 localStorage。
-  const [apiKey, setApiKey] = useState(() => readStoredKey());
-  const [provider, setProvider] = useState<ProviderId>(() => readStoredProvider());
-  const [model, setModel] = useState(() => readStoredModel(readStoredProvider()));
-  const [keyDraft, setKeyDraft] = useState("");
+  // 设置只存在浏览器里，惰性初始化避免服务端渲染时访问 localStorage。
+  const [settings, setSettings] = useState<AiSettings>(() => readSettings());
+  const [draft, setDraft] = useState<AiSettings>(() => ({ ...readSettings(), apiKey: "" }));
   const [showKeyPanel, setShowKeyPanel] = useState(false);
   const [progress, setProgress] = useState<TranslateProgress | null>(null);
   const [overview, setOverview] = useState<VideoOverview | null>(null);
@@ -197,7 +198,7 @@ export function YouTubeTranslateDemo() {
 
     const { translations, translatedCount } = await translateSegmentsInBrowser(
       transcript.segments.map((segment) => ({ id: segment.id, sourceText: segment.sourceText })),
-      { apiKey, provider, model, onProgress: setProgress }
+      { ...translateConfig(settings), onProgress: setProgress }
     );
 
     if (translatedCount === 0) {
@@ -271,7 +272,7 @@ export function YouTubeTranslateDemo() {
 
     try {
       setResult(
-        apiKey
+        settings.apiKey
           ? await translateWithOwnKey(nextUrl, nextSourceLanguage)
           : await translateOnServer(nextUrl, nextSourceLanguage)
       );
@@ -575,7 +576,7 @@ export function YouTubeTranslateDemo() {
   }
 
   async function explainCurrentSelection() {
-    if (!result || !apiKey || !selection) {
+    if (!result || !settings.apiKey || !selection) {
       return;
     }
 
@@ -596,7 +597,7 @@ export function YouTubeTranslateDemo() {
 
     try {
       setExplanation(
-        await explainSelection({ selection, context }, { apiKey, provider, model })
+        await explainSelection({ selection, context }, analyzeConfig(settings))
       );
       setExplainState("idle");
     } catch (error) {
@@ -606,7 +607,7 @@ export function YouTubeTranslateDemo() {
   }
 
   async function generateOverview() {
-    if (!result || !apiKey) {
+    if (!result || !settings.apiKey) {
       return;
     }
 
@@ -620,7 +621,7 @@ export function YouTubeTranslateDemo() {
             startMs: segment.startMs,
             text: segment.translatedText || segment.sourceText
           })),
-          { apiKey, provider, model }
+          analyzeConfig(settings)
         )
       );
       setOverviewState("idle");
@@ -662,41 +663,44 @@ export function YouTubeTranslateDemo() {
         <div className="byok-box">
           <div className="byok-head">
             <span className="section-kicker">
-              {apiKey
-                ? `已启用 ${PROVIDERS[provider].label} · ${maskKey(apiKey)}`
-                : "翻译需要你自己的 API key（OpenAI 或 DeepSeek）"}
+              {settings.apiKey
+                ? `已连接 ${PRESETS[settings.preset].label} · ${maskKey(settings.apiKey)}`
+                : "翻译与 AI 功能需要你自己的 API key"}
             </span>
             <button
               className="ghost-button"
               onClick={() => {
-                setKeyDraft("");
+                setDraft({ ...settings, apiKey: "" });
                 setShowKeyPanel((open) => !open);
               }}
               type="button"
             >
-              {showKeyPanel ? "收起" : apiKey ? "更换" : "填写 key"}
+              {showKeyPanel ? "收起" : settings.apiKey ? "更改设置" : "填写 key"}
             </button>
           </div>
 
           {showKeyPanel ? (
             <div className="byok-panel">
               <p className="muted form-helper">
-                key 只保存在你这台设备的浏览器里，翻译时由你的浏览器直接请求服务商，
-                <strong>不会经过这个网站的服务器</strong>。你可以打开浏览器的网络面板自己核实。
+                这些设置只保存在你这台设备的浏览器里，请求由你的浏览器直接发给服务商，
+                <strong>不会经过这个网站的服务器</strong>。你可以打开浏览器网络面板自己核实。
               </p>
 
               <label>
                 服务商
                 <select
                   onChange={(event) => {
-                    const next = event.target.value as ProviderId;
-                    setProvider(next);
-                    // 换服务商时模型必须跟着换，否则会拿旧模型名去请求新端点。
-                    setModel(PROVIDERS[next].defaultModel);
+                    const preset = event.target.value as PresetId;
+                    // 换服务商时地址和模型一起换，否则会拿旧模型名请求新端点。
+                    const presetDefaults = defaultSettings(preset);
+                    setDraft((current) => ({
+                      ...presetDefaults,
+                      apiKey: current.apiKey
+                    }));
                   }}
-                  value={provider}
+                  value={draft.preset}
                 >
-                  {Object.entries(PROVIDERS).map(([id, config]) => (
+                  {Object.entries(PRESETS).map(([id, config]) => (
                     <option key={id} value={id}>
                       {config.label}
                     </option>
@@ -705,64 +709,100 @@ export function YouTubeTranslateDemo() {
               </label>
 
               <label>
-                {PROVIDERS[provider].label} API key
+                API key
                 <input
                   autoComplete="off"
-                  onChange={(event) => setKeyDraft(event.target.value)}
-                  placeholder="sk-..."
+                  onChange={(event) => setDraft((c) => ({ ...c, apiKey: event.target.value }))}
+                  placeholder={settings.apiKey ? "留空则保留现有 key" : "sk-..."}
                   spellCheck={false}
                   type="password"
-                  value={keyDraft}
+                  value={draft.apiKey}
                 />
               </label>
 
               <label>
-                模型
+                接口地址
                 <input
-                  onChange={(event) => setModel(event.target.value)}
-                  placeholder={PROVIDERS[provider].defaultModel}
+                  onChange={(event) => setDraft((c) => ({ ...c, baseUrl: event.target.value }))}
+                  placeholder="https://api.openai.com/v1"
                   spellCheck={false}
-                  value={model}
+                  value={draft.baseUrl}
+                />
+              </label>
+
+              <p className="muted form-helper">
+                下面两个模型分开填是有意的：翻译是机械转换，便宜模型就够；章节和解释是判断题，
+                值得用好一点的。两者单价可以差十倍，而质量差异只体现在后者。
+              </p>
+
+              <label>
+                翻译模型（高频、便宜）
+                <input
+                  onChange={(event) =>
+                    setDraft((c) => ({ ...c, translateModel: event.target.value }))
+                  }
+                  placeholder="gpt-5.6-luna"
+                  spellCheck={false}
+                  value={draft.translateModel}
+                />
+              </label>
+
+              <label>
+                分析模型（章节速览与选中解释）
+                <input
+                  onChange={(event) =>
+                    setDraft((c) => ({ ...c, analyzeModel: event.target.value }))
+                  }
+                  placeholder="gpt-5.6-terra"
+                  spellCheck={false}
+                  value={draft.analyzeModel}
                 />
               </label>
 
               <div className="button-row portfolio-link-row">
                 <button
                   className="primary-button"
-                  disabled={!keyDraft.trim()}
+                  disabled={!draft.apiKey.trim() && !settings.apiKey}
                   onClick={() => {
-                    const next = keyDraft.trim();
-                    setApiKey(next);
-                    storeKey(next, provider, model);
-                    setKeyDraft("");
+                    // key 留空表示沿用已保存的那个，方便只改模型不重填 key。
+                    const next: AiSettings = {
+                      ...draft,
+                      apiKey: draft.apiKey.trim() || settings.apiKey
+                    };
+                    setSettings(next);
+                    storeSettings(next);
+                    setDraft({ ...next, apiKey: "" });
                     setShowKeyPanel(false);
                   }}
                   type="button"
                 >
                   保存
                 </button>
-                {apiKey ? (
+                {settings.apiKey ? (
                   <button
                     className="ghost-button"
                     onClick={() => {
-                      setApiKey("");
-                      storeKey("", provider, PROVIDERS[provider].defaultModel);
-                      setModel(PROVIDERS[provider].defaultModel);
+                      const cleared = defaultSettings();
+                      setSettings(cleared);
+                      storeSettings(cleared);
+                      setDraft(cleared);
                       setShowKeyPanel(false);
                     }}
                     type="button"
                   >
-                    清除已保存的 key
+                    清除已保存的设置
                   </button>
                 ) : null}
-                <a
-                  className="ghost-button"
-                  href={PROVIDERS[provider].keysUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  去 {PROVIDERS[provider].label} 创建 key
-                </a>
+                {PRESETS[draft.preset].keysUrl ? (
+                  <a
+                    className="ghost-button"
+                    href={PRESETS[draft.preset].keysUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    去 {PRESETS[draft.preset].label} 创建 key
+                  </a>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -799,7 +839,7 @@ export function YouTubeTranslateDemo() {
               {isSubmitting ? "翻译中..." : "开始翻译"}
             </button>
             <span className="muted form-helper">
-              {apiKey
+              {settings.apiKey
                 ? "翻译会用你自己的 key 在浏览器里完成，费用计入你的 OpenAI 账户。"
                 : "字幕读取不需要 key；翻译需要填写上方的 OpenAI key。"}
             </span>
@@ -977,7 +1017,7 @@ export function YouTubeTranslateDemo() {
               </div>
             </div>
 
-            {apiKey ? (
+            {settings.apiKey ? (
               <div className="panel">
                 <div className="section-header section-header-inline">
                   <div>
@@ -1139,7 +1179,7 @@ export function YouTubeTranslateDemo() {
 
               <p className="muted form-helper">
                 点击任意一条字幕可以跳到视频对应位置。
-                {apiKey ? "选中一段文字可以让 AI 解释。" : null}
+                {settings.apiKey ? "选中一段文字可以让 AI 解释。" : null}
               </p>
 
               <div
@@ -1197,7 +1237,7 @@ export function YouTubeTranslateDemo() {
               </div>
             </div>
 
-            {apiKey && selection ? (
+            {settings.apiKey && selection ? (
               <div className="panel">
                 <div className="section-header section-header-inline">
                   <div>

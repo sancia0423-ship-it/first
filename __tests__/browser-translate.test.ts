@@ -15,7 +15,12 @@ function mockCompletion(content: unknown) {
   );
 }
 
-const config = { apiKey: "test-key", provider: "openai" as const, model: "gpt-4o-mini" };
+const config = {
+  apiKey: "test-key",
+  baseUrl: "https://api.openai.com/v1",
+  model: "gpt-5.6-luna",
+  label: "OpenAI"
+};
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -150,7 +155,7 @@ describe("explainSelection", () => {
 
     await explainSelection(
       { selection: "get it", context: "before get it after" },
-      { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+      { ...config, apiKey: "k" }
     );
 
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
@@ -168,7 +173,7 @@ describe("explainSelection", () => {
     await expect(
       explainSelection(
         { selection: "   ", context: "x" },
-        { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+        { ...config, apiKey: "k" }
       )
     ).rejects.toThrow("请先选中一段字幕");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -179,7 +184,7 @@ describe("explainSelection", () => {
 
     const result = await explainSelection(
       { selection: "x", context: "y" },
-      { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+      { ...config, apiKey: "k" }
     );
 
     expect(result.notes).toEqual(["ok"]);
