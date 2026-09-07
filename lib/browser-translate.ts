@@ -27,7 +27,10 @@ export const PRESETS = {
   openai: {
     label: "OpenAI",
     baseUrl: "https://api.openai.com/v1",
-    translateModel: "gpt-5.6-luna",
+    // 翻译走最便宜的一档就够（一部 1.5 小时访谈约 3 美分）；想更省可以改成
+    // gpt-5-nano，约 2 美分。分析是判断题，值得用中档，而且每部只调一次，
+    // 输出量很小，实际约 9 美分。
+    translateModel: "gpt-4o-mini",
     analyzeModel: "gpt-5.6-terra",
     keysUrl: "https://platform.openai.com/api-keys",
     /** 鉴权失败时响应是否带 CORS 头，决定浏览器能否读到真实错误。 */
@@ -36,8 +39,10 @@ export const PRESETS = {
   deepseek: {
     label: "DeepSeek",
     baseUrl: "https://api.deepseek.com",
-    translateModel: "deepseek-chat",
-    analyzeModel: "deepseek-chat",
+    // deepseek-chat 已废弃，现在是 v4-flash / v4-pro。
+    // 注意它按时段计价，高峰期翻倍，而高峰正是北京时间的工作日白天。
+    translateModel: "deepseek-v4-flash",
+    analyzeModel: "deepseek-v4-pro",
     keysUrl: "https://platform.deepseek.com/api_keys",
     readableAuthError: true
   },
