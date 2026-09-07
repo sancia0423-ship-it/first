@@ -869,30 +869,8 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
-   Portrait and video
+   Video
    ========================================================================== */
-
-/* Text carries the page; the portrait sits beside it at a fixed, modest width
-   so it never competes with the opening paragraph. */
-.intro-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: var(--gap-lg);
-  align-items: start;
-}
-
-.portrait {
-  margin: 0;
-}
-
-.portrait img {
-  width: 100%;
-  height: auto;
-  display: block;
-  /* A soft rectangle, in keeping with a sheet with no other rounded edges. */
-  border-radius: 0;
-  filter: saturate(0.92);
-}
 
 .intro-video {
   width: 100%;
@@ -900,17 +878,6 @@ input[type="radio"]:checked {
   display: block;
   background: #d8d8d8;
   border-radius: 0;
-}
-
-@media (max-width: 860px) {
-  .intro-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--gap-md);
-  }
-
-  .portrait {
-    max-width: 220px;
-  }
 }
 
 /* ==========================================================================

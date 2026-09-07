@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { publicFileExists } from "@/lib/media";
@@ -7,10 +6,9 @@ import { personalSiteContent } from "@/lib/personal-site-content";
 export function PersonalHomePage() {
   const { about, contact, hero, learningPreview, projects, resume, toolsPreview } =
     personalSiteContent.home;
-  const { portrait, video } = personalSiteContent.media;
+  const { video } = personalSiteContent.media;
 
   // 文件还没放进 public/ 时，整块不渲染。
-  const hasPortrait = publicFileExists(portrait.src);
   const hasVideo = publicFileExists(video.src);
   const hasPoster = publicFileExists(video.poster);
 
@@ -19,25 +17,8 @@ export function PersonalHomePage() {
       <SiteHeader />
 
       <section id="top">
-        <div className={hasPortrait ? "intro-grid" : undefined}>
-          <div>
-            <h1 className="page-title">{hero.titleIntro}</h1>
-            <p className="hero-copy section">{hero.lead}</p>
-          </div>
-
-          {hasPortrait ? (
-            <figure className="portrait">
-              <Image
-                alt={portrait.alt}
-                height={880}
-                priority
-                sizes="(max-width: 860px) 100vw, 280px"
-                src={portrait.src}
-                width={720}
-              />
-            </figure>
-          ) : null}
-        </div>
+        <h1 className="page-title">{hero.titleIntro}</h1>
+        <p className="hero-copy section">{hero.lead}</p>
 
         <div className="button-row section">
           <a className="ghost-button" href={resume.viewHref} rel="noreferrer" target="_blank">

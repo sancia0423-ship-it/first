@@ -1,6 +1,4 @@
-把首页头像照片放在这个目录，命名为 `profile.jpg`（或 .png / .webp，
-改 lib/personal-site-content.ts 里 media.portrait.src 的后缀即可）。
+这个目录目前只放视频封面 `intro-poster.jpg`（由 public/videos/intro.mp4 抽帧生成）。
 
-建议：
-- 短边不小于 800px，避免在高分屏上发虚
-- 先压到 300KB 以内 —— 这个目录会整个打进 Docker 镜像
+以后如果要在首页加照片，把图片放进来，再在 lib/personal-site-content.ts 的
+media 里加回 portrait 配置即可。
