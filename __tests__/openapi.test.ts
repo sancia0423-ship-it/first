@@ -9,6 +9,7 @@ describe("buildOpenApiDocument", () => {
       "/api/v1/health",
       "/api/v1/interview/briefing",
       "/api/v1/interview/mock",
+      "/api/v1/youtube/transcript",
       "/api/v1/youtube/translate"
     ]);
   });

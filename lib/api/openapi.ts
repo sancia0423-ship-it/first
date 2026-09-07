@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MockActionSchema } from "@/lib/api/contracts";
 import { SearchResultSchema } from "@/lib/schemas";
 import {
+  YouTubeTranscriptResultSchema,
   YouTubeTranslationRequestSchema,
   YouTubeTranslationResultSchema
 } from "@/lib/youtube-agent/contracts";
@@ -112,6 +113,19 @@ export function buildOpenApiDocument(serverUrl?: string) {
           requestBody: jsonBody(toSchema(YouTubeTranslationRequestSchema, "input")),
           responses: {
             "200": jsonResponse("翻译完成", toSchema(YouTubeTranslationResultSchema, "output")),
+            ...commonErrors
+          }
+        }
+      },
+      "/api/v1/youtube/transcript": {
+        post: {
+          tags: ["youtube"],
+          summary: "只读取公开视频字幕原文，不做翻译",
+          description:
+            "抓字幕需要服务端能力，但不需要任何 AI key。自带 key 的客户端可以取走原文自行翻译。",
+          requestBody: jsonBody(toSchema(YouTubeTranslationRequestSchema, "input")),
+          responses: {
+            "200": jsonResponse("字幕读取完成", toSchema(YouTubeTranscriptResultSchema, "output")),
             ...commonErrors
           }
         }

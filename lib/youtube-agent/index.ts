@@ -14,8 +14,10 @@ import {
 } from "@/lib/config";
 import { mapWithConcurrency } from "@/lib/concurrency";
 import { runPythonScript } from "@/lib/youtube-agent/python";
+import { buildSrt } from "@/lib/srt";
 import {
   YouTubeCaptionTrackSchema,
+  type YouTubeTranscriptResult,
   type YouTubeTranslatedSegment,
   type YouTubeTranslationRequest,
   type YouTubeTranslationResult
@@ -296,24 +298,13 @@ async function buildSummaryIfPossible(text: string) {
   return response.output_parsed ?? null;
 }
 
-function formatSrtTimestamp(ms: number) {
-  const hours = Math.floor(ms / 3_600_000);
-  const minutes = Math.floor((ms % 3_600_000) / 60_000);
-  const seconds = Math.floor((ms % 60_000) / 1000);
-  const milliseconds = ms % 1000;
-
-  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":") + `,${String(milliseconds).padStart(3, "0")}`;
-}
-
-export function buildSrt(segments: Array<Pick<YouTubeTranslatedSegment, "startMs" | "endMs" | "translatedText">>) {
-  return segments
-    .map((segment, index) => {
-      return `${index + 1}\n${formatSrtTimestamp(segment.startMs)} --> ${formatSrtTimestamp(segment.endMs)}\n${segment.translatedText}`;
-    })
-    .join("\n\n");
-}
-
-export async function runYouTubeTranslation(params: YouTubeTranslationRequest): Promise<YouTubeTranslationResult> {
+/**
+ * 取字幕并清洗，不做翻译。
+ *
+ * 翻译流程和「浏览器自带 key」流程共用这一步：抓字幕需要服务端的 yt-dlp，
+ * 但不需要任何 AI key，所以它可以独立对外提供。
+ */
+async function loadTranscript(params: YouTubeTranslationRequest) {
   const videoId = parseYouTubeVideoId(params.url);
   if (!videoId) {
     throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
@@ -328,13 +319,10 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
           return null;
         }
 
-        const startMs = segment.startMs;
-        const durationMs = segment.durationMs;
-
         return {
-          startMs,
-          endMs: startMs + durationMs,
-          durationMs,
+          startMs: segment.startMs,
+          endMs: segment.startMs + segment.durationMs,
+          durationMs: segment.durationMs,
           sourceText
         };
       })
@@ -344,6 +332,45 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
   if (allSegments.length === 0) {
     throw new PublicError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。");
   }
+
+  return { videoId, transcriptPayload, allSegments };
+}
+
+/** 只返回原文字幕，交给调用方自己翻译。 */
+export async function fetchYouTubeTranscript(
+  params: YouTubeTranslationRequest
+): Promise<YouTubeTranscriptResult> {
+  const { videoId, transcriptPayload, allSegments } = await loadTranscript(params);
+  const warnings = [...transcriptPayload.warnings];
+  const segments = allSegments.slice(0, MAX_CAPTION_SEGMENTS);
+
+  if (allSegments.length > segments.length) {
+    warnings.push(
+      `这个视频字幕较长，本次只返回了前 ${segments.length} 条（共 ${allSegments.length} 条）。`
+    );
+  }
+
+  return {
+    videoId,
+    videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    title: transcriptPayload.title || "Untitled video",
+    description: transcriptPayload.description || "",
+    sourceLanguage: transcriptPayload.selectedTrack.languageCode,
+    sourceTrackLabel: transcriptPayload.selectedTrack.label,
+    warnings,
+    availableTracks: transcriptPayload.availableTracks,
+    segments: segments.map((segment, index) => ({
+      id: `seg-${index + 1}`,
+      startMs: segment.startMs,
+      endMs: segment.endMs,
+      durationMs: segment.durationMs,
+      sourceText: segment.sourceText
+    }))
+  };
+}
+
+export async function runYouTubeTranslation(params: YouTubeTranslationRequest): Promise<YouTubeTranslationResult> {
+  const { videoId, transcriptPayload, allSegments } = await loadTranscript(params);
 
   const warnings = [...transcriptPayload.warnings];
 
@@ -415,3 +442,5 @@ export async function runYouTubeTranslation(params: YouTubeTranslationRequest): 
     srt: buildSrt(segments)
   };
 }
+
+export { buildSrt };

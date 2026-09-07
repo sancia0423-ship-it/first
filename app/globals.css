@@ -1060,6 +1060,35 @@ code {
   gap: 2px;
 }
 
+/* ---- bring-your-own-key ---- */
+
+.byok-box {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: var(--gap-xs) 0;
+  margin-bottom: var(--gap-md);
+}
+
+.byok-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+}
+
+.byok-panel {
+  display: grid;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-sm);
+  max-width: var(--measure);
+}
+
+.byok-panel strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
 /* ---- caption toolbar ---- */
 
 .caption-toolbar {

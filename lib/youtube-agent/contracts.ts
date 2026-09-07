@@ -37,6 +37,28 @@ export const YouTubeTranslationResultSchema = z.object({
   srt: z.string()
 });
 
+/** 只取字幕、不翻译的结果。供浏览器自带 key 时在本地完成翻译。 */
+export const YouTubeTranscriptResultSchema = z.object({
+  videoId: z.string(),
+  videoUrl: z.string().url(),
+  title: z.string(),
+  description: z.string(),
+  sourceLanguage: z.string(),
+  sourceTrackLabel: z.string(),
+  warnings: z.array(z.string()),
+  availableTracks: z.array(YouTubeCaptionTrackSchema),
+  segments: z.array(
+    z.object({
+      id: z.string(),
+      startMs: z.number().int().nonnegative(),
+      endMs: z.number().int().nonnegative(),
+      durationMs: z.number().int().nonnegative(),
+      sourceText: z.string()
+    })
+  )
+});
+
+export type YouTubeTranscriptResult = z.infer<typeof YouTubeTranscriptResultSchema>;
 export type YouTubeTranslationRequest = z.infer<typeof YouTubeTranslationRequestSchema>;
 export type YouTubeCaptionTrack = z.infer<typeof YouTubeCaptionTrackSchema>;
 export type YouTubeTranslatedSegment = z.infer<typeof YouTubeTranslatedSegmentSchema>;

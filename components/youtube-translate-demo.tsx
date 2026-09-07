@@ -2,9 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  YouTubeTranscriptResultSchema,
   YouTubeTranslationResultSchema,
   type YouTubeTranslationResult
 } from "@/lib/youtube-agent/contracts";
+import {
+  BrowserTranslateError,
+  DEFAULT_BYOK_MODEL,
+  maskKey,
+  readStoredKey,
+  readStoredModel,
+  storeKey,
+  translateSegmentsInBrowser,
+  type TranslateProgress
+} from "@/lib/browser-translate";
+import { buildSrt } from "@/lib/srt";
 
 type YouTubePlayer = {
   destroy: () => void;
@@ -138,45 +150,117 @@ export function YouTubeTranslateDemo() {
     key: "",
     items: []
   });
+  // key 只存在浏览器里，首次渲染用惰性初始化读取，避免服务端渲染时访问 localStorage。
+  const [apiKey, setApiKey] = useState(() => readStoredKey());
+  const [model, setModel] = useState(() => readStoredModel());
+  const [keyDraft, setKeyDraft] = useState("");
+  const [showKeyPanel, setShowKeyPanel] = useState(false);
+  const [progress, setProgress] = useState<TranslateProgress | null>(null);
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
+
+  /** 有自带 key 时：服务端只取原文，翻译在浏览器里用访客自己的 key 完成。 */
+  async function translateWithOwnKey(nextUrl: string, nextSourceLanguage: string) {
+    const response = await fetch("/api/v1/youtube/transcript", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: nextUrl, sourceLanguage: nextSourceLanguage })
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.message || payload.error || "字幕读取失败");
+    }
+
+    const parsed = YouTubeTranscriptResultSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error("服务端返回结构异常，请稍后再试。");
+    }
+
+    const transcript = parsed.data;
+    setProgress({ done: 0, total: transcript.segments.length });
+
+    const { translations, translatedCount } = await translateSegmentsInBrowser(
+      transcript.segments.map((segment) => ({ id: segment.id, sourceText: segment.sourceText })),
+      { apiKey, model, onProgress: setProgress }
+    );
+
+    if (translatedCount === 0) {
+      throw new BrowserTranslateError("一条字幕都没有翻译成功，请检查 API key 或稍后再试。");
+    }
+
+    const segments = transcript.segments.map((segment, index) => ({
+      ...segment,
+      translatedText: translations[index] || segment.sourceText
+    }));
+
+    const untranslated = segments.filter(
+      (segment) => segment.translatedText.trim() === segment.sourceText.trim()
+    ).length;
+
+    const warnings = [...transcript.warnings];
+    if (untranslated > 0) {
+      warnings.push(`有 ${untranslated} 条字幕未能翻译，已保留原文。`);
+    }
+
+    return YouTubeTranslationResultSchema.parse({
+      videoId: transcript.videoId,
+      videoUrl: transcript.videoUrl,
+      title: transcript.title,
+      description: transcript.description,
+      sourceLanguage: transcript.sourceLanguage,
+      sourceTrackLabel: transcript.sourceTrackLabel,
+      translationMode: "openai",
+      warnings,
+      takeaways: [],
+      availableTracks: transcript.availableTracks,
+      segments,
+      srt: buildSrt(segments)
+    });
+  }
+
+  /** 没有自带 key 时走服务端整条链路。 */
+  async function translateOnServer(nextUrl: string, nextSourceLanguage: string) {
+    const response = await fetch("/api/youtube-translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: nextUrl, sourceLanguage: nextSourceLanguage })
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "翻译请求失败");
+    }
+
+    const parsed = YouTubeTranslationResultSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error("服务端返回结构异常，请稍后再试。");
+    }
+
+    return parsed.data;
+  }
 
   async function submit(nextUrl = url, nextSourceLanguage = sourceLanguage) {
     setIsSubmitting(true);
     setError("");
     setActiveSegmentIndex(-1);
+    setProgress(null);
     lastSpokenSegmentRef.current = null;
 
     try {
-      const response = await fetch("/api/youtube-translate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          url: nextUrl,
-          sourceLanguage: nextSourceLanguage
-        })
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "翻译请求失败");
-      }
-
-      const parsed = YouTubeTranslationResultSchema.safeParse(payload);
-      if (!parsed.success) {
-        throw new Error("服务端返回结构异常，请稍后再试。");
-      }
-
-      setResult(parsed.data);
+      setResult(
+        apiKey
+          ? await translateWithOwnKey(nextUrl, nextSourceLanguage)
+          : await translateOnServer(nextUrl, nextSourceLanguage)
+      );
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "未知错误";
       setResult(null);
       setError(message);
     } finally {
       setIsSubmitting(false);
+      setProgress(null);
     }
   }
 
@@ -461,6 +545,20 @@ export function YouTubeTranslateDemo() {
   }
 
   const canSubmit = url.trim().length > 0;
+  const progressPercent = progress && progress.total > 0
+    ? Math.round((progress.done / progress.total) * 100)
+    : 0;
+
+  const progressNote = progress ? (
+    <div className="section">
+      <p className="muted form-helper">
+        正在用你自己的 key 翻译：{progress.done} / {progress.total} 条（{progressPercent}%）
+      </p>
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="section-grid youtube-demo-grid">
@@ -474,6 +572,94 @@ export function YouTubeTranslateDemo() {
         <p className="muted search-panel-copy">
           支持大多数带公开字幕的公开视频。翻译完成后，你可以一边看视频，一边看中文字幕，也可以打开中文朗读。
         </p>
+
+        <div className="byok-box">
+          <div className="byok-head">
+            <span className="section-kicker">
+              {apiKey ? `已启用自带 key · ${maskKey(apiKey)}` : "翻译需要你自己的 OpenAI key"}
+            </span>
+            <button
+              className="ghost-button"
+              onClick={() => {
+                setKeyDraft("");
+                setShowKeyPanel((open) => !open);
+              }}
+              type="button"
+            >
+              {showKeyPanel ? "收起" : apiKey ? "更换" : "填写 key"}
+            </button>
+          </div>
+
+          {showKeyPanel ? (
+            <div className="byok-panel">
+              <p className="muted form-helper">
+                key 只保存在你这台设备的浏览器里，翻译时由你的浏览器直接请求 OpenAI，
+                <strong>不会经过这个网站的服务器</strong>。你可以打开浏览器的网络面板自己核实。
+              </p>
+
+              <label>
+                OpenAI API key
+                <input
+                  autoComplete="off"
+                  onChange={(event) => setKeyDraft(event.target.value)}
+                  placeholder="sk-..."
+                  spellCheck={false}
+                  type="password"
+                  value={keyDraft}
+                />
+              </label>
+
+              <label>
+                模型
+                <input
+                  onChange={(event) => setModel(event.target.value)}
+                  placeholder={DEFAULT_BYOK_MODEL}
+                  spellCheck={false}
+                  value={model}
+                />
+              </label>
+
+              <div className="button-row portfolio-link-row">
+                <button
+                  className="primary-button"
+                  disabled={!keyDraft.trim()}
+                  onClick={() => {
+                    const next = keyDraft.trim();
+                    setApiKey(next);
+                    storeKey(next, model);
+                    setKeyDraft("");
+                    setShowKeyPanel(false);
+                  }}
+                  type="button"
+                >
+                  保存
+                </button>
+                {apiKey ? (
+                  <button
+                    className="ghost-button"
+                    onClick={() => {
+                      setApiKey("");
+                      storeKey("", DEFAULT_BYOK_MODEL);
+                      setModel(DEFAULT_BYOK_MODEL);
+                      setShowKeyPanel(false);
+                    }}
+                    type="button"
+                  >
+                    清除已保存的 key
+                  </button>
+                ) : null}
+                <a
+                  className="ghost-button"
+                  href="https://platform.openai.com/api-keys"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  去 OpenAI 创建 key
+                </a>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div className="search-form">
           <div className="youtube-form-grid">
@@ -506,9 +692,13 @@ export function YouTubeTranslateDemo() {
               {isSubmitting ? "翻译中..." : "开始翻译"}
             </button>
             <span className="muted form-helper">
-              没有 OpenAI key 也能用；如果已经配置，翻译会更自然，还会补一段中文速览。
+              {apiKey
+                ? "翻译会用你自己的 key 在浏览器里完成，费用计入你的 OpenAI 账户。"
+                : "字幕读取不需要 key；翻译需要填写上方的 OpenAI key。"}
             </span>
           </div>
+
+          {progressNote}
 
           <div className="example-block">
             <p className="example-label">快速试试</p>
