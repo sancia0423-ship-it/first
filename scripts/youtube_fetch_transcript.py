@@ -24,18 +24,37 @@ class TrackSelection:
     url: str
 
 
-def build_ydl() -> YoutubeDL:
-    return YoutubeDL(
-        {
-            "skip_download": True,
-            "quiet": True,
-            "no_warnings": True,
-            # Certificate verification stays on: these requests go out over the
-            # public internet and the response is fed straight into the app.
-            "socket_timeout": 20,
-            "retries": 2
-        }
+# YouTube 对数据中心 IP 会触发机器人检测，不同的 player client 触发概率不同。
+# 按顺序尝试，任意一个拿到字幕就停。default 放最后，因为它最容易被拦。
+PLAYER_CLIENTS = ("tv_embedded", "ios", "android", "web_safari", "default")
+
+
+def build_ydl(player_client: str) -> YoutubeDL:
+    options = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        # Certificate verification stays on: these requests go out over the
+        # public internet and the response is fed straight into the app.
+        "socket_timeout": 20,
+        "retries": 2
+    }
+
+    if player_client != "default":
+        options["extractor_args"] = {"youtube": {"player_client": [player_client]}}
+
+    return YoutubeDL(options)
+
+
+def is_bot_block(message: str) -> bool:
+    markers = (
+        "Sign in to confirm",
+        "confirm you're not a bot",
+        "LOGIN_REQUIRED",
+        "not a bot",
+        "cookies"
     )
+    return any(marker in message for marker in markers)
 
 
 def pick_best_entry(entries: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -213,15 +232,46 @@ def main() -> int:
     if not VIDEO_ID_PATTERN.match(video_id):
         raise UserFacingError("视频 ID 不合法，请重新输入 YouTube 链接。")
 
-    with build_ydl() as ydl:
-        info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    last_error: Exception | None = None
+    blocked_everywhere = True
+    info = None
+    tracks: list[TrackSelection] = []
+    segments: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    selected_track = None
 
-        tracks = collect_available_tracks(info)
-        if not tracks:
-            raise UserFacingError("这个视频当前没有可读取的公开字幕。请换一个带字幕的视频再试。")
+    for player_client in PLAYER_CLIENTS:
+        try:
+            with build_ydl(player_client) as ydl:
+                info = ydl.extract_info(url, download=False)
+                tracks = collect_available_tracks(info)
+                if not tracks:
+                    # 这个 client 能访问但确实没字幕，换 client 也不会有。
+                    blocked_everywhere = False
+                    raise UserFacingError(
+                        "这个视频当前没有可读取的公开字幕。请换一个带字幕的视频再试。"
+                    )
 
-        selected_track, warnings = choose_track(tracks, preferred_language)
-        segments = fetch_segments(ydl, selected_track)
+                selected_track, warnings = choose_track(tracks, preferred_language)
+                segments = fetch_segments(ydl, selected_track)
+                break
+        except UserFacingError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - 换下一个 client 再试
+            last_error = exc
+            if not is_bot_block(str(exc)):
+                blocked_everywhere = False
+
+    if selected_track is None:
+        if last_error is not None and blocked_everywhere:
+            raise UserFacingError(
+                "YouTube 暂时拒绝了来自本服务器的字幕请求（机器人检测）。"
+                "这是服务器网络出口被限制，不是视频的问题，请稍后再试。"
+            )
+        raise UserFacingError(
+            f"读取字幕失败：{last_error}" if last_error else "读取字幕失败，请稍后再试。"
+        )
 
     if not segments:
         raise UserFacingError("字幕轨道存在，但没有成功读取到正文。请换一个视频再试。")

@@ -741,14 +741,16 @@ export function YouTubeTranslateDemo() {
           </div>
         ) : null}
 
-        {!result ? (
+        {!result && !error ? (
           <div className="panel empty-state">
             <h2 className="panel-title">翻译结果会显示在这里</h2>
             <p className="muted">
               这里会出现播放器、中文字幕、原文对照、SRT 下载按钮，以及中文朗读开关。
             </p>
           </div>
-        ) : (
+        ) : null}
+
+        {result ? (
           <div className="youtube-results-stack">
             <div className="panel">
               <div className="result-header">
@@ -1034,7 +1036,7 @@ export function YouTubeTranslateDemo() {
               </div>
             ) : null}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
