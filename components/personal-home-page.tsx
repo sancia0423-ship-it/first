@@ -11,8 +11,7 @@ export function PersonalHomePage() {
       <SiteHeader />
 
       <section id="top">
-        <span className="eyebrow">{hero.kicker}</span>
-        <h1 className="hero-title">{hero.titleIntro}</h1>
+        <h1 className="page-title">{hero.titleIntro}</h1>
         <p className="hero-copy section">{hero.lead}</p>
 
         <div className="button-row section">
@@ -33,8 +32,8 @@ export function PersonalHomePage() {
 
       <section id="about">
         <div className="section-header">
-          <span className="section-kicker">{about.kicker}</span>
-          <h2 className="panel-title">{about.title}</h2>
+          <h2 className="section-title">{about.kicker}</h2>
+          <p className="section-lede">{about.title}</p>
           <p className="section-copy muted">{about.summary}</p>
         </div>
 
@@ -58,8 +57,8 @@ export function PersonalHomePage() {
 
       <section id="work">
         <div className="section-header">
-          <span className="section-kicker">{projects.kicker}</span>
-          <h2 className="panel-title">{projects.title}</h2>
+          <h2 className="section-title">{projects.kicker}</h2>
+          <p className="section-lede">{projects.title}</p>
           <p className="section-copy muted">{projects.summary}</p>
         </div>
 
@@ -83,8 +82,8 @@ export function PersonalHomePage() {
 
       <section id="resume">
         <div className="section-header">
-          <span className="section-kicker">{resume.kicker}</span>
-          <h2 className="panel-title">{resume.title}</h2>
+          <h2 className="section-title">{resume.kicker}</h2>
+          <p className="section-lede">{resume.title}</p>
         </div>
 
         <ul className="portfolio-list">
@@ -113,8 +112,8 @@ export function PersonalHomePage() {
 
       <section id="learning">
         <div className="section-header">
-          <span className="section-kicker">{learningPreview.kicker}</span>
-          <h2 className="panel-title">{learningPreview.title}</h2>
+          <h2 className="section-title">{learningPreview.kicker}</h2>
+          <p className="section-lede">{learningPreview.title}</p>
           <p className="section-copy muted">{learningPreview.summary}</p>
         </div>
 
@@ -133,8 +132,8 @@ export function PersonalHomePage() {
 
       <section id="tools-preview">
         <div className="section-header">
-          <span className="section-kicker">{toolsPreview.kicker}</span>
-          <h2 className="panel-title">{toolsPreview.title}</h2>
+          <h2 className="section-title">{toolsPreview.kicker}</h2>
+          <p className="section-lede">{toolsPreview.title}</p>
           <p className="section-copy muted">{toolsPreview.summary}</p>
         </div>
 
@@ -153,8 +152,8 @@ export function PersonalHomePage() {
 
       <section id="contact">
         <div className="section-header">
-          <span className="section-kicker">{contact.kicker}</span>
-          <h2 className="panel-title">{contact.title}</h2>
+          <h2 className="section-title">{contact.kicker}</h2>
+          <p className="section-lede">{contact.title}</p>
           <p className="section-copy muted">{contact.summary}</p>
         </div>
 

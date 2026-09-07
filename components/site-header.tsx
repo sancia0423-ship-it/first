@@ -2,19 +2,21 @@ import Link from "next/link";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 const navItems = [
-  { label: "简介", href: "/" },
-  { label: "学习资料", href: "/ai-learning" },
+  { label: "自我介绍", href: "/" },
+  { label: "AI 学习资料", href: "/ai-learning" },
   { label: "小工具", href: "/tools" },
-  { label: "模拟面试", href: "/mock" },
-  { label: "API", href: "/api-docs" }
+  { label: "模拟面试", href: "/mock" }
 ];
 
 export function SiteHeader() {
+  const { handle, subtitle, title } = personalSiteContent.site;
+
   return (
     <header className="site-header">
       <Link className="brand-lockup" href="/">
-        <strong className="brand-title">{personalSiteContent.site.title}</strong>
-        <span className="brand-subtitle">{personalSiteContent.site.subtitle}</span>
+        <strong className="brand-title">{title}</strong>
+        <span className="brand-handle">{handle}</span>
+        <span className="brand-subtitle">{subtitle}</span>
       </Link>
 
       <nav className="header-nav" aria-label="Primary">
@@ -24,8 +26,6 @@ export function SiteHeader() {
           </Link>
         ))}
       </nav>
-
-      <p className="header-badge">悉尼 / AI 产品</p>
     </header>
   );
 }

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { promptLibrary } from "@/lib/prompt-library";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
 
@@ -7,7 +8,7 @@ const routes = [
   { path: "/ai-learning", priority: 0.8 },
   { path: "/tools", priority: 0.8 },
   { path: "/mock", priority: 0.6 },
-  { path: "/api-docs", priority: 0.6 }
+  ...promptLibrary.map((entry) => ({ path: `/prompts/${entry.slug}`, priority: 0.5 }))
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

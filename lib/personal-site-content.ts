@@ -1,14 +1,18 @@
 export const personalSiteContent = {
   site: {
-    title: "萨奇",
-    subtitle: "AI 产品 / 数据分析 / 作品集网站",
+    /** Browser tab / metadata name. */
+    siteName: "sancia_aboutme",
+    /** Display name in the masthead. */
+    title: "夏琪",
+    handle: "sancia",
+    subtitle: "AI 产品 / 数据分析",
     description:
-      "萨奇的个人网站，包含简历、AI 学习资料，以及自己做的小工具。"
+      "这个网站有我的介绍和学习资料，有自己做的工具，做得很简单。"
   },
   home: {
     hero: {
-      kicker: "作品集式个人主页",
-      titleIntro: "你好，我是萨奇",
+      kicker: "",
+      titleIntro: "你好，我是夏琪",
       highlightWords: {
         first: "",
         second: "",
@@ -98,7 +102,7 @@ export const personalSiteContent = {
     resume: {
       kicker: "简历",
       title: "简历与个人资料",
-      previewTitle: "萨奇 Resume",
+      previewTitle: "夏琪 Resume",
       previewHint: "AI Product / Data Analysis / Business Analytics",
       viewHref: "/docs/resume/xiaqi-resume.pdf",
       highlights: [
@@ -195,7 +199,8 @@ export const personalSiteContent = {
     referenceShelf: {
       kicker: "文献笔记",
       title: "Articles 文献清单",
-      summary: "这里先把 `Articles.docx` 里的文章全部整理进来。之后我会继续在这个板块补充自己看过的内容、阅读记录和简单笔记。",
+      summary:
+        "这里先把我看的重要的 `Articles.docx` 里的文章全部整理进来。之后我会继续在这个板块补充自己看过的内容、阅读记录和简单笔记。",
       fileHref: "/docs/ai-learning/articles/articles.docx",
       items: [
         {

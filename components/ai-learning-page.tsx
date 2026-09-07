@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
+import { promptLibrary } from "@/lib/prompt-library";
 
 export function AiLearningPage() {
   const { hero, lectures, overviewCards, practice, referenceShelf } = personalSiteContent.learning;
@@ -12,7 +14,7 @@ export function AiLearningPage() {
         <div className="hero-grid">
           <div>
             <span className="eyebrow">{hero.kicker}</span>
-            <h1 className="hero-title hero-title-compact">{hero.title}</h1>
+            <h1 className="page-title">{hero.title}</h1>
             <p className="hero-copy">{hero.lead}</p>
           </div>
 
@@ -31,8 +33,8 @@ export function AiLearningPage() {
       <section className="portfolio-section section" id="lectures">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">文件</span>
-            <h2 className="panel-title">AI 学习文件</h2>
+            <h2 className="section-title">AI 学习文件</h2>
+            <p className="section-lede">课程 lecture 与基础入门资料，按顺序看即可。</p>
           </div>
         </div>
 
@@ -62,11 +64,34 @@ export function AiLearningPage() {
         </div>
       </section>
 
+      <section className="portfolio-section section" id="prompts">
+        <div className="section-header portfolio-section-header">
+          <div>
+            <h2 className="section-title">Prompt 合集</h2>
+            <p className="section-lede">
+              我自己在用的提示词，每一条都能直接复制走。比起收藏一堆链接，我更想把真正反复用到的几条整理清楚。
+            </p>
+          </div>
+        </div>
+
+        <ul className="stack-list">
+          {promptLibrary.map((item) => (
+            <li key={item.slug}>
+              <span className="story-badge">{item.label}</span>
+              <h3 className="entry-title">{item.title}</h3>
+              <p className="muted">{item.summary}</p>
+              <Link className="ghost-button" href={`/prompts/${item.slug}`}>
+                打开
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="portfolio-section section" id="practice">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">{practice.kicker}</span>
-            <h2 className="panel-title">{practice.title}</h2>
+            <h2 className="section-title">{practice.title}</h2>
           </div>
           <p className="section-copy">{practice.summary}</p>
         </div>
@@ -82,8 +107,7 @@ export function AiLearningPage() {
       <section className="portfolio-section section" id="references">
         <div className="section-header portfolio-section-header">
           <div>
-            <span className="section-kicker">{referenceShelf.kicker}</span>
-            <h2 className="panel-title">{referenceShelf.title}</h2>
+            <h2 className="section-title">{referenceShelf.title}</h2>
           </div>
           <div>
             <p className="section-copy">{referenceShelf.summary}</p>

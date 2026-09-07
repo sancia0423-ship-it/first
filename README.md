@@ -71,7 +71,7 @@ npm run lint && npm run typecheck && npm test && npm run build
 | `POST /api/v1/interview/mock` | 模拟面试：`start` / `evaluate` / `summary` |
 | `GET /api/openapi.json` | OpenAPI 3.1 规范，由服务端的 zod schema 直接生成 |
 
-浏览器打开 `/api-docs` 有完整说明和调用示例。
+接口仍然可用，但站点导航里不再展示 —— 这是个人作品集，API 说明留在这份 README 和 `/api/openapi.json` 里。
 
 鉴权由 `API_KEYS` 控制：配置后 `/api/v1/*` 需要 `Authorization: Bearer <key>`，
 不配置则开放访问（本地开发方便，公网部署前记得配上）。

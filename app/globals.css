@@ -28,10 +28,15 @@
   --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
 
-  /* One size for content, one for meta. That is the whole scale. */
+  /* Content sits at one size; headings get a deliberately short scale on top.
+     The reference keeps everything at a single size, but this site has far more
+     nesting than an exhibition list — without a scale the sections read as one
+     undifferentiated column. */
   --size-body: 13px;
   --size-meta: 11.5px;
   --size-lede: 15px;
+  --size-h2: 17px;
+  --size-h1: 27px;
 
   --leading-tight: 1.35;
   --leading-body: 1.75;
@@ -244,21 +249,37 @@ img {
   padding-top: 0;
 }
 
-/* The signature divider, on every top-level section but the first. */
+/* The signature divider, on every top-level section but the first. A rule
+   carries further than the bare glyph did once headings gained weight. */
+.page-shell > section:not(:first-of-type) {
+  border-top: 1px solid var(--rule);
+}
+
 .page-shell > section:not(:first-of-type)::before {
   content: "⎯";
   display: block;
-  margin-bottom: var(--gap-md);
-  color: var(--ink);
+  margin: var(--gap-md) 0 var(--gap-sm);
+  color: var(--ink-faint);
   line-height: 1;
 }
 
 .section-header,
 .portfolio-section-header {
   display: grid;
-  gap: var(--gap-sm);
+  gap: var(--gap-xs);
   margin-bottom: var(--gap-md);
   max-width: var(--measure);
+}
+
+/* The kicker sits tight above its title rather than floating. */
+.section-header > .section-kicker,
+.section-header > .eyebrow {
+  margin-bottom: -2px;
+}
+
+.section-header > .section-copy,
+.section-header > p {
+  margin-top: var(--gap-xs);
 }
 
 .section-header-inline {
@@ -285,15 +306,38 @@ img {
   letter-spacing: 0.01em;
 }
 
+/* Page title — one per page, sits under the grey eyebrow. */
+.hero-title,
+.page-title {
+  font-size: var(--size-h1);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--gap-xs);
+}
+
+/* Section title — carries a rule so each block announces itself. */
 .panel-title,
-.hero-title {
+.section-title {
+  font-size: var(--size-h2);
+  font-weight: 500;
+  line-height: 1.4;
+  padding-bottom: var(--gap-xs);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Entry title — the smallest heading, inside lists and grids. */
+.entry-title,
+.article-grid h3,
+.project-grid h3,
+.showcase-grid h3,
+.stack-list h3 {
   font-size: var(--size-body);
-  font-weight: 400;
-  line-height: var(--leading-tight);
+  font-weight: 500;
 }
 
 .hero-title-compact {
-  font-size: var(--size-body);
+  font-size: var(--size-h1);
 }
 
 .section-copy,
@@ -815,6 +859,58 @@ input[type="radio"]:checked {
 .mode-card-active span,
 .caption-card-active span {
   color: var(--ink-muted);
+}
+
+/* The sentence under a section title — sets up the block, stays subordinate. */
+.section-lede {
+  font-size: var(--size-body);
+  color: var(--ink);
+  max-width: var(--measure);
+}
+
+/* ==========================================================================
+   Prompt library
+   ========================================================================== */
+
+.prompt-block {
+  margin-top: var(--gap-sm);
+}
+
+.prompt-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-xs);
+}
+
+.prompt-body {
+  max-height: 620px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--gap-sm);
+}
+
+.numbered-list {
+  counter-reset: step;
+}
+
+.numbered-list > li {
+  counter-increment: step;
+  grid-template-columns: 20px minmax(0, 1fr);
+  display: grid;
+  gap: var(--gap-xs);
+  align-items: start;
+}
+
+.numbered-list > li::before {
+  content: counter(step);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==========================================================================
