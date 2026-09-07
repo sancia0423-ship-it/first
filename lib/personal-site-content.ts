@@ -99,13 +99,14 @@ export const personalSiteContent = {
         },
         {
           badge: "NSW Government",
-          // TODO(夏琪)：把下面这段换成你实际做的事——数据来自哪里、看板给谁用、
-          // 解决了什么问题。现在这版只写了能确认的部分，没有编造任何数字。
-          title: "NSW 政府 IDE 部门 Tableau 数据看板",
-          body: "为新南威尔士州政府 IDE 部门搭建 Tableau 数据看板，用于公开数据的整理与可视化呈现。",
-          metrics: ["Tableau", "Data Visualisation", "Public Sector"],
+          title: "澳洲职场性别平等数据看板",
+          body:
+            "为新南威尔士州政府 IDE 部门做的 Tableau 看板，用公开雇主数据回答「性别薪酬差距出现在哪里」。" +
+            "从整体中位数与平均数差距入手，逐层下钻到不同规模雇主的管理层性别构成、各薪酬四分位的女性占比、" +
+            "各行业董事会女性比例，最后聚焦制造业细分行业的改善幅度与女性管理者占比。",
+          metrics: ["Tableau", "Gender Pay Gap", "Public Sector", "Data Storytelling"],
           image: "/images/projects/nsw-tableau.png",
-          imageAlt: "NSW 政府 IDE 部门 Tableau 看板截图"
+          imageAlt: "澳洲职场性别平等 Tableau 看板：整体性别薪酬差距、分层与分行业下钻"
         }
       ]
     },
