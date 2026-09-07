@@ -14,18 +14,9 @@ import {
   hasOpenAIKey
 } from "@/lib/config";
 import { mapWithConcurrency } from "@/lib/concurrency";
-import { runPythonScript } from "@/lib/youtube-agent/python";
-import {
-  fetchTranscriptFromSupadata,
-  hasSupadataKey,
-  recordPrimaryFailure,
-  recordPrimarySuccess,
-  shouldTryPrimarySource,
-  type SupadataTranscript
-} from "@/lib/youtube-agent/supadata";
+import { fetchTranscript } from "@/lib/youtube-agent/transcript-source";
 import { buildSrt } from "@/lib/srt";
 import {
-  YouTubeCaptionTrackSchema,
   type YouTubeTranscriptResult,
   type YouTubeTranslatedSegment,
   type YouTubeTranslationRequest,
@@ -44,28 +35,6 @@ const TranslationBatchSchema = z.object({
 const VideoSummarySchema = z.object({
   summary: z.string(),
   takeaways: z.array(z.string()).min(2).max(4)
-});
-
-const TranscriptFetchResultSchema = z.object({
-  title: z.string().default(""),
-  description: z.string().default(""),
-  availableTracks: z.array(YouTubeCaptionTrackSchema).default([]),
-  selectedTrack: z.object({
-    languageCode: z.string(),
-    label: z.string(),
-    kind: z.enum(["manual", "auto"]),
-    isTranslatable: z.boolean()
-  }),
-  warnings: z.array(z.string()).default([]),
-  segments: z
-    .array(
-      z.object({
-        startMs: z.number().int().nonnegative(),
-        durationMs: z.number().int().nonnegative(),
-        sourceText: z.string()
-      })
-    )
-    .min(1)
 });
 
 /** Chunks are independent, so a few can be in flight without risking rate limits. */
@@ -176,20 +145,6 @@ function coalesceSegments(segments: RawCaptionSegment[]) {
   return merged;
 }
 
-async function fetchTranscriptWithPython(videoId: string, sourceLanguage: string) {
-  const raw = await runPythonScript<unknown>("youtube_fetch_transcript.py", {
-    videoId,
-    sourceLanguage
-  });
-
-  const parsed = TranscriptFetchResultSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new PublicError("字幕服务返回结构异常，请稍后再试。");
-  }
-
-  return parsed.data;
-}
-
 function chunkSegments(segments: RawCaptionSegment[], maxItems: number, maxChars: number) {
   const chunks: RawCaptionSegment[][] = [];
   let current: RawCaptionSegment[] = [];
@@ -264,30 +219,6 @@ async function translateSegmentsWithOpenAI(segments: RawCaptionSegment[]) {
   return segments.map((segment) => translated.get(`${segment.startMs}:${segment.endMs}`) || segment.sourceText);
 }
 
-async function translateSegmentsWithPython(segments: RawCaptionSegment[]) {
-  const payload = await runPythonScript<{
-    translations?: Array<string | null>;
-    translatedCount?: number;
-    totalCount?: number;
-  }>("youtube_translate_fallback.py", {
-    texts: segments.map((segment) => segment.sourceText)
-  });
-
-  const translations = payload.translations ?? [];
-
-  // The helper returns the source text for anything it could not translate. If
-  // it could not translate a single segment, the upstream service is down and
-  // handing back the original subtitles would look like a successful result.
-  if (!payload.translatedCount) {
-    throw new PublicError("字幕翻译服务暂时不可用，请稍后再试。");
-  }
-
-  return segments.map((segment, index) => {
-    const translated = translations[index];
-    return typeof translated === "string" && translated.trim() ? translated.trim() : segment.sourceText;
-  });
-}
-
 async function buildSummaryIfPossible(text: string) {
   const client = getClient();
   if (!client || !text.trim()) {
@@ -310,29 +241,9 @@ async function buildSummaryIfPossible(text: string) {
 /**
  * 取字幕并清洗，不做翻译。
  *
- * 翻译流程和「浏览器自带 key」流程共用这一步：抓字幕需要服务端的 yt-dlp，
+ * 翻译流程和「浏览器自带 key」流程共用这一步：抓字幕需要服务端的字幕服务，
  * 但不需要任何 AI key，所以它可以独立对外提供。
  */
-/** 把备用源的结果整理成和主源一致的结构。 */
-function buildFallbackPayload(fallback: SupadataTranscript) {
-  const label = fallback.languageCode || "备用字幕源";
-  const track = {
-    languageCode: fallback.languageCode,
-    label,
-    kind: "auto" as const,
-    isTranslatable: true
-  };
-
-  return {
-    title: "",
-    description: "",
-    availableTracks: [track],
-    selectedTrack: track,
-    warnings: ["主字幕源不可用，本次通过备用服务读取。"],
-    segments: fallback.segments
-  };
-}
-
 /** 清洗并合并相邻字幕。空字幕会被丢掉，所以结果可能为空。 */
 function normalizeSegments(
   segments: Array<{ startMs: number; durationMs: number; sourceText: string }>
@@ -368,42 +279,30 @@ async function loadTranscript(params: YouTubeTranslationRequest) {
     throw new PublicError("请输入有效的 YouTube 链接。当前支持 watch、shorts、embed 和 youtu.be。");
   }
 
-  let transcriptPayload: Awaited<ReturnType<typeof fetchTranscriptWithPython>>;
+  const transcript = await fetchTranscript(videoId, params.sourceLanguage);
+  const label = transcript.languageCode || "字幕";
 
-  // 主源正处在熔断冷却期时直接走备用源，省下必然失败的十几秒。
-  if (!shouldTryPrimarySource()) {
-    const fallback = await fetchTranscriptFromSupadata(videoId, params.sourceLanguage);
-    return {
-      videoId,
-      transcriptPayload: buildFallbackPayload(fallback),
-      allSegments: normalizeSegments(fallback.segments)
-    };
-  }
-
-  try {
-    transcriptPayload = await fetchTranscriptWithPython(videoId, params.sourceLanguage);
-    recordPrimarySuccess();
-  } catch (ytdlpError) {
-    recordPrimaryFailure();
-    // yt-dlp 从机房 IP 抓字幕会被 YouTube 间歇拦截。配了备用源就改走那条路。
-    if (!hasSupadataKey()) {
-      throw ytdlpError;
-    }
-
-    console.warn("[youtube] yt-dlp failed, falling back to supadata", ytdlpError);
-
-    try {
-      transcriptPayload = buildFallbackPayload(
-        await fetchTranscriptFromSupadata(videoId, params.sourceLanguage)
-      );
-    } catch (fallbackError) {
-      console.error("[youtube] supadata fallback also failed", fallbackError);
-      // 报原始错误：备用源的失败对访客没有意义。
-      throw ytdlpError;
-    }
-  }
-
-  return { videoId, transcriptPayload, allSegments: normalizeSegments(transcriptPayload.segments) };
+  return {
+    videoId,
+    transcriptPayload: {
+      title: transcript.title,
+      description: "",
+      availableTracks: transcript.availableLanguages.map((code) => ({
+        languageCode: code,
+        label: code,
+        kind: "auto" as const,
+        isTranslatable: true
+      })),
+      selectedTrack: {
+        languageCode: transcript.languageCode,
+        label,
+        kind: "auto" as const,
+        isTranslatable: true
+      },
+      warnings: [] as string[]
+    },
+    allSegments: normalizeSegments(transcript.segments)
+  };
 }
 
 /** 只返回原文字幕，交给调用方自己翻译。 */
@@ -461,21 +360,14 @@ export async function runYouTubeTranslation(
     );
   }
 
-  const hasOpenAI = hasOpenAIKey();
-  let translatedTexts: string[];
-  let translationMode: YouTubeTranslationResult["translationMode"] = "google_fallback";
-
-  if (hasOpenAI) {
-    try {
-      translatedTexts = await translateSegmentsWithOpenAI(rawSegments);
-      translationMode = "openai";
-    } catch {
-      warnings.push("增强翻译暂时不可用，已自动切换到标准翻译模式。");
-      translatedTexts = await translateSegmentsWithPython(rawSegments);
-    }
-  } else {
-    translatedTexts = await translateSegmentsWithPython(rawSegments);
+  if (!hasOpenAIKey()) {
+    // 曾经有一条免费的 Google 翻译回退，但那个端点连住宅 IP 都会 429，
+    // 失败时还会把原文当译文返回。与其给人一堆英文，不如直接说清楚。
+    throw new PublicError("这个站点暂时无法完成翻译。你可以填入自己的 API key 使用。");
   }
+
+  const translatedTexts = await translateSegmentsWithOpenAI(rawSegments);
+  const translationMode: YouTubeTranslationResult["translationMode"] = "openai";
 
   const untranslated = rawSegments.filter(
     (segment, index) => translatedTexts[index].trim() === segment.sourceText.trim()

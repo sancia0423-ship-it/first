@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthEnabled } from "@/lib/api/auth";
 import { hasOpenAIKey } from "@/lib/config";
 import { getTrialStatus } from "@/lib/api/trial";
-import { hasSupadataKey } from "@/lib/youtube-agent/supadata";
+import { hasTranscriptKey } from "@/lib/youtube-agent/transcript-source";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     authRequired: isAuthEnabled(),
     // Tells a client which quality tier to expect before it spends a call.
     aiEnhanced: hasOpenAIKey(),
-    // 主字幕源被 YouTube 拦截时是否有备用通道。
-    transcriptFallback: hasSupadataKey(),
+    // 字幕服务是否已配置。没有它就读不到任何字幕。
+    transcriptReady: hasTranscriptKey(),
     // 没有自带 key 的访客今天还能免费试用几次。
     trial,
     timestamp: new Date().toISOString()

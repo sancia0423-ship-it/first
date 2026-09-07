@@ -14,7 +14,7 @@ export function rateLimitGuard(request: { headers: Headers }): NextResponse | nu
 }
 
 /**
- * Upstream failures (yt-dlp, OpenAI, a parse error) can carry file paths and
+ * Upstream failures (the transcript service, OpenAI, a parse error) can carry
  * stack detail. Only messages we authored are safe to hand back to a browser.
  */
 export function toPublicErrorMessage(error: unknown, fallback: string) {

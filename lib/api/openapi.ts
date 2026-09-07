@@ -96,9 +96,9 @@ export function buildOpenApiDocument(serverUrl?: string) {
                   type: "boolean",
                   description: "true 表示已配置 OpenAI key，会走增强模式。"
                 },
-                transcriptFallback: {
+                transcriptReady: {
                   type: "boolean",
-                  description: "true 表示主字幕源失败时有备用通道。"
+                  description: "true 表示已配置字幕服务。"
                 },
                 timestamp: { type: "string", format: "date-time" }
               },
@@ -108,7 +108,7 @@ export function buildOpenApiDocument(serverUrl?: string) {
                 "version",
                 "authRequired",
                 "aiEnhanced",
-                "transcriptFallback"
+                "transcriptReady"
               ]
             })
           }

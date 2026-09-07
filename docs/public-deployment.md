@@ -4,15 +4,15 @@
 
 ## 为什么是 Railway
 
-YouTube 字幕那条链路会在 Node 进程里调用本地 Python 脚本（yt-dlp + deep-translator），
-所以需要一个能跑 **完整容器** 且允许 **长时请求** 的平台。
+字幕通过 Supadata 官方 API 读取，翻译走 OpenAI，都不依赖本地脚本。
+所以对平台没有特殊要求，只要能跑 Docker 容器即可。
 
 | 平台 | 能否直接跑 | 说明 |
 | --- | --- | --- |
 | Railway | 可以 | 识别 `Dockerfile`，Python 一起打进镜像。约 $5/月起 |
 | Render | 可以 | 同样跑 Docker。免费档会休眠，首次访问很慢，所以要付费档，$7/月起 |
 | Fly.io | 可以 | 也跑 Docker，配置比前两个繁琐一些 |
-| Vercel | 不行 | 无法在函数里跑 yt-dlp 子进程，需要先把抓字幕改成外部服务 |
+| Vercel | 可以 | 移除本地脚本后已无阻碍 |
 
 域名另算，`.com` 大约 $10–15/年（Cloudflare Registrar 按成本价卖，不加价，推荐）。
 
@@ -31,7 +31,6 @@ git push origin main
 
 - `Dockerfile` — 多阶段构建，Node 22 + Python 依赖分层，非 root 用户运行
 - `railway.json` — 健康检查指向 `/api/health`
-- `requirements.txt` — yt-dlp（翻译走标准库，无额外依赖）
 - `.dockerignore`
 
 本地先验证一次镜像能起来，能省掉很多线上排查：

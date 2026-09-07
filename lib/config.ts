@@ -48,9 +48,6 @@ export const OPENAI_REQUEST_TIMEOUT_MS = readNumber("OPENAI_TIMEOUT_MS", 30_000)
 /** Retries are handled by our own fallbacks, so keep the SDK from doubling latency. */
 export const OPENAI_MAX_RETRIES = 1;
 
-/** Budget for a python helper (yt-dlp / deep-translator) invocation. */
-export const PYTHON_SCRIPT_TIMEOUT_MS = readNumber("PYTHON_SCRIPT_TIMEOUT_MS", 90_000);
-
 /**
  * 单个视频最多处理多少条字幕。
  *

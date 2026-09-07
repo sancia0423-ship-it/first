@@ -180,7 +180,6 @@ first/
 │  ├─ pipeline/                    # 检索、抽取、聚合、缓存、限流
 │  ├─ schemas.ts                   # 类型和 schema
 │  └─ youtube-agent/               # 字幕读取、翻译与 python 调用封装
-├─ scripts/                        # yt-dlp / 翻译回退脚本
 ├─ __tests__/                      # vitest 单测
 ├─ docs/                           # 产品、设计与部署文档
 ├─ .github/workflows/ci.yml        # lint / typecheck / test / build
@@ -224,13 +223,12 @@ first/
 - `Railway`
 - `Render`
 
-不建议第一版直接上 `Vercel`，因为当前 YouTube 翻译链路会在服务端调用本地 Python 回退脚本，更适合用 Docker 容器整体部署。
+字幕通过 Supadata 官方 API 读取，不再依赖任何本地脚本，所以对部署平台没有特殊要求。
 
 仓库里已经补好的部署文件：
 
 - `Dockerfile`
 - `.dockerignore`
-- `requirements.txt`
 - `/api/health`
 
 本地容器自测：
