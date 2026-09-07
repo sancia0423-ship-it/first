@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildVideoOverview, translateSegmentsInBrowser } from "../lib/browser-translate";
+import {
+  buildVideoOverview,
+  explainSelection,
+  translateSegmentsInBrowser
+} from "../lib/browser-translate";
 
 /** 让被测代码以为拿到了服务商的一次正常响应。 */
 function mockCompletion(content: unknown) {
@@ -93,7 +97,8 @@ describe("buildVideoOverview", () => {
 
     await buildVideoOverview(long, config);
 
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
     const sent = JSON.parse(body.messages[1].content).captions as Array<{ startMs: number }>;
 
     expect(sent.length).toBeLessThan(long.length);
@@ -135,5 +140,48 @@ describe("translateSegmentsInBrowser", () => {
     await expect(
       translateSegmentsInBrowser([{ id: "seg-1", sourceText: "one" }], { ...config, apiKey: "" })
     ).rejects.toThrow("还没有填写 API key");
+  });
+});
+
+describe("explainSelection", () => {
+  it("passes the surrounding context along with the selection", async () => {
+    const fetchMock = mockCompletion({ meaning: "意思", notes: ["用法"] });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await explainSelection(
+      { selection: "get it", context: "before get it after" },
+      { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(JSON.parse(init.body as string).messages[1].content);
+
+    // 脱离上下文时 "get it" 有十几种意思，模型只能猜，所以上下文必须一起发。
+    expect(sent.selection).toBe("get it");
+    expect(sent.context).toContain("before");
+  });
+
+  it("rejects an empty selection before spending a request", async () => {
+    const fetchMock = mockCompletion({});
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      explainSelection(
+        { selection: "   ", context: "x" },
+        { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+      )
+    ).rejects.toThrow("请先选中一段字幕");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("drops non-string notes the model may return", async () => {
+    vi.stubGlobal("fetch", mockCompletion({ meaning: "m", notes: ["ok", 42, null, "  "] }));
+
+    const result = await explainSelection(
+      { selection: "x", context: "y" },
+      { apiKey: "k", provider: "openai", model: "gpt-4o-mini" }
+    );
+
+    expect(result.notes).toEqual(["ok"]);
   });
 });

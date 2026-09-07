@@ -384,3 +384,57 @@ export async function buildVideoOverview(
       .sort((left, right) => left.startMs - right.startMs)
   };
 }
+
+/* ==========================================================================
+   选中文本解释
+   ========================================================================== */
+
+export type Explanation = {
+  meaning: string;
+  notes: string[];
+};
+
+const EXPLAIN_PROMPT =
+  "你是一个语言学习助手。用户会给你一小段视频字幕，以及它在视频里的上下文。" +
+  "解释这段话在这个语境下的意思，指出其中的固定搭配、俚语、文化梗或语法难点。" +
+  "简明扼要，不要复述原文，不要长篇大论。全部使用简体中文。只返回 JSON。";
+
+/**
+ * 解释选中的字幕片段。
+ *
+ * 一定要带上下文：脱离语境时 "get it" 这类短语可以有十几种解释，模型只能猜。
+ */
+export async function explainSelection(
+  params: { selection: string; context: string },
+  options: ProviderConfig & { signal?: AbortSignal }
+): Promise<Explanation> {
+  const { signal, ...config } = options;
+
+  if (!config.apiKey) {
+    throw new BrowserTranslateError("还没有填写 API key。");
+  }
+
+  if (!params.selection.trim()) {
+    throw new BrowserTranslateError("请先选中一段字幕。");
+  }
+
+  const result = await callChatJson<{ meaning?: string; notes?: unknown }>(
+    config,
+    EXPLAIN_PROMPT,
+    {
+      instruction:
+        '返回 {"meaning":"这句话在此语境下的意思","notes":["值得注意的用法或文化背景"]}。' +
+        "notes 最多 4 条，没有可写的就返回空数组。",
+      selection: params.selection,
+      context: params.context
+    },
+    signal
+  );
+
+  return {
+    meaning: typeof result.meaning === "string" ? result.meaning : "",
+    notes: Array.isArray(result.notes)
+      ? result.notes.filter((note): note is string => typeof note === "string" && note.trim() !== "").slice(0, 4)
+      : []
+  };
+}

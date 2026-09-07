@@ -1089,6 +1089,15 @@ code {
   color: var(--ink);
 }
 
+/* 被解释的原文：用左侧引线标出，和正文区分开。 */
+.selection-quote {
+  margin: var(--gap-sm) 0 0;
+  padding-left: var(--gap-sm);
+  border-left: 2px solid var(--ink);
+  max-width: var(--measure);
+  color: var(--ink);
+}
+
 /* ---- caption toolbar ---- */
 
 .caption-toolbar {

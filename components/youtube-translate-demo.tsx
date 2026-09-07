@@ -14,9 +14,11 @@ import {
   readStoredModel,
   readStoredProvider,
   buildVideoOverview,
+  explainSelection,
   storeKey,
   translateSegmentsInBrowser,
   type VideoOverview,
+  type Explanation,
   type ProviderId,
   type TranslateProgress
 } from "@/lib/browser-translate";
@@ -164,6 +166,10 @@ export function YouTubeTranslateDemo() {
   const [overview, setOverview] = useState<VideoOverview | null>(null);
   const [overviewState, setOverviewState] = useState<"idle" | "loading" | "error">("idle");
   const [overviewError, setOverviewError] = useState("");
+  const [selection, setSelection] = useState("");
+  const [explanation, setExplanation] = useState<Explanation | null>(null);
+  const [explainState, setExplainState] = useState<"idle" | "loading" | "error">("idle");
+  const [explainError, setExplainError] = useState("");
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const lastSpokenSegmentRef = useRef<string | null>(null);
@@ -257,6 +263,10 @@ export function YouTubeTranslateDemo() {
     setOverview(null);
     setOverviewState("idle");
     setOverviewError("");
+    setSelection("");
+    setExplanation(null);
+    setExplainState("idle");
+    setExplainError("");
     lastSpokenSegmentRef.current = null;
 
     try {
@@ -553,6 +563,46 @@ export function YouTubeTranslateDemo() {
     anchor.click();
     document.body.removeChild(anchor);
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+
+  /** 记录用户在字幕区选中的文本，供解释功能使用。 */
+  function captureSelection() {
+    const text = window.getSelection()?.toString().trim() ?? "";
+    // 单个字符多半是误触，不值得提示可以解释。
+    if (text.length > 1) {
+      setSelection(text);
+    }
+  }
+
+  async function explainCurrentSelection() {
+    if (!result || !apiKey || !selection) {
+      return;
+    }
+
+    setExplainState("loading");
+    setExplainError("");
+    setExplanation(null);
+
+    // 带上前后各若干条字幕作为语境：脱离上下文时很多短语没法判断意思。
+    const anchor = result.segments.findIndex(
+      (segment) =>
+        segment.sourceText.includes(selection) || segment.translatedText.includes(selection)
+    );
+    const from = anchor >= 0 ? Math.max(0, anchor - 3) : 0;
+    const context = result.segments
+      .slice(from, from + 7)
+      .map((segment) => segment.sourceText)
+      .join(" ");
+
+    try {
+      setExplanation(
+        await explainSelection({ selection, context }, { apiKey, provider, model })
+      );
+      setExplainState("idle");
+    } catch (error) {
+      setExplainState("error");
+      setExplainError(error instanceof Error ? error.message : "解释失败");
+    }
   }
 
   async function generateOverview() {
@@ -1087,9 +1137,16 @@ export function YouTubeTranslateDemo() {
                 </div>
               </div>
 
-              <p className="muted form-helper">点击任意一条字幕可以跳到视频对应位置。</p>
+              <p className="muted form-helper">
+                点击任意一条字幕可以跳到视频对应位置。
+                {apiKey ? "选中一段文字可以让 AI 解释。" : null}
+              </p>
 
-              <div className="caption-scroller">
+              <div
+                className="caption-scroller"
+                onMouseUp={captureSelection}
+                onTouchEnd={captureSelection}
+              >
                 {result.segments.map((segment, index) => {
                   const isMatch = matches.includes(index);
                   const isCurrentMatch = matches[matchCursor] === index;
@@ -1139,6 +1196,64 @@ export function YouTubeTranslateDemo() {
                 })}
               </div>
             </div>
+
+            {apiKey && selection ? (
+              <div className="panel">
+                <div className="section-header section-header-inline">
+                  <div>
+                    <span className="section-kicker">Explain</span>
+                    <h2 className="panel-title">解释选中内容</h2>
+                  </div>
+                </div>
+
+                <blockquote className="selection-quote">{selection}</blockquote>
+
+                {explanation ? (
+                  <div className="section">
+                    <p>{explanation.meaning}</p>
+                    {explanation.notes.length > 0 ? (
+                      <ul className="stack-list section">
+                        {explanation.notes.map((note) => (
+                          <li key={note}>
+                            <p className="muted">{note}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {explainState === "error" ? (
+                  <p className="muted form-helper">解释失败：{explainError}</p>
+                ) : null}
+
+                <div className="button-row section portfolio-link-row">
+                  <button
+                    className="primary-button"
+                    disabled={explainState === "loading"}
+                    onClick={explainCurrentSelection}
+                    type="button"
+                  >
+                    {explainState === "loading"
+                      ? "解释中..."
+                      : explanation
+                        ? "重新解释"
+                        : "解释这段"}
+                  </button>
+                  <button
+                    className="ghost-button"
+                    onClick={() => {
+                      setSelection("");
+                      setExplanation(null);
+                      setExplainState("idle");
+                    }}
+                    type="button"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {notes.length > 0 ? (
               <div className="panel">
