@@ -309,13 +309,17 @@ img {
   letter-spacing: 0.01em;
 }
 
-/* Page title — one per page, sits under the grey eyebrow. */
+/* Page title — one per page, sits under the grey eyebrow.
+   Set in a serif: against the neutral sans of the body it reads as more
+   formal and more restrained, which suits an editorial sheet. Only the h1
+   uses it, so the face is loaded as a small subset. */
 .hero-title,
 .page-title {
+  font-family: "Noto Serif SC", var(--sans);
   font-size: var(--size-h1);
   font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  line-height: 1.3;
+  letter-spacing: 0;
   margin-bottom: var(--gap-xs);
 }
 
