@@ -167,7 +167,7 @@ export const personalSiteContent = {
         {
           title: "模拟面试",
           body: "用于练习表达、模拟问答和拿到结构化反馈。",
-          href: "/mock"
+          href: "/tools/mock"
         }
       ]
     },
@@ -443,7 +443,7 @@ export const personalSiteContent = {
         label: "工具 02",
         title: "模拟面试",
         body: "把面试问题、回答练习和反馈放在一条链路里。",
-        href: "/mock",
+        href: "/tools/mock",
         action: "开始练习"
       }
     ],

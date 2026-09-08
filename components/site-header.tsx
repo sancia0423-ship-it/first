@@ -5,7 +5,7 @@ const navItems = [
   { label: "自我介绍", href: "/" },
   { label: "AI 学习资料", href: "/ai-learning" },
   { label: "小工具", href: "/tools" },
-  { label: "模拟面试", href: "/mock" }
+  { label: "模拟面试", href: "/tools/mock" }
 ];
 
 export function SiteHeader() {

@@ -14,7 +14,7 @@ const tools = [
   {
     label: "工具 02",
     title: "AI 产品模拟面试",
-    href: "/mock",
+    href: "/tools/mock",
     body: "选定岗位方向后生成四道面试题，逐题给出评分、追问和更强的回答结构。",
     extras: ["五维评分", "逐题追问", "整场总结"]
   }
