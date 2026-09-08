@@ -1098,6 +1098,71 @@ code {
   color: var(--ink);
 }
 
+/* ---- ask & quiz ---- */
+
+.ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm);
+  max-width: var(--measure);
+}
+
+.ask-row input {
+  flex: 1 1 240px;
+  min-width: 160px;
+}
+
+.quiz-options {
+  display: grid;
+  gap: var(--gap-hair);
+  margin-top: var(--gap-xs);
+  max-width: var(--measure);
+}
+
+/* Options read as a list of choices, not a row of chrome. Correctness is shown
+   with a leading mark and ink weight rather than colour, which keeps the sheet
+   monochrome and stays legible without relying on hue. */
+.quiz-option {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 0 4px 20px;
+  font: inherit;
+  font-size: var(--size-body);
+  color: var(--ink-muted);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  position: relative;
+}
+
+.quiz-option:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.quiz-option:disabled {
+  cursor: default;
+}
+
+.quiz-option.is-correct {
+  color: var(--ink);
+}
+
+.quiz-option.is-correct::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+}
+
+.quiz-option.is-wrong::before {
+  content: "✕";
+  position: absolute;
+  left: 0;
+  color: var(--ink-muted);
+}
+
 /* ---- caption toolbar ---- */
 
 .caption-toolbar {

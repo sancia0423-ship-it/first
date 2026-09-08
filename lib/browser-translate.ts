@@ -425,6 +425,36 @@ function sampleForOverview(segments: Array<{ startMs: number; text: string }>) {
   return segments.filter((_, index) => index % step === 0);
 }
 
+/**
+ * 把模型给出的时间戳吸附到最近的真实字幕。
+ *
+ * 模型会返回看起来合理、但字幕里并不存在的时间点。照搬的话用户点了会跳到
+ * 空白处 —— 章节、引用、问答依据、测验题都依赖这个修正。
+ */
+function snapToCaption(segments: Array<{ startMs: number }>) {
+  const valid = new Set(segments.map((item) => item.startMs));
+
+  return (value: unknown) => {
+    const raw = typeof value === "number" && Number.isFinite(value) ? value : 0;
+    if (valid.has(raw)) {
+      return raw;
+    }
+
+    let best = segments[0]?.startMs ?? 0;
+    let bestGap = Math.abs(best - raw);
+
+    for (const item of segments) {
+      const gap = Math.abs(item.startMs - raw);
+      if (gap < bestGap) {
+        best = item.startMs;
+        bestGap = gap;
+      }
+    }
+
+    return best;
+  };
+}
+
 export async function buildVideoOverview(
   segments: Array<{ startMs: number; text: string }>,
   options: CallConfig & { signal?: AbortSignal }
@@ -455,23 +485,7 @@ export async function buildVideoOverview(
     signal
   );
 
-  const valid = new Set(segments.map((item) => item.startMs));
-  /** AI 可能给出不存在的时间戳，吸附到最近的真实字幕，避免点了跳到空白处。 */
-  const snap = (value: unknown) => {
-    const raw = typeof value === "number" && Number.isFinite(value) ? value : 0;
-    if (valid.has(raw)) return raw;
-
-    let best = segments[0]?.startMs ?? 0;
-    let bestGap = Math.abs(best - raw);
-    for (const item of segments) {
-      const gap = Math.abs(item.startMs - raw);
-      if (gap < bestGap) {
-        best = item.startMs;
-        bestGap = gap;
-      }
-    }
-    return best;
-  };
+  const snap = snapToCaption(segments);
 
   return {
     summary: typeof result.summary === "string" ? result.summary : "",
@@ -546,4 +560,152 @@ export async function explainSelection(
       ? result.notes.filter((note): note is string => typeof note === "string" && note.trim() !== "").slice(0, 4)
       : []
   };
+}
+
+/* ==========================================================================
+   对内容提问
+   ========================================================================== */
+
+export type AnswerCitation = {
+  startMs: number;
+  quote: string;
+};
+
+export type ContentAnswer = {
+  answer: string;
+  /** 答案依据的原文片段，可点击跳转。 */
+  citations: AnswerCitation[];
+};
+
+const ASK_PROMPT =
+  "你是一个视频内容问答助手。只依据给定的字幕回答问题，不要补充字幕之外的知识。" +
+  "字幕里没有答案时，直接说没有讲到，不要猜测。" +
+  "每个结论都要给出依据片段，startMs 必须是给定字幕里真实出现过的时间戳。" +
+  "全部使用简体中文。只返回 JSON。";
+
+/**
+ * 就视频内容提问。
+ *
+ * 摘要覆盖不了所有想问的，尤其是一两个小时的访谈 —— 这个功能补的是这一段。
+ * 强制要求引用依据，是为了让答案可追溯：AI 说了什么，能直接跳到原话去核对。
+ */
+export async function askAboutContent(
+  params: { question: string; segments: Array<{ startMs: number; text: string }> },
+  options: CallConfig & { signal?: AbortSignal }
+): Promise<ContentAnswer> {
+  const { signal, ...config } = options;
+
+  if (!config.apiKey) {
+    throw new BrowserTranslateError("还没有填写 API key。");
+  }
+
+  if (!params.question.trim()) {
+    throw new BrowserTranslateError("请先输入问题。");
+  }
+
+  const sampled = sampleForOverview(params.segments);
+
+  const result = await callChatJson<{
+    answer?: string;
+    citations?: Array<{ startMs?: number; quote?: string }>;
+  }>(
+    config,
+    ASK_PROMPT,
+    {
+      instruction:
+        '返回 {"answer":"回答","citations":[{"startMs":<数字>,"quote":"原文片段"}]}。' +
+        "citations 最多 4 条；字幕里没有答案时 answer 说明没有讲到，citations 返回空数组。",
+      question: params.question,
+      captions: sampled.map((item) => ({ startMs: item.startMs, text: item.text }))
+    },
+    signal
+  );
+
+  const snap = snapToCaption(params.segments);
+
+  return {
+    answer: typeof result.answer === "string" ? result.answer : "",
+    citations: (result.citations ?? [])
+      .filter((item) => item.quote)
+      .slice(0, 4)
+      .map((item) => ({ startMs: snap(item.startMs), quote: String(item.quote) }))
+  };
+}
+
+/* ==========================================================================
+   自测问答
+   ========================================================================== */
+
+export type QuizQuestion = {
+  question: string;
+  options: string[];
+  answerIndex: number;
+  explanation: string;
+  startMs: number;
+};
+
+const QUIZ_PROMPT =
+  "你是一个学习检测助手。基于给定字幕出选择题，检验读者是否真的理解了内容。" +
+  "题目要考察理解而不是记忆细节，干扰项要合理、不能一眼排除。" +
+  "只依据字幕出题，不要引入字幕之外的知识。" +
+  "startMs 必须是给定字幕里真实出现过的时间戳，指向答案所在位置。" +
+  "全部使用简体中文。只返回 JSON。";
+
+export async function buildQuiz(
+  segments: Array<{ startMs: number; text: string }>,
+  options: CallConfig & { signal?: AbortSignal; count?: number }
+): Promise<QuizQuestion[]> {
+  const { signal, count = 5, ...config } = options;
+
+  if (!config.apiKey) {
+    throw new BrowserTranslateError("还没有填写 API key。");
+  }
+
+  const sampled = sampleForOverview(segments);
+
+  const result = await callChatJson<{
+    questions?: Array<{
+      question?: string;
+      options?: unknown;
+      answerIndex?: number;
+      explanation?: string;
+      startMs?: number;
+    }>;
+  }>(
+    config,
+    QUIZ_PROMPT,
+    {
+      instruction:
+        '返回 {"questions":[{"question":"题目","options":["A","B","C","D"],' +
+        '"answerIndex":<0 到 3>,"explanation":"为什么是这个答案","startMs":<数字>}]}。' +
+        `出 ${count} 道题，每题恰好 4 个选项。`,
+      captions: sampled.map((item) => ({ startMs: item.startMs, text: item.text }))
+    },
+    signal
+  );
+
+  const snap = snapToCaption(segments);
+
+  return (result.questions ?? [])
+    .map((item) => {
+      const options = Array.isArray(item.options)
+        ? item.options.filter((option): option is string => typeof option === "string")
+        : [];
+      const answerIndex = typeof item.answerIndex === "number" ? item.answerIndex : -1;
+
+      // 选项不足或答案越界的题直接丢掉 —— 一道点不出正确答案的题比没有更糟。
+      if (!item.question || options.length < 2 || answerIndex < 0 || answerIndex >= options.length) {
+        return null;
+      }
+
+      return {
+        question: String(item.question),
+        options,
+        answerIndex,
+        explanation: String(item.explanation ?? ""),
+        startMs: snap(item.startMs)
+      };
+    })
+    .filter((item): item is QuizQuestion => item !== null)
+    .slice(0, count);
 }

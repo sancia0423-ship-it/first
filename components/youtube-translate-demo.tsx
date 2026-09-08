@@ -10,6 +10,8 @@ import {
   BrowserTranslateError,
   PRESETS,
   analyzeConfig,
+  askAboutContent,
+  buildQuiz,
   buildVideoOverview,
   defaultSettings,
   explainSelection,
@@ -19,7 +21,9 @@ import {
   translateConfig,
   translateSegmentsInBrowser,
   type AiSettings,
+  type ContentAnswer,
   type Explanation,
+  type QuizQuestion,
   type PresetId,
   type TranslateProgress,
   type VideoOverview
@@ -171,6 +175,14 @@ export function YouTubeTranslateDemo() {
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [explainState, setExplainState] = useState<"idle" | "loading" | "error">("idle");
   const [explainError, setExplainError] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<ContentAnswer | null>(null);
+  const [askState, setAskState] = useState<"idle" | "loading" | "error">("idle");
+  const [askError, setAskError] = useState("");
+  const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
+  const [quizPicks, setQuizPicks] = useState<Record<number, number>>({});
+  const [quizState, setQuizState] = useState<"idle" | "loading" | "error">("idle");
+  const [quizError, setQuizError] = useState("");
   const [trial, setTrial] = useState<{
     enabled: boolean;
     available: boolean;
@@ -315,6 +327,13 @@ export function YouTubeTranslateDemo() {
     setExplanation(null);
     setExplainState("idle");
     setExplainError("");
+    setAnswer(null);
+    setAskState("idle");
+    setAskError("");
+    setQuiz(null);
+    setQuizPicks({});
+    setQuizState("idle");
+    setQuizError("");
     lastSpokenSegmentRef.current = null;
 
     try {
@@ -684,6 +703,51 @@ export function YouTubeTranslateDemo() {
     } catch (error) {
       setExplainState("error");
       setExplainError(error instanceof Error ? error.message : "解释失败");
+    }
+  }
+
+  /** 给 AI 的字幕：优先用译文，没翻到的退回原文。 */
+  function captionsForAi() {
+    return (result?.segments ?? []).map((segment) => ({
+      startMs: segment.startMs,
+      text: segment.translatedText || segment.sourceText
+    }));
+  }
+
+  async function submitQuestion() {
+    if (!result || !settings.apiKey || !question.trim()) {
+      return;
+    }
+
+    setAskState("loading");
+    setAskError("");
+
+    try {
+      setAnswer(
+        await askAboutContent({ question, segments: captionsForAi() }, analyzeConfig(settings))
+      );
+      setAskState("idle");
+    } catch (error) {
+      setAskState("error");
+      setAskError(error instanceof Error ? error.message : "提问失败");
+    }
+  }
+
+  async function generateQuiz() {
+    if (!result || !settings.apiKey) {
+      return;
+    }
+
+    setQuizState("loading");
+    setQuizError("");
+    setQuizPicks({});
+
+    try {
+      setQuiz(await buildQuiz(captionsForAi(), analyzeConfig(settings)));
+      setQuizState("idle");
+    } catch (error) {
+      setQuizState("error");
+      setQuizError(error instanceof Error ? error.message : "出题失败");
     }
   }
 
@@ -1183,6 +1247,179 @@ export function YouTubeTranslateDemo() {
                         type="button"
                       >
                         {overviewState === "loading" ? "生成中..." : "生成章节速览"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : null}
+
+            {settings.apiKey ? (
+              <div className="panel">
+                <div className="section-header section-header-inline">
+                  <div>
+                    <span className="section-kicker">Ask</span>
+                    <h2 className="panel-title">就这个视频提问</h2>
+                  </div>
+                </div>
+
+                <p className="muted form-helper">
+                  只依据字幕回答，并给出可点击的原文依据。字幕里没讲到的会直说，不会替你编。
+                </p>
+
+                <div className="ask-row section">
+                  <label className="visually-hidden" htmlFor="ask-input">
+                    你的问题
+                  </label>
+                  <input
+                    id="ask-input"
+                    onChange={(event) => setQuestion(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && question.trim()) {
+                        event.preventDefault();
+                        void submitQuestion();
+                      }
+                    }}
+                    placeholder="比如：他对开源模型的看法是什么？"
+                    value={question}
+                  />
+                  <button
+                    className="primary-button"
+                    disabled={askState === "loading" || !question.trim()}
+                    onClick={submitQuestion}
+                    type="button"
+                  >
+                    {askState === "loading" ? "思考中..." : "提问"}
+                  </button>
+                </div>
+
+                {askState === "error" ? (
+                  <p className="muted form-helper">提问失败：{askError}</p>
+                ) : null}
+
+                {answer ? (
+                  <div className="section">
+                    <p>{answer.answer}</p>
+                    {answer.citations.length > 0 ? (
+                      <ul className="stack-list section">
+                        {answer.citations.map((citation) => (
+                          <li key={`${citation.startMs}-${citation.quote.slice(0, 10)}`}>
+                            <button
+                              className="caption-seek"
+                              onClick={() => seekToSegment(citation.startMs)}
+                              type="button"
+                            >
+                              <span className="caption-time">
+                                {formatTimestamp(citation.startMs)}
+                              </span>
+                              <span className="caption-source">{citation.quote}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {settings.apiKey ? (
+              <div className="panel">
+                <div className="section-header section-header-inline">
+                  <div>
+                    <span className="section-kicker">Quiz</span>
+                    <h2 className="panel-title">自测一下</h2>
+                  </div>
+                </div>
+
+                {quiz && quiz.length > 0 ? (
+                  <>
+                    <ul className="stack-list">
+                      {quiz.map((item, index) => {
+                        const picked = quizPicks[index];
+                        const answered = picked !== undefined;
+
+                        return (
+                          <li key={item.question}>
+                            <h3 className="entry-title">
+                              {index + 1}. {item.question}
+                            </h3>
+
+                            <ul className="quiz-options">
+                              {item.options.map((option, optionIndex) => {
+                                const isAnswer = optionIndex === item.answerIndex;
+                                const isPicked = picked === optionIndex;
+
+                                return (
+                                  <li key={option}>
+                                    <button
+                                      className={[
+                                        "quiz-option",
+                                        answered && isAnswer ? "is-correct" : "",
+                                        answered && isPicked && !isAnswer ? "is-wrong" : ""
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                      disabled={answered}
+                                      onClick={() =>
+                                        setQuizPicks((current) => ({
+                                          ...current,
+                                          [index]: optionIndex
+                                        }))
+                                      }
+                                      type="button"
+                                    >
+                                      {option}
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+
+                            {answered ? (
+                              <div className="section">
+                                {item.explanation ? (
+                                  <p className="muted">{item.explanation}</p>
+                                ) : null}
+                                <button
+                                  className="caption-seek"
+                                  onClick={() => seekToSegment(item.startMs)}
+                                  type="button"
+                                >
+                                  <span className="caption-time">
+                                    {formatTimestamp(item.startMs)}
+                                  </span>
+                                  <span className="caption-source">跳到讲这一段的地方</span>
+                                </button>
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    <div className="button-row section portfolio-link-row">
+                      <button className="ghost-button" onClick={generateQuiz} type="button">
+                        换一组题
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="muted form-helper">
+                      出 5 道选择题检验你是否真的看懂了。答完会给出解析，并可以跳到讲这一段的位置。
+                    </p>
+                    {quizState === "error" ? (
+                      <p className="muted form-helper">出题失败：{quizError}</p>
+                    ) : null}
+                    <div className="button-row section portfolio-link-row">
+                      <button
+                        className="primary-button"
+                        disabled={quizState === "loading"}
+                        onClick={generateQuiz}
+                        type="button"
+                      >
+                        {quizState === "loading" ? "出题中..." : "生成自测题"}
                       </button>
                     </div>
                   </>

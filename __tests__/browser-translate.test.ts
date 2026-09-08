@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  askAboutContent,
+  buildQuiz,
   buildVideoOverview,
   explainSelection,
   translateSegmentsInBrowser
@@ -322,5 +324,91 @@ describe("temperature compatibility", () => {
 
     expect(bodies).toHaveLength(1);
     expect(JSON.parse(bodies[0])).not.toHaveProperty("temperature");
+  });
+});
+
+describe("askAboutContent", () => {
+  const segments = [
+    { startMs: 0, text: "开场" },
+    { startMs: 30000, text: "他讲了扩展法则" },
+    { startMs: 90000, text: "结尾" }
+  ];
+
+  it("snaps citation timestamps onto real captions", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockCompletion({
+        answer: "他在中段讲了扩展法则。",
+        citations: [{ startMs: 29999, quote: "他讲了扩展法则" }]
+      })
+    );
+
+    const result = await askAboutContent({ question: "他讲了什么", segments }, config);
+
+    expect(result.answer).toContain("扩展法则");
+    expect(result.citations[0].startMs).toBe(30000);
+  });
+
+  it("refuses an empty question before spending a request", async () => {
+    const fetchMock = mockCompletion({});
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      askAboutContent({ question: "  ", segments }, config)
+    ).rejects.toThrow("请先输入问题");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps an answer that cites nothing", async () => {
+    // 字幕里没讲到时模型应当直说，这种回答同样有价值，不该被丢掉。
+    vi.stubGlobal("fetch", mockCompletion({ answer: "字幕里没有讲到这一点。", citations: [] }));
+
+    const result = await askAboutContent({ question: "他提到价格了吗", segments }, config);
+    expect(result.answer).toContain("没有讲到");
+    expect(result.citations).toEqual([]);
+  });
+});
+
+describe("buildQuiz", () => {
+  const segments = [
+    { startMs: 0, text: "一" },
+    { startMs: 10000, text: "二" }
+  ];
+
+  it("drops questions whose answer index is out of range", async () => {
+    // 一道点不出正确答案的题比没有这道题更糟。
+    vi.stubGlobal(
+      "fetch",
+      mockCompletion({
+        questions: [
+          { question: "好题", options: ["A", "B"], answerIndex: 1, explanation: "", startMs: 0 },
+          { question: "越界", options: ["A", "B"], answerIndex: 5, explanation: "", startMs: 0 },
+          { question: "选项不足", options: ["A"], answerIndex: 0, explanation: "", startMs: 0 },
+          { question: "", options: ["A", "B"], answerIndex: 0, explanation: "", startMs: 0 }
+        ]
+      })
+    );
+
+    const quiz = await buildQuiz(segments, config);
+
+    expect(quiz).toHaveLength(1);
+    expect(quiz[0].question).toBe("好题");
+  });
+
+  it("limits the number of questions to what was asked for", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockCompletion({
+        questions: Array.from({ length: 9 }, (_, index) => ({
+          question: `题 ${index}`,
+          options: ["A", "B"],
+          answerIndex: 0,
+          explanation: "",
+          startMs: 0
+        }))
+      })
+    );
+
+    expect(await buildQuiz(segments, { ...config, count: 3 })).toHaveLength(3);
   });
 });
