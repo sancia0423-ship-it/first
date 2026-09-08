@@ -253,26 +253,18 @@ img {
 
 .page-shell > section {
   margin-top: 0;
-  padding-top: var(--gap-xl);
+  /* 少了分隔线，间距就是唯一的分节信号，要给足。 */
+  padding-top: 96px;
 }
 
 .page-shell > section:first-of-type {
   padding-top: 0;
 }
 
-/* The signature divider, on every top-level section but the first. A rule
-   carries further than the bare glyph did once headings gained weight. */
-.page-shell > section:not(:first-of-type) {
-  border-top: 1px solid var(--rule);
-}
-
-.page-shell > section:not(:first-of-type)::before {
-  content: "⎯";
-  display: block;
-  margin: var(--gap-md) 0 var(--gap-sm);
-  color: var(--ink-faint);
-  line-height: 1;
-}
+/* Sections are separated by whitespace alone.
+   The rule under each section title is the only line the eye needs — a glyph
+   and a border on top of it put three lines within a few pixels of each
+   other, which reads as clutter rather than structure. */
 
 .section-header,
 .portfolio-section-header {
@@ -315,16 +307,6 @@ img {
   line-height: 1.5;
   color: var(--ink-muted);
   letter-spacing: 0.01em;
-}
-
-/* The home page greeting, set in brush calligraphy. The face is loaded as a
-   7-glyph subset, so it costs about 3KB; everything else stays in the sans. */
-.page-title-brush {
-  font-family: "Ma Shan Zheng", var(--sans);
-  font-size: 44px;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: 0.02em;
 }
 
 /* Page title — one per page, sits under the grey eyebrow. */
@@ -891,9 +873,10 @@ input[type="radio"]:checked {
 
 /* Project screenshot — full width of the text column, hairline above it so it
    reads as evidence attached to the entry rather than decoration. */
+/* 截图是佐证，不是主角 —— 给它比正文更窄的宽度，避免喧宾夺主。 */
 .project-figure {
-  margin: var(--gap-sm) 0 0;
-  max-width: var(--measure);
+  margin: var(--gap-md) 0 0;
+  max-width: 440px;
 }
 
 .project-figure img {
@@ -1333,10 +1316,6 @@ code {
    ========================================================================== */
 
 @media (max-width: 860px) {
-  .page-title-brush {
-    font-size: 34px;
-  }
-
   .page-shell {
     grid-template-columns: minmax(0, 1fr);
     padding: 24px 20px 120px;
@@ -1366,11 +1345,7 @@ code {
   }
 
   .page-shell > section {
-    padding-top: var(--gap-lg);
-  }
-
-  .page-shell > section:not(:first-of-type)::before {
-    margin-bottom: var(--gap-md);
+    padding-top: 60px;
   }
 
   .span-8,

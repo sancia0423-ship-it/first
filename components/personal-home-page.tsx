@@ -1,7 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { publicFileExists } from "@/lib/media";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 export function PersonalHomePage() {
@@ -13,23 +11,9 @@ export function PersonalHomePage() {
       <SiteHeader />
 
       <section id="top">
-        <h1 className="page-title page-title-brush">{hero.titleIntro}</h1>
+        <h1 className="page-title">{hero.titleIntro}</h1>
         <p className="hero-copy section">{hero.lead}</p>
 
-        <div className="button-row section">
-          <a className="ghost-button" href={resume.viewHref} rel="noreferrer" target="_blank">
-            简历 PDF
-          </a>
-          <Link className="ghost-button" href="/ai-learning">
-            学习资料
-          </Link>
-          <Link className="ghost-button" href="/tools">
-            小工具
-          </Link>
-          <a className="ghost-button" href={contact.links[0].href}>
-            邮件联系
-          </a>
-        </div>
       </section>
 
       <section id="about">
@@ -61,36 +45,22 @@ export function PersonalHomePage() {
         <div className="section-header">
           <h2 className="section-title">{projects.kicker}</h2>
           <p className="section-lede">{projects.title}</p>
-          <p className="section-copy muted">{projects.summary}</p>
         </div>
 
         <ul className="stack-list">
           {projects.cards.map((item) => (
             <li key={item.title}>
               <span className="story-badge">{item.badge}</span>
-              <h3>{item.title}</h3>
-              <p className="muted">{item.body}</p>
-              <div className="metric-chip-row">
-                {item.metrics.map((metric) => (
-                  <span className="metric-chip" key={metric}>
-                    {metric}
-                  </span>
-                ))}
-              </div>
-              {"image" in item && publicFileExists(item.image) ? (
-                <figure className="project-figure">
-                  <Image
-                    alt={item.imageAlt}
-                    height={item.imageHeight}
-                    sizes="(max-width: 860px) 100vw, 620px"
-                    src={item.image}
-                    width={item.imageWidth}
-                  />
-                </figure>
-              ) : null}
+              <h3 className="entry-title">{item.title}</h3>
             </li>
           ))}
         </ul>
+
+        <div className="button-row section portfolio-link-row">
+          <Link className="ghost-button" href="/projects">
+            查看项目详情
+          </Link>
+        </div>
       </section>
 
       <section id="resume">
@@ -99,21 +69,7 @@ export function PersonalHomePage() {
           <p className="section-lede">{resume.title}</p>
         </div>
 
-        <ul className="portfolio-list">
-          {resume.highlights.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        <p className="metric-chip-row section">
-          {resume.skills.map((item) => (
-            <span className="metric-chip" key={item}>
-              {item}
-            </span>
-          ))}
-        </p>
-
-        <div className="button-row section portfolio-link-row">
+        <div className="button-row portfolio-link-row">
           <a className="ghost-button" href={resume.viewHref} rel="noreferrer" target="_blank">
             查看简历
           </a>
@@ -167,7 +123,6 @@ export function PersonalHomePage() {
         <div className="section-header">
           <h2 className="section-title">{contact.kicker}</h2>
           <p className="section-lede">{contact.title}</p>
-          <p className="section-copy muted">{contact.summary}</p>
         </div>
 
         <div className="contact-pill-row">

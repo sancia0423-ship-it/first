@@ -77,7 +77,7 @@ export const personalSiteContent = {
     projects: {
       kicker: "项目经历",
       title: "我做过的一些数据分析和 AI 产品项目",
-      summary: "这里先放最能代表我的几段经历，后面你也可以继续往里加 dashboard、数据作品截图或单独项目页。",
+      summary: "",
       cards: [
         {
           badge: "Meituan",
@@ -146,23 +146,23 @@ export const personalSiteContent = {
           title: "Articles 文献清单",
           body: "这里已经接进了 `Articles.docx` 的文献列表，后面会继续补阅读记录和文献笔记。",
           href: "/ai-learning"
+        },
+        {
+          title: "Prompt 合集",
+          body: "我自己在用的提示词，每一条都能直接复制走。",
+          href: "/ai-learning#prompts"
         }
       ]
     },
     toolsPreview: {
       kicker: "小工具",
       title: "我做的一些小工具",
-      summary: "工具页会集中放我自己做的小功能，现在先接进来 YouTube 翻译、信息搜索和模拟面试三个入口。",
+      summary: "我自己做的小功能，都可以直接用。",
       cards: [
         {
           title: "YouTube 中文翻译",
-          body: "把公开视频字幕翻成中文，支持原文对照、SRT 下载和中文朗读。",
-          href: "/tools"
-        },
-        {
-          title: "信息搜索",
-          body: "适合做研究和资料整理，帮助快速收集和总结信息。",
-          href: "/search"
+          body: "把公开视频字幕翻成中文，支持搜索、点句跳转、章节速览和内容提问。",
+          href: "/tools/youtube"
         },
         {
           title: "模拟面试",
@@ -174,13 +174,11 @@ export const personalSiteContent = {
     contact: {
       kicker: "联系与入口",
       title: "如果你想继续看资料、作品或联系我",
-      summary: "这里先保留最核心的几个入口。后面如果你想加 LinkedIn、邮箱按钮或更多社交链接，也很容易继续扩展。",
+      summary: "",
       links: [
         { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
         { label: "LinkedIn", href: "https://www.linkedin.com/feed/" },
-        { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" },
-        { label: "AI 学习资料", href: "/ai-learning" },
-        { label: "小工具", href: "/tools" }
+        { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" }
       ]
     }
   },
@@ -431,8 +429,7 @@ export const personalSiteContent = {
     hero: {
       kicker: "工具区",
       title: "我做的一些小工具",
-      lead:
-        "这里放我现在做过的小工具。你可以把它看成是一个实验区，一边展示我会做什么，一边也真的可以直接用。"
+      lead: "这里放我做过的小工具。既是展示，也真的可以直接用。"
     },
     cards: [
       {
@@ -444,13 +441,6 @@ export const personalSiteContent = {
       },
       {
         label: "工具 02",
-        title: "信息搜索",
-        body: "适合做资料检索、内容整理和快速研究验证。",
-        href: "/search",
-        action: "打开搜索"
-      },
-      {
-        label: "工具 03",
         title: "模拟面试",
         body: "把面试问题、回答练习和反馈放在一条链路里。",
         href: "/mock",
