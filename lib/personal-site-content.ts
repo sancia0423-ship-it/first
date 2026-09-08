@@ -6,6 +6,8 @@ export const personalSiteContent = {
     title: "夏琪",
     handle: "sancia",
     subtitle: "AI 产品 / 数据分析",
+    /** 个性签名。跟在名字下面，一句话交代我做这些事情的出发点。 */
+    tagline: "AI 是新的生产力",
     description:
       "这个网站有我的介绍和学习资料，有自己做的工具，做得很简单。"
   },
@@ -428,8 +430,7 @@ export const personalSiteContent = {
   tools: {
     hero: {
       kicker: "工具区",
-      title: "我做的一些小工具",
-      lead: "这里放我做过的小工具。既是展示，也真的可以直接用。"
+      title: "我做过的小工具"
     },
     cards: [
       {

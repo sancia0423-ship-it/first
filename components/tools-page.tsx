@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
@@ -30,7 +31,17 @@ export function ToolsPage() {
       <section id="top">
         <span className="eyebrow">{hero.kicker}</span>
         <h1 className="page-title">{hero.title}</h1>
-        <p className="hero-copy section">{hero.lead}</p>
+
+        <figure className="site-figure">
+          <Image
+            alt="机柜前的一台旧显示器"
+            height={826}
+            sizes="(max-width: 640px) 100vw, 300px"
+            src="/images/site/monitor.jpg"
+            width={1240}
+          />
+          <figcaption>摄影：Will Handley，经作者授权使用。</figcaption>
+        </figure>
       </section>
 
       <section id="tools">

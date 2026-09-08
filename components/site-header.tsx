@@ -9,7 +9,7 @@ const navItems = [
 ];
 
 export function SiteHeader() {
-  const { handle, subtitle, title } = personalSiteContent.site;
+  const { handle, subtitle, tagline, title } = personalSiteContent.site;
 
   return (
     <header className="site-header">
@@ -19,6 +19,7 @@ export function SiteHeader() {
           <span className="brand-handle">{handle}</span>
         </span>
         <span className="brand-subtitle">{subtitle}</span>
+        <span className="brand-tagline">{tagline}</span>
       </Link>
 
       <nav className="header-nav" aria-label="Primary">

@@ -207,6 +207,17 @@ img {
   color: var(--ink-muted);
 }
 
+/* 个性签名。比 subtitle 再退一档：上面留一道空隙把它和职位描述分开，
+   它不是身份说明，是一句态度。 */
+.brand-tagline {
+  display: block;
+  margin-top: 10px;
+  font-size: var(--size-meta);
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
 .header-nav {
   display: flex;
   flex-direction: column;
@@ -888,6 +899,30 @@ input[type="radio"]:checked {
   height: auto;
   display: block;
   border: 1px solid var(--rule-soft);
+}
+
+/* ==========================================================================
+   Site imagery
+   ========================================================================== */
+
+/* 装置摄影配图。它不承担信息，只负责在整页文字里留出一次呼吸，
+   所以宽度压到正文列的一半左右，绝不越过标题的分量。 */
+.site-figure {
+  margin: var(--gap-md) 0 0;
+  max-width: 300px;
+}
+
+.site-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.site-figure figcaption {
+  margin-top: 8px;
+  font-size: var(--size-meta);
+  line-height: 1.5;
+  color: var(--ink-muted);
 }
 
 /* ==========================================================================
