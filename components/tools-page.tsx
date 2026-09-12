@@ -65,6 +65,19 @@ export function ToolsPage() {
           ))}
         </ul>
       </section>
+
+      <section id="access">
+        <div className="section-header">
+          <h2 className="section-title">不止网页</h2>
+          <p className="section-lede">
+            上面这些工具还有 REST API 和 MCP 两种接入方式，背后是同一套逻辑。
+          </p>
+        </div>
+
+        <Link className="ghost-button" href="/tools/mcp">
+          看怎么接
+        </Link>
+      </section>
     </main>
   );
 }
