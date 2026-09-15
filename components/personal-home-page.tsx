@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PhotoCollage, hasCollagePhotos } from "@/components/photo-collage";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
@@ -26,21 +25,16 @@ export function PersonalHomePage() {
         <h1 className="page-title">{hero.titleIntro}</h1>
         <p className="hero-copy section">{hero.lead}</p>
 
-        {hasCollagePhotos() ? (
-          <PhotoCollage />
-        ) : (
-          <figure className="site-figure landing-figure">
-            <Image
-              alt="白墙上悬挂的一只灰色喇叭"
-              height={826}
-              priority
-              sizes="(max-width: 640px) 100vw, 300px"
-              src="/images/site/speaker.jpg"
-              width={1240}
-            />
-            <figcaption>摄影：Will Handley，经作者授权使用。</figcaption>
-          </figure>
-        )}
+        <figure className="landing-figure">
+          <Image
+            alt="夏琪的生活照片拼贴：悉尼大学、活动发言、生日、海港大桥"
+            height={1389}
+            priority
+            sizes="(max-width: 700px) 100vw, 620px"
+            src="/images/me/collage.jpg"
+            width={1400}
+          />
+        </figure>
 
         <nav aria-label="站内入口" className="entry-links">
           {entries.map((item) =>

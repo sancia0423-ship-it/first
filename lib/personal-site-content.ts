@@ -26,40 +26,6 @@ export const personalSiteContent = {
       lead: "悉尼大学商业数据分析硕士在读。做过美团、得物的 AI 产品，和联合国儿童基金会的数据分析。",
       badges: []
     },
-    /**
-     * 首页的照片拼贴。图片文件不在就整块不渲染（publicFileExists 在构建期检查），
-     * 所以可以先合版式、后补照片。note 是手写体标注，写在图片旁边。
-     */
-    collage: [
-      {
-        src: "/images/me/beach.jpg",
-        alt: "傍晚的海边",
-        note: "Sydney",
-        width: 1080,
-        height: 1620
-      },
-      {
-        src: "/images/me/parliament.jpg",
-        alt: "澳大利亚国会参议院议事厅",
-        note: "Canberra",
-        width: 1850,
-        height: 2000
-      },
-      {
-        src: "/images/me/speaking.jpg",
-        alt: "在一场活动上发言",
-        note: "speaking up",
-        width: 1600,
-        height: 1067
-      },
-      {
-        src: "/images/me/birthday.jpg",
-        alt: "生日蛋糕与花束",
-        note: "26",
-        width: 1300,
-        height: 2000
-      }
-    ],
     /** 首页只放这几个入口。是文字链，不是按钮 —— 按钮会把留白吃掉。 */
     entries: [
       { label: "自我介绍", href: "/about" },
