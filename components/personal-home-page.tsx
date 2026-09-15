@@ -21,19 +21,27 @@ export function PersonalHomePage() {
       <SiteHeader />
 
       <section className="landing" id="top">
+        {/*
+          首屏整块用夏琪设计稿里渲染好的图：Canva 把字体转成了轮廓，
+          SVG 里没留下字体名，那几款中文手写体也不在任何网页字体服务里 ——
+          想和她的设计完全一致，只有按原样取图这一条路。
+
+          代价是标题不再是可选中的文字，所以下面补一个视觉隐藏的 h1，
+          搜索引擎和读屏软件读到的仍然是真文字。
+        */}
+        <h1 className="visually-hidden">
+          {hero.kicker}，{hero.titleIntro}。{hero.lead}
+        </h1>
+
         <Image
           alt=""
           className="landing-art"
-          height={364}
+          height={1053}
           priority
-          sizes="(max-width: 900px) 92vw, 760px"
-          src="/images/art/home.png"
-          width={900}
+          sizes="(max-width: 900px) 94vw, 1000px"
+          src="/images/art/hero.png"
+          width={2000}
         />
-
-        <p className="landing-kicker">{hero.kicker}</p>
-        <h1 className="landing-name">{hero.titleIntro}</h1>
-        <p className="landing-sign">{hero.lead}</p>
 
         <Link className="welcome-button" href="/about">
           welcome
