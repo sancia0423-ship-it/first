@@ -2319,7 +2319,19 @@ code {
     display: none;
   }
 
+  /* 打印时保留底色。
+     浏览器默认会把背景全部丢掉以省墨，所以要显式打开 print-color-adjust ——
+     否则插画自带的浅蓝底会变成白纸上一个个悬空的蓝方块，比不印还难看。
+     这套配色的浅蓝是站点识别色，不是可有可无的装饰。 */
+  html,
   body {
-    background: #fff;
+    background: var(--paper);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
