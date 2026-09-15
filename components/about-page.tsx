@@ -1,17 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { publicFileExists } from "@/lib/media";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 /**
- * 自我介绍 + 项目展示。
- *
- * 照夏琪的设计稿，这两块是同一页的上下两屏：上半浅蓝讲人，下半墨绿通栏讲项目。
- * 之前拆成了 /about 和 /projects 两个路由，跟她的设计对不上，现在合回来。
+ * 自我介绍。项目展示拆在 /projects，从这一页的链接进入 ——
+ * 一屏里塞两个主题会让人以为页面到底了。
  */
 export function AboutPage() {
-  const { about, projects, resume } = personalSiteContent.home;
+  const { about, resume } = personalSiteContent.home;
 
   return (
     <main className="page-shell">
@@ -50,40 +47,10 @@ export function AboutPage() {
           <a href={resume.viewHref} rel="noreferrer" target="_blank">
             RESUME 简历下载
           </a>
-          <Link href="#projects">项目展示</Link>
+          <Link href="/projects">项目展示</Link>
         </div>
       </section>
 
-      <section className="projects-section" id="projects">
-        <div>
-          <h2 className="projects-title">{projects.title}</h2>
-
-          <div className="project-cards">
-            {projects.cards.map((card) => (
-              <article className="project-card" key={card.lines[0]}>
-                {publicFileExists(card.image) ? (
-                  <div className="project-card-media">
-                    <Image
-                      alt={card.imageAlt}
-                      height={card.imageHeight}
-                      sizes="(max-width: 900px) 45vw, 240px"
-                      src={card.image}
-                      width={card.imageWidth}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="project-card-body">
-                  {card.title ? <h3>{card.title}</h3> : null}
-                  {card.lines.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

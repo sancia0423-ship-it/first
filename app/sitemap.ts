@@ -6,6 +6,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
 const routes = [
   { path: "/", priority: 1 },
   { path: "/about", priority: 0.9 },
+  { path: "/projects", priority: 0.8 },
   { path: "/ai-learning", priority: 0.8 },
   { path: "/tools", priority: 0.8 },
   { path: "/tools/youtube", priority: 0.7 },
