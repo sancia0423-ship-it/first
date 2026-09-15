@@ -23,8 +23,10 @@
      混灰会让整套颜色显脏。 */
   --paper: #d7faff;
   --ink: #002400;
-  --ink-muted: #3d5c3d;
-  --ink-faint: #6b856b;
+  /* 都按 4.5:1 的正文对比度下限校准过：原来的 #6b856b 在浅蓝底上只有 3.66:1，
+     小字读着发虚。现在分别是 8.95:1 和 5.71:1。 */
+  --ink-muted: #2c4a2c;
+  --ink-faint: #4a674a;
   --rule: #a8c4b4;
   --rule-soft: #c2dcd0;
 

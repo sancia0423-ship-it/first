@@ -38,7 +38,7 @@ const displayGlyphs = [
   tools.feature.tagline,
   tools.feature.logTitle,
   // 组件里直接写死的标题与按钮文案
-  "项目展示 自我介绍 主页 项目 作品 学习资料 返回 打开越语听 看怎么接入 简历下载 开发者日志",
+  "项目展示 自我介绍 主页 项目 作品 学习资料 返回 打开越语听 看怎么接入 简历下载 开发者日志 工具列表 粘贴链接 支持范围 快速试试 翻译结果会显示在这里",
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789?!,.—·｜/&:"
 ].join("");
 
