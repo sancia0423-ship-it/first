@@ -14,12 +14,32 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
  * 3-8MB，这样切下来约 4KB。字表跟着页面标题走，改文案不会缺字。
  */
 const displayFontFamily = "Noto Serif SC";
+/**
+ * 字表从内容里收，不要手写。
+ *
+ * 之前这里是一份写死的清单，页面上新出现的标题字（「期待你的联系」「项目展示」等）
+ * 不在表里就下不到字形，浏览器悄悄退回系统黑体 —— 同一行里半宋体半黑体，
+ * 看起来就是「字体不统一」。改成从实际用到的标题文案里收集，文案改了也不会再缺字。
+ */
+const { home, learning, tools } = personalSiteContent;
 const displayGlyphs = [
-  personalSiteContent.home.hero.titleIntro,
-  personalSiteContent.learning.hero.title,
-  personalSiteContent.tools.hero.title,
-  personalSiteContent.home.projects.kicker,
-  "项目经历 提示词架构师 项目经历改写 中文翻译 模拟面试 快速准备页"
+  home.hero.kicker,
+  home.hero.titleIntro,
+  home.hero.lead,
+  home.about.kicker,
+  home.about.title,
+  home.projects.title,
+  home.contact.kicker,
+  home.contact.title,
+  learning.hero.title,
+  learning.hero.lead,
+  tools.hero.title,
+  tools.feature.name,
+  tools.feature.tagline,
+  tools.feature.logTitle,
+  // 组件里直接写死的标题与按钮文案
+  "项目展示 自我介绍 主页 项目 作品 学习资料 返回 打开越语听 看怎么接入 简历下载 开发者日志",
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789?!,.—·｜/&:"
 ].join("");
 
 const displayFontUrl =

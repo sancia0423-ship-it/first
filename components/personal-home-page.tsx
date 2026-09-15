@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ContactForm } from "@/components/contact-form";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
@@ -58,28 +57,29 @@ export function PersonalHomePage() {
       </section>
 
       <section id="contact">
-        <div className="contact-grid">
-          <div>
-            <h2 className="contact-title">{contact.kicker}</h2>
-            <p className="contact-subtitle">{contact.title}</p>
+        <h2 className="contact-title">{contact.kicker}</h2>
+        <p className="contact-subtitle">{contact.title}</p>
 
-            <div className="contact-links">
-              {contact.links.map((item) => (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  rel={item.href.startsWith("http") ? "noreferrer" : undefined}
-                  target={item.href.startsWith("http") ? "_blank" : undefined}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </div>
-          </div>
+        <div className="contact-block">
+          <p className="contact-label">Social media</p>
+          <a
+            className="contact-value"
+            href={contact.links[0].href}
+            rel="noreferrer"
+            target="_blank"
+          >
+            LinkedIn
+          </a>
+        </div>
 
-          <ContactForm />
+        <div className="contact-block">
+          <p className="contact-label">Email us</p>
+          <a className="contact-value" href={`mailto:${contact.email}`}>
+            {contact.email}
+          </a>
         </div>
       </section>
+
     </main>
   );
 }
