@@ -6,6 +6,7 @@ import { personalSiteContent } from "@/lib/personal-site-content";
 /** 工具索引。每个工具有自己的页面，这里只负责说清楚它是什么、能做什么。 */
 const tools = [
   {
+    id: "youtube-tool",
     label: "工具 01",
     title: "YouTube 中文翻译",
     href: "/tools/youtube",
@@ -13,6 +14,7 @@ const tools = [
     extras: ["章节速览", "内容提问", "自测问答", "中文朗读"]
   },
   {
+    id: "mock-interview-tool",
     label: "工具 02",
     title: "AI 产品模拟面试",
     href: "/tools/mock",
@@ -47,7 +49,7 @@ export function ToolsPage() {
       <section id="tools">
         <ul className="stack-list">
           {tools.map((tool) => (
-            <li key={tool.href}>
+            <li id={tool.id} key={tool.href}>
               <span className="story-badge">{tool.label}</span>
               <h2 className="entry-title">{tool.title}</h2>
               <p className="muted">{tool.body}</p>

@@ -1387,10 +1387,21 @@ code {
     padding-top: 60px;
   }
 
-  .span-8,
-  .span-4,
-  .span-2 {
-    grid-column: span 12;
+  .section-grid {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .section-grid > .span-8,
+  .section-grid > .span-4,
+  .section-grid > .span-2 {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  /* `span-2` is also reused inside this implicit form grid. */
+  .mock-form-grid > .span-2 {
+    grid-column: auto;
   }
 }
 

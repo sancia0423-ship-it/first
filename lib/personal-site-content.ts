@@ -179,7 +179,7 @@ export const personalSiteContent = {
       summary: "",
       links: [
         { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
-        { label: "LinkedIn", href: "https://www.linkedin.com/feed/" },
+        { label: "LinkedIn", href: "https://www.linkedin.com/in/xiaqi77sancia/" },
         { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" }
       ]
     }
@@ -437,7 +437,7 @@ export const personalSiteContent = {
         label: "工具 01",
         title: "YouTube 中文翻译",
         body: "读取公开视频字幕，生成中文字幕、原文对照和可下载 SRT，还能打开中文朗读。",
-        href: "#youtube-tool",
+        href: "/tools/youtube",
         action: "直接试用"
       },
       {
