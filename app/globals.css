@@ -935,46 +935,74 @@ input[type="radio"]:checked {
   color: var(--ink-muted);
 }
 
-/* 墨绿整块：她的设计里作品页正文是深底浅字。这块自己反色，
-   不依赖外面的 --paper / --ink，所以放在任何页面里都成立。 */
-.dark-panel {
-  margin-top: 44px;
-  padding: 40px 38px;
-  background: var(--paper-dark);
+/* 整页深色下的标题与正文。她的设计里作品页是整屏墨绿，文字直接铺在底上，
+   不是浅蓝页面里嵌一个深色块。 */
+.dark-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
   color: var(--ink-on-dark);
-  border-radius: 10px;
 }
 
-.dark-panel-title {
-  margin: 0 0 24px;
-  font-size: 17px;
+.dev-log {
+  margin-top: 40px;
+  max-width: 68ch;
+}
+
+.dev-log-title {
+  margin: 0 0 20px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  color: var(--ink-on-dark);
 }
 
-.dark-panel p {
-  margin: 0 0 18px;
-  max-width: 62ch;
+.dev-log p {
+  margin: 0 0 16px;
   font-size: var(--size-body);
   line-height: 1.95;
   color: var(--ink-on-dark);
 }
 
-.dark-panel p:last-child {
+.dev-log p:last-child {
   margin-bottom: 0;
 }
 
-@media (max-width: 640px) {
-  .dark-panel {
-    padding: 28px 22px;
-  }
+.page-dark .feature-name,
+.page-dark .feature-tagline {
+  color: var(--ink-on-dark);
 }
 
 /* ==========================================================================
    Projects
    ========================================================================== */
 
-/* 整页反色。左栏和正文都跟着翻，所以单独给 page-shell 加一个修饰类，
+/* 通栏深色段：挣脱居中的内容列，铺满整个视口宽度。
+   100vw 会把滚动条宽度也算进去，所以用 100% + 负边距的写法，不会横向溢出。 */
+.bleed-dark {
+  margin-left: calc(50% - 50vw + var(--sb, 0px) / 2);
+  margin-right: calc(50% - 50vw + var(--sb, 0px) / 2);
+  width: auto;
+  background: var(--paper-dark);
+  color: var(--ink-on-dark);
+  padding: 72px 0 84px;
+  margin-top: 90px;
+}
+
+.bleed-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.bleed-dark .project-card-body h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 整页反色。导航跟着翻，所以单独给 page-shell 加一个修饰类，
    而不是在每个子元素上改颜色。 */
 .page-dark {
   background: var(--paper-dark);

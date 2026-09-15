@@ -11,28 +11,27 @@ export function ToolsPage() {
   const { feature, hero } = personalSiteContent.tools;
 
   return (
-    <main className="page-shell">
+    <main className="page-shell page-dark">
       <SiteHeader />
 
       <section id="top">
-        <h1 className="page-title">{hero.title}</h1>
+        <Image
+          alt=""
+          className="art art-tools"
+          height={361}
+          sizes="(max-width: 760px) 40vw, 300px"
+          src="/images/art/tools.png"
+          width={420}
+        />
+
+        <h1 className="dark-title">{hero.title}</h1>
         <p className="feature-name">
           {feature.name}
           <span className="feature-tagline">｜{feature.tagline}</span>
         </p>
-      </section>
 
-      <section id="log">
-        <div className="dark-panel">
-          <Image
-            alt=""
-            className="art art-tools"
-            height={361}
-            sizes="200px"
-            src="/images/art/tools.png"
-            width={420}
-          />
-          <h2 className="dark-panel-title">{feature.logTitle}</h2>
+        <div className="dev-log">
+          <h2 className="dev-log-title">{feature.logTitle}</h2>
           {feature.log.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}

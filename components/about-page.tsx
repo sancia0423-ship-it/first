@@ -1,16 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { publicFileExists } from "@/lib/media";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 /**
- * 自我介绍。版式照夏琪在 Canva 里定的那版：圆形头像 + ABOUT ME 大标题 +
- * 四段正文 + 底部两个入口。
+ * 自我介绍 + 项目展示。
  *
- * 原来这里还挂着简历亮点和技能清单，她的设计里没有，去掉 —— 她要的是简洁。
+ * 照夏琪的设计稿，这两块是同一页的上下两屏：上半浅蓝讲人，下半墨绿通栏讲项目。
+ * 之前拆成了 /about 和 /projects 两个路由，跟她的设计对不上，现在合回来。
  */
 export function AboutPage() {
-  const { about, resume } = personalSiteContent.home;
+  const { about, projects, resume } = personalSiteContent.home;
 
   return (
     <main className="page-shell">
@@ -49,7 +50,39 @@ export function AboutPage() {
           <a href={resume.viewHref} rel="noreferrer" target="_blank">
             RESUME 简历下载
           </a>
-          <Link href="/projects">项目展示</Link>
+          <Link href="#projects">项目展示</Link>
+        </div>
+      </section>
+
+      {/* 通栏深色段。width:100vw + 负边距让它挣脱居中的内容列，铺满整个视口宽度。 */}
+      <section className="bleed-dark" id="projects">
+        <div className="bleed-inner">
+          <h2 className="projects-title">{projects.title}</h2>
+
+          <div className="project-cards">
+            {projects.cards.map((card) => (
+              <article className="project-card" key={card.lines[0]}>
+                {publicFileExists(card.image) ? (
+                  <div className="project-card-media">
+                    <Image
+                      alt={card.imageAlt}
+                      height={card.imageHeight}
+                      sizes="(max-width: 900px) 45vw, 240px"
+                      src={card.image}
+                      width={card.imageWidth}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="project-card-body">
+                  {card.title ? <h3>{card.title}</h3> : null}
+                  {card.lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </main>
