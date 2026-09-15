@@ -1,29 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ContactForm } from "@/components/contact-form";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 /**
- * 首页 = 落地页。一句话、一张图、几个入口，别的都不放。
- *
- * 之前这里堆了自我介绍、项目、简历、学习资料、工具、联系六大段，等于把整站
- * 压成一页。现在正文各自有页面，首页只负责让人知道往哪走。
+ * 主页 = 落地页。照夏琪的设计：署名、一句签名、拼贴图、welcome 入口，
+ * 底部是联系区。正文各自在自己的页面里。
  */
-
-function isExternal(href: string) {
-  return href.startsWith("http") || href.startsWith("mailto:");
-}
-
 export function PersonalHomePage() {
-  const { entries, hero } = personalSiteContent.home;
+  const { contact, hero } = personalSiteContent.home;
 
   return (
     <main className="page-shell">
       <SiteHeader />
 
       <section id="top">
+        <p className="hero-kicker">{hero.kicker}</p>
         <h1 className="page-title">{hero.titleIntro}</h1>
-        <p className="hero-copy section">{hero.lead}</p>
+        <p className="hero-sign">{hero.lead}</p>
 
         <figure className="landing-figure">
           <Image
@@ -36,24 +31,33 @@ export function PersonalHomePage() {
           />
         </figure>
 
-        <nav aria-label="站内入口" className="entry-links">
-          {entries.map((item) =>
-            isExternal(item.href) ? (
-              <a
-                href={item.href}
-                key={item.label}
-                rel={item.href.startsWith("http") ? "noreferrer" : undefined}
-                target={item.href.startsWith("http") ? "_blank" : undefined}
-              >
-                {item.label}
-              </a>
-            ) : (
-              <Link href={item.href} key={item.label}>
-                {item.label}
-              </Link>
-            )
-          )}
-        </nav>
+        <Link className="welcome-button" href="/about">
+          welcome
+        </Link>
+      </section>
+
+      <section id="contact">
+        <div className="contact-grid">
+          <div>
+            <h2 className="contact-title">{contact.kicker}</h2>
+            <p className="contact-subtitle">{contact.title}</p>
+
+            <div className="contact-links">
+              {contact.links.map((item) => (
+                <a
+                  href={item.href}
+                  key={item.label}
+                  rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+                  target={item.href.startsWith("http") ? "_blank" : undefined}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <ContactForm />
+        </div>
       </section>
     </main>
   );

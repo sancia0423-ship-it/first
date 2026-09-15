@@ -2,9 +2,10 @@ import Link from "next/link";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 const navItems = [
+  { label: "主页", href: "/" },
   { label: "自我介绍", href: "/about" },
-  { label: "AI 学习资料", href: "/ai-learning" },
-  { label: "小工具", href: "/tools" }
+  { label: "作品", href: "/tools" },
+  { label: "AI 学习", href: "/ai-learning" }
 ];
 
 export function SiteHeader() {

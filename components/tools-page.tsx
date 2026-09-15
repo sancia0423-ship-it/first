@@ -1,84 +1,39 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
-/** 工具索引。每个工具有自己的页面，这里只负责说清楚它是什么、能做什么。 */
-const tools = [
-  {
-    id: "youtube-tool",
-    label: "工具 01",
-    title: "YouTube 中文翻译",
-    href: "/tools/youtube",
-    body: "读取公开视频字幕并翻成中文，支持搜索、点句跳转、时间戳笔记和 SRT 下载。",
-    extras: ["章节速览", "内容提问", "自测问答", "中文朗读"]
-  },
-  {
-    id: "mock-interview-tool",
-    label: "工具 02",
-    title: "AI 产品模拟面试",
-    href: "/tools/mock",
-    body: "选定岗位方向后生成四道面试题，逐题给出评分、追问和更强的回答结构。",
-    extras: ["五维评分", "逐题追问", "整场总结"]
-  }
-];
-
+/**
+ * 作品页。版式照夏琪在 Canva 里定的那版：浅蓝标题区 + 墨绿的开发者日志整块。
+ * 正文逐字用她写的原文。
+ */
 export function ToolsPage() {
-  const { hero } = personalSiteContent.tools;
+  const { feature, hero } = personalSiteContent.tools;
 
   return (
     <main className="page-shell">
       <SiteHeader />
 
       <section id="top">
-        <span className="eyebrow">{hero.kicker}</span>
         <h1 className="page-title">{hero.title}</h1>
-
-        <figure className="site-figure">
-          <Image
-            alt="机柜前的一台旧显示器"
-            height={826}
-            sizes="(max-width: 640px) 100vw, 300px"
-            src="/images/site/monitor.jpg"
-            width={1240}
-          />
-          <figcaption>摄影：Will Handley，经作者授权使用。</figcaption>
-        </figure>
+        <p className="feature-name">
+          {feature.name}
+          <span className="feature-tagline">｜{feature.tagline}</span>
+        </p>
       </section>
 
-      <section id="tools">
-        <ul className="stack-list">
-          {tools.map((tool) => (
-            <li id={tool.id} key={tool.href}>
-              <span className="story-badge">{tool.label}</span>
-              <h2 className="entry-title">{tool.title}</h2>
-              <p className="muted">{tool.body}</p>
-              <p className="metric-chip-row">
-                {tool.extras.map((extra) => (
-                  <span className="metric-chip" key={extra}>
-                    {extra}
-                  </span>
-                ))}
-              </p>
-              <Link className="ghost-button" href={tool.href}>
-                打开
-              </Link>
-            </li>
+      <section id="log">
+        <div className="dark-panel">
+          <h2 className="dark-panel-title">{feature.logTitle}</h2>
+          {feature.log.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
           ))}
-        </ul>
-      </section>
-
-      <section id="access">
-        <div className="section-header">
-          <h2 className="section-title">不止网页</h2>
-          <p className="section-lede">
-            上面这些工具还有 REST API 和 MCP 两种接入方式，背后是同一套逻辑。
-          </p>
         </div>
 
-        <Link className="ghost-button" href="/tools/mcp">
-          看怎么接
-        </Link>
+        <div className="about-links">
+          <Link href={feature.href}>{feature.action}</Link>
+          <Link href="/tools/mcp">看怎么接入 MCP</Link>
+          <Link href="/tools/mock">AI 产品模拟面试</Link>
+        </div>
       </section>
     </main>
   );

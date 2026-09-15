@@ -18,12 +18,20 @@
    ========================================================================== */
 
 :root {
-  --paper: #eeeeee;
-  --ink: #000000;
-  --ink-muted: #767676;
-  --ink-faint: #9a9a9a;
-  --rule: #c9c9c9;
-  --rule-soft: #dcdcdc;
+  /* 配色取自夏琪在 Canva 里定的那版：浅蓝打底、墨绿写字。
+     muted / faint / rule 都是墨绿按透明度压出来的同色系，不另引入灰色 ——
+     混灰会让整套颜色显脏。 */
+  --paper: #d7faff;
+  --ink: #002400;
+  --ink-muted: #3d5c3d;
+  --ink-faint: #6b856b;
+  --rule: #a8c4b4;
+  --rule-soft: #c2dcd0;
+
+  /* 深色段落（作品页）用的反色。 */
+  --paper-dark: #002400;
+  --ink-on-dark: #d7faff;
+  --rule-on-dark: #2f4a2f;
 
   --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
@@ -902,19 +910,108 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
-   Landing entries
+   Feature / dark panel
    ========================================================================== */
 
-/* 首页的入口链接。文字链而非按钮 —— 按钮有边框和内边距，七个排在一起会把
-   首页的留白全吃掉，那正好是这一页要保住的东西。 */
-.entry-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 28px;
-  margin-top: 72px;
+.feature-name {
+  margin: 20px 0 0;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.entry-links a {
+.feature-tagline {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+/* 墨绿整块：她的设计里作品页正文是深底浅字。这块自己反色，
+   不依赖外面的 --paper / --ink，所以放在任何页面里都成立。 */
+.dark-panel {
+  margin-top: 44px;
+  padding: 40px 38px;
+  background: var(--paper-dark);
+  color: var(--ink-on-dark);
+  border-radius: 10px;
+}
+
+.dark-panel-title {
+  margin: 0 0 24px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.dark-panel p {
+  margin: 0 0 18px;
+  max-width: 62ch;
+  font-size: var(--size-body);
+  line-height: 1.95;
+  color: var(--ink-on-dark);
+}
+
+.dark-panel p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .dark-panel {
+    padding: 28px 22px;
+  }
+}
+
+/* ==========================================================================
+   About
+   ========================================================================== */
+
+.about-head {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+/* 圆形头像，跟大标题并排。尺寸压在 112px —— 它是引子不是主角。 */
+.about-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}
+
+.about-title {
+  margin: 0;
+  font-family: "Noto Serif SC", var(--sans);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.about-body {
+  margin-top: 40px;
+  max-width: var(--measure);
+}
+
+.about-body p {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.85;
+  font-weight: 500;
+}
+
+.about-body p:last-child {
+  margin-bottom: 0;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin-top: 56px;
+}
+
+.about-links a {
   font-size: var(--size-body);
   color: var(--ink);
   text-decoration: none;
@@ -922,21 +1019,179 @@ input[type="radio"]:checked {
   padding-bottom: 2px;
 }
 
-.entry-links a:hover {
+.about-links a:hover {
   border-bottom-color: var(--ink);
 }
 
-/* 落地页的拼贴图。它是首屏唯一的视觉，所以占满正文列；
-   底色已在图片里对齐成 #eeeeee，四周不会出现比页面略暗的方框。 */
-.landing-figure {
-  margin: 56px 0 0;
-  max-width: 100%;
+@media (max-width: 640px) {
+  .about-head {
+    gap: 16px;
+  }
+
+  .about-avatar {
+    width: 84px;
+    height: 84px;
+  }
+
+  .about-title {
+    font-size: 30px;
+  }
 }
 
-.landing-figure img {
+/* ==========================================================================
+   Landing
+   ========================================================================== */
+
+.hero-kicker {
+  margin: 0 0 6px;
+  font-family: "Noto Serif SC", var(--sans);
+  font-size: 19px;
+  font-style: italic;
+  color: var(--ink);
+}
+
+/* 个性签名，跟在名字下面。 */
+.hero-sign {
+  margin: 14px 0 0;
+  font-size: var(--size-body);
+  letter-spacing: 0.22em;
+  color: var(--ink-muted);
+}
+
+/* 主页唯一的按钮，进自我介绍。做成实心胶囊，是页面上唯一的落点。 */
+.welcome-button {
+  display: inline-block;
+  margin-top: 40px;
+  padding: 11px 34px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--size-body);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.welcome-button:hover {
+  opacity: 0.86;
+}
+
+/* ==========================================================================
+   Contact
+   ========================================================================== */
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.contact-title {
+  margin: 0;
+  font-family: "Noto Serif SC", var(--sans);
+  font-weight: 500;
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+.contact-subtitle {
+  margin: 6px 0 0;
+  font-family: "Noto Serif SC", var(--sans);
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin-top: 36px;
+}
+
+.contact-links a,
+.contact-fallback a {
+  font-size: var(--size-body);
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 2px;
+}
+
+.contact-links a:hover,
+.contact-fallback a:hover {
+  border-bottom-color: var(--ink);
+}
+
+.contact-form {
+  padding: 32px 30px;
+  background: var(--paper-dark);
+  color: var(--ink-on-dark);
+  border-radius: 10px;
+}
+
+.contact-form-title {
+  margin: 0 0 22px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 18px;
+  font-size: var(--size-meta);
+  color: var(--ink-on-dark);
+}
+
+.contact-form input,
+.contact-form textarea {
   display: block;
   width: 100%;
-  height: auto;
+  margin-top: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--rule-on-dark);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-on-dark);
+  font: inherit;
+  font-size: var(--size-body);
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: 1px solid var(--ink-on-dark);
+  outline-offset: 1px;
+}
+
+.contact-submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink-on-dark);
+  color: var(--paper-dark);
+  font: inherit;
+  font-size: var(--size-body);
+  cursor: pointer;
+}
+
+.contact-submit:hover {
+  opacity: 0.88;
+}
+
+@media (max-width: 760px) {
+  .contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .contact-title {
+    font-size: 27px;
+  }
+
+  .contact-subtitle {
+    font-size: 21px;
+  }
 }
 
 /* ==========================================================================

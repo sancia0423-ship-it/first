@@ -5,12 +5,11 @@ import { ToolsPage } from "@/components/tools-page";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 describe("portfolio links", () => {
-  it("keeps the shared YouTube anchor and the direct tool link valid", () => {
+  it("keeps the link to the YouTube tool valid", () => {
     const html = renderToStaticMarkup(createElement(ToolsPage));
 
-    expect(html).toContain('id="youtube-tool"');
     expect(html).toContain('href="/tools/youtube"');
-    expect(personalSiteContent.tools.cards[0].href).toBe("/tools/youtube");
+    expect(personalSiteContent.tools.feature.href).toBe("/tools/youtube");
   });
 
   it("links LinkedIn to a public profile rather than the feed", () => {

@@ -13,8 +13,8 @@ export const personalSiteContent = {
   },
   home: {
     hero: {
-      kicker: "",
-      titleIntro: "你好，我是夏琪",
+      kicker: "Hi, I am sancia",
+      titleIntro: "我是夏琪",
       highlightWords: {
         first: "",
         second: "",
@@ -23,7 +23,7 @@ export const personalSiteContent = {
       titleMiddle: "",
       titleConnector: "",
       titleOutro: "",
-      lead: "悉尼大学商业数据分析硕士在读。做过美团、得物的 AI 产品，和联合国儿童基金会的数据分析。",
+      lead: "温暖、好奇、生命力",
       badges: []
     },
     /** 首页只放这几个入口。是文字链，不是按钮 —— 按钮会把留白吃掉。 */
@@ -59,30 +59,19 @@ export const personalSiteContent = {
       ]
     },
     about: {
-      kicker: "自我介绍",
-      title: "悉尼大学商业数据分析硕士在读，做 AI 产品和数据分析。",
+      kicker: "ABOUT ME",
+      title: "hello，我叫夏琪",
       summary: "",
-      storyBadge: "一句话介绍",
-      storyTitle: "悉尼大学商分硕士在读，偏 AI 产品与数据分析。",
+      storyBadge: "",
+      storyTitle: "",
+      /** 夏琪自己写的原文，逐字照录。 */
       storyParagraphs: [
-        "在美团实习时，我参与了金融保险电销 AI 化项目，负责购买流程设计、知识库与对话链路优化，推动 AI 独立承接售卖流程后的转化率由 7.44% 提升到 12.6%。",
-        "在得物实习时，我参与 AIGC 文生图能力建设，从结构化 Prompt 方案、PRD、原型到评测体系，推动能力接入内容发布与商家工具链，帮助商品内容生产效率提升 5 到 6 倍。",
-        "除了业务项目，我也在系统学习 AI and Society、adversarial machine learning、distributed AI、AI literacy 等内容，并把 lecture 和 assignment 整理成了可下载的资料页。"
+        "hello，我叫夏琪，悉尼大学商业数据分析硕士在读，预计 2026 年底毕业。",
+        "过去，在美团和得物做过 AI 产品实习。",
+        "未来，我希望继续沿着 AI 产品这条路探索，做真正有价值、有意思的产品。",
+        "能力：熟练使用 Python 和 SQL，具备良好的代码理解与基础开发能力，可完成数据处理、模型调用及简单功能实现。"
       ],
-      prompts: [
-        {
-          title: "我现在在做什么",
-          body: "一边做 AI 产品与数据分析相关实习，一边把课程学习和 Demo 沉淀成作品集。"
-        },
-        {
-          title: "我擅长什么",
-          body: "Python、SQL、Prompt 设计、数据分析、实验设计、原型设计，以及用 AI 工具快速搭建原型。"
-        },
-        {
-          title: "我想去哪里",
-          body: "希望继续做 AI 产品、AIGC 应用、多模态工作流或偏产品导向的数据分析岗位。"
-        }
-      ]
+      prompts: []
     },
     projects: {
       kicker: "项目经历",
@@ -182,22 +171,21 @@ export const personalSiteContent = {
       ]
     },
     contact: {
-      kicker: "联系与入口",
-      title: "如果你想继续看资料、作品或联系我",
+      kicker: "Got questions?",
+      title: "期待你的联系",
       summary: "",
+      email: "sancia0423@gmail.com",
       links: [
-        { label: "Email / Sancia0423@gmail.com", href: "mailto:Sancia0423@gmail.com" },
         { label: "LinkedIn", href: "https://www.linkedin.com/in/xiaqi77sancia/" },
-        { label: "Resume PDF", href: "/docs/resume/xiaqi-resume.pdf" }
+        { label: "Email", href: "mailto:sancia0423@gmail.com" }
       ]
     }
   },
   learning: {
     hero: {
-      kicker: "AI 学习资料库",
+      kicker: "",
       title: "AI 学习与文献资料",
-      lead:
-        "这个页面集中放我现在学过以后觉得很好的资料、一些小练习，之后也会继续补充，希望大家可以一起学习。我打算把这里慢慢做成自己的一个知识库。"
+      lead: "这个页面集中记录我觉得不错的学习资料和文献。"
     },
     overviewCards: [
       {
@@ -437,27 +425,27 @@ export const personalSiteContent = {
   },
   tools: {
     hero: {
-      kicker: "工具区",
+      kicker: "",
       title: "我做过的小工具"
     },
-    cards: [
-      {
-        label: "工具 01",
-        title: "YouTube 中文翻译",
-        body: "读取公开视频字幕，生成中文字幕、原文对照和可下载 SRT，还能打开中文朗读。",
-        href: "/tools/youtube",
-        action: "直接试用"
-      },
-      {
-        label: "工具 02",
-        title: "模拟面试",
-        body: "把面试问题、回答练习和反馈放在一条链路里。",
-        href: "/tools/mock",
-        action: "开始练习"
-      }
-    ],
-    noteTitle: "之后这里还可以继续加",
-    noteBody:
-      "如果你后面还想放更多功能，比如简历分析器、论文摘要器、课程问答助手、数据作品展示小组件，都可以继续接进这个工具页。"
+    /** 夏琪自己写的开发者日志，逐字照录，不改写不增补。 */
+    feature: {
+      name: "越语听",
+      tagline: "第二语言长播客理解 AI",
+      logTitle: "开发者日志",
+      log: [
+        "这个工具，来源于我自己的一个小困扰。",
+        "我很喜欢在打扫卫生、走路或者做家务的时候听 YouTube 长播客。但我发现，当播客使用第二语言时，我很容易走神，对信息的理解和吸收也明显低于母语内容。",
+        "后来问了一圈身边的人，发现很多人都有类似的问题：很难在放松的场景里持续跟上长时间、高密度的第二语言播客。",
+        "于是，这个让英文长播客变得更容易理解的 AI 工具就做出来了。",
+        "只需要粘贴 YouTube 长播客视频链接，它就可以自动获取字幕、完成翻译，并生成可以直接收听的中文内容。你也可以点击任意字幕片段，针对具体内容直接向 AI 提问。",
+        "我还为它设计了一套内容理解 Prompt，让 AI 在读完整期内容后成为这期播客的内容专家：你可以继续追问具体观点、概念或细节，也可以让它总结重点、解释上下文，甚至围绕内容继续深入讨论。",
+        "每天提供 3 次免费体验；如果希望长期多次使用，也可以填写自己的 API Key。",
+        "目前支持字幕获取、翻译与下载，同时提供 MCP 模式，方便在不同使用场景下快速调用。",
+        "我希望它不只是一个翻译工具，而是能让英文播客真正进入日常生活，无论走路、通勤还是做家务，都能随时听懂即使是其他语言、但是自己感兴趣的内容，减少语言带来的理解门槛。"
+      ],
+      href: "/tools/youtube",
+      action: "打开越语听"
+    }
   }
 } as const;

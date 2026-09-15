@@ -289,5 +289,8 @@ YouTube 工具里的**章节速览、金句提取、划词解释**几个功能�
 [zarazhangrui/youtube-digest](https://github.com/zarazhangrui/youtube-digest)（MIT）。
 代码是按本仓库自己的架构重写的，并非直接复制 —— 记在这里是因为想法来自那边。
 
-站上的装置摄影配图版权归 [Will Handley](https://willhandley.net/) 所有，已获作者授权使用，
-**不包含在本仓库的 MIT 授权范围内**。二次使用请自行取得许可。
+站上的照片（拼贴、头像）版权归夏琪本人所有，**不包含在本仓库的 MIT 授权范围内**。
+
+站点的视觉设计基于 Canva 模板改制，其中的手绘插画元素版权归 Canva 及其素材作者所有，
+同样**不在 MIT 授权范围内** —— fork 本仓库不代表获得这些素材的使用许可，二次使用请自行
+通过 Canva 取得。MIT 覆盖的是代码，不是这些美术资源。
