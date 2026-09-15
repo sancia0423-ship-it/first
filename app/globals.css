@@ -961,6 +961,115 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
+   Projects
+   ========================================================================== */
+
+/* 整页反色。左栏和正文都跟着翻，所以单独给 page-shell 加一个修饰类，
+   而不是在每个子元素上改颜色。 */
+.page-dark {
+  background: var(--paper-dark);
+  color: var(--ink-on-dark);
+}
+
+.page-dark .brand-title,
+.page-dark .brand-handle,
+.page-dark .brand-subtitle,
+.page-dark .brand-tagline,
+.page-dark .header-link {
+  color: var(--ink-on-dark);
+}
+
+.projects-title {
+  margin: 0 0 56px;
+  font-family: "Noto Serif SC", var(--sans);
+  font-weight: 700;
+  font-size: 40px;
+  text-align: center;
+  color: var(--ink-on-dark);
+}
+
+/* 四张卡横排，窄屏两列再到一列。minmax(0,1fr) 防止长词把列撑破。 */
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.project-card-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 14px 0;
+}
+
+.project-card-media img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.project-card-body {
+  padding: 14px 16px 20px;
+}
+
+.project-card-body h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.project-card-body p {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.project-card-body p:last-child {
+  margin-bottom: 0;
+}
+
+.page-dark .about-links {
+  justify-content: center;
+}
+
+.page-dark .about-links a {
+  color: var(--ink-on-dark);
+  border-bottom-color: var(--rule-on-dark);
+}
+
+.page-dark .about-links a:hover {
+  border-bottom-color: var(--ink-on-dark);
+}
+
+@media (max-width: 900px) {
+  .project-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .project-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .projects-title {
+    font-size: 28px;
+    margin-bottom: 36px;
+  }
+}
+
+/* ==========================================================================
    Illustrations
    ========================================================================== */
 

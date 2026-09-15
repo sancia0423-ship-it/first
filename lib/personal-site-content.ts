@@ -26,38 +26,6 @@ export const personalSiteContent = {
       lead: "温暖、好奇、生命力",
       badges: []
     },
-    /** 首页只放这几个入口。是文字链，不是按钮 —— 按钮会把留白吃掉。 */
-    entries: [
-      { label: "自我介绍", href: "/about" },
-      { label: "项目经历", href: "/projects" },
-      { label: "AI 学习资料", href: "/ai-learning" },
-      { label: "小工具", href: "/tools" },
-      { label: "简历 PDF", href: "/docs/resume/xiaqi-resume.pdf" },
-      { label: "Email", href: "mailto:Sancia0423@gmail.com" },
-      { label: "LinkedIn", href: "https://www.linkedin.com/in/xiaqi77sancia/" }
-    ],
-    photos: {
-      kicker: "照片与日常",
-      title: "这里会放我的照片、学习记录和作品截图",
-      summary: "这一块我先把结构留出来。之后你只要把真实照片、活动记录或者作品截图换进去，首页就会更完整、更有个人感。",
-      cards: [
-        {
-          label: "生活",
-          caption: "可以放你平时的照片、城市记录或日常片段。",
-          className: "photo-card photo-card-peach"
-        },
-        {
-          label: "学习",
-          caption: "可以放上课、做作业、整理课程资料时的照片。",
-          className: "photo-card photo-card-mint"
-        },
-        {
-          label: "项目",
-          caption: "可以放数据分析作品截图、比赛现场或实习相关画面。",
-          className: "photo-card photo-card-sky"
-        }
-      ]
-    },
     about: {
       kicker: "ABOUT ME",
       title: "hello，我叫夏琪",
@@ -74,40 +42,47 @@ export const personalSiteContent = {
       prompts: []
     },
     projects: {
-      kicker: "项目经历",
-      title: "我做过的一些数据分析和 AI 产品项目",
+      kicker: "",
+      title: "项目展示",
       summary: "",
+      /** 四张卡的文案逐字用夏琪自己写的，不改写不增补。 */
       cards: [
         {
-          badge: "Meituan",
-          title: "金融保险 AI 电销流程优化",
-          body: "负责购买流程、知识库与话术策略优化，把 AI 独立售卖链路真正跑通，推动转化率和成单效率一起提升。",
-          metrics: ["AI Product", "Conversion", "Knowledge Base"]
+          title: "美团AI电销",
+          lines: [
+            "参与美团 AI 电销机器人从 0 到 1 的产品建设",
+            "负责核心业务链路优化，推动转化率与成单效率同步提升"
+          ],
+          image: "/images/projects/meituan-polaroid.jpg",
+          imageAlt: "美团实习期间的拍立得合影",
+          imageWidth: 570,
+          imageHeight: 656
         },
         {
-          badge: "Dewu",
-          title: "AIGC 文生图能力建设",
-          body: "围绕商品内容生产设计结构化 Prompt、评测体系和功能原型，把能力接入商家工具链，提升内容供给效率。",
-          metrics: ["AIGC", "Prompt", "Evaluation"]
+          title: "得物AIGC板块",
+          lines: [
+            "参与商家 AI 素材创作平台的 AIGC 文生图板块建设，5 个月完成 MVP 上线并接入内容发布与商家工具链"
+          ],
+          image: "/images/projects/dewu-art.png",
+          imageAlt: "",
+          imageWidth: 177,
+          imageHeight: 291
         },
         {
-          badge: "UNICEF",
-          title: "募捐页面数据分析与推荐策略",
-          body: "做用户分层、捐赠预测和策略评估，推动动态金额推荐上线，为后续投放和页面配置提供依据。",
-          metrics: ["Data Analysis", "Experiment", "Impact"]
-        },
-        {
-          badge: "NSW Government",
-          title: "澳洲职场性别平等数据看板",
-          body:
-            "为新南威尔士州政府 IDE 部门做的 Tableau 看板，用公开雇主数据回答「性别薪酬差距出现在哪里」。" +
-            "从整体中位数与平均数差距入手，逐层下钻到不同规模雇主的管理层性别构成、各薪酬四分位的女性占比、" +
-            "各行业董事会女性比例，最后聚焦制造业细分行业的改善幅度与女性管理者占比。",
-          metrics: ["Tableau", "Gender Pay Gap", "Public Sector", "Data Storytelling"],
+          title: "",
+          lines: ["为悉尼新洲政府 IDE 部门做数分报告（校企合作）"],
           image: "/images/projects/nsw-tableau.png",
-          imageAlt: "澳洲职场性别平等 Tableau 看板：整体性别薪酬差距、分层与分行业下钻",
+          imageAlt: "澳洲职场性别平等 Tableau 看板",
           imageWidth: 1600,
           imageHeight: 1900
+        },
+        {
+          title: "",
+          lines: ["为澳洲联合国儿童基金会搭建预测模型，并提供最终数据分析报告（校企合作）"],
+          image: "/images/projects/unicef-art.png",
+          imageAlt: "",
+          imageWidth: 235,
+          imageHeight: 260
         }
       ]
     },
@@ -124,51 +99,6 @@ export const personalSiteContent = {
         "联合国儿童基金会项目推动动态金额推荐上线，页面支付转化效率提升 4.8%。"
       ],
       skills: ["Python", "SQL", "Machine Learning", "Prompt Design", "A/B Testing", "AI Product"]
-    },
-    learningPreview: {
-      kicker: "学习资料",
-      title: "AI 学习文献资料",
-      summary:
-        "这里会放我学过以后觉得很好的资料、小练习和文献笔记。后面也会继续补充，慢慢把它整理成自己的知识库。",
-      items: [
-        {
-          title: "AI 学习文件",
-          body: "这一组文件偏 AI 通识和基础入门，每个文件都有简单介绍，可以按顺序慢慢看。",
-          href: "/ai-learning"
-        },
-        {
-          title: "小练习",
-          body: "这个板块先留着，后面会继续补我做过的小练习、随手实验和学习记录。",
-          href: "/ai-learning"
-        },
-        {
-          title: "Articles 文献清单",
-          body: "这里已经接进了 `Articles.docx` 的文献列表，后面会继续补阅读记录和文献笔记。",
-          href: "/ai-learning"
-        },
-        {
-          title: "Prompt 合集",
-          body: "我自己在用的提示词，每一条都能直接复制走。",
-          href: "/ai-learning#prompts"
-        }
-      ]
-    },
-    toolsPreview: {
-      kicker: "小工具",
-      title: "我做的一些小工具",
-      summary: "我自己做的小功能，都可以直接用。",
-      cards: [
-        {
-          title: "YouTube 中文翻译",
-          body: "把公开视频字幕翻成中文，支持搜索、点句跳转、章节速览和内容提问。",
-          href: "/tools/youtube"
-        },
-        {
-          title: "模拟面试",
-          body: "用于练习表达、模拟问答和拿到结构化反馈。",
-          href: "/tools/mock"
-        }
-      ]
     },
     contact: {
       kicker: "Got questions?",

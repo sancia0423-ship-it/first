@@ -41,7 +41,6 @@ export function ToolsPage() {
         <div className="about-links">
           <Link href={feature.href}>{feature.action}</Link>
           <Link href="/tools/mcp">看怎么接入 MCP</Link>
-          <Link href="/tools/mock">AI 产品模拟面试</Link>
         </div>
       </section>
     </main>

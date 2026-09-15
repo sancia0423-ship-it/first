@@ -6,57 +6,52 @@ import { publicFileExists } from "@/lib/media";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
 export const metadata: Metadata = {
-  title: "项目经历",
-  description: "做过的数据分析与 AI 产品项目。"
+  title: "项目展示",
+  description: "夏琪做过的 AI 产品与数据分析项目。"
 };
 
+/**
+ * 项目展示。版式照夏琪的设计：墨绿整页、标题居中、四张浅蓝卡片横排，
+ * 每张卡上图下文。文案逐字用她写的。
+ */
 export default function ProjectsPage() {
   const { projects } = personalSiteContent.home;
 
   return (
-    <main className="page-shell">
+    <main className="page-shell page-dark">
       <SiteHeader />
 
       <section id="top">
-        <h1 className="page-title">{projects.kicker}</h1>
-        <p className="hero-copy section">{projects.title}</p>
-      </section>
+        <h1 className="projects-title">{projects.title}</h1>
 
-      {projects.cards.map((item) => (
-        <section key={item.title}>
-          <div className="section-header">
-            <span className="section-kicker">{item.badge}</span>
-            <h2 className="section-title">{item.title}</h2>
-          </div>
+        <div className="project-cards">
+          {projects.cards.map((card) => (
+            <article className="project-card" key={card.lines[0]}>
+              {publicFileExists(card.image) ? (
+                <div className="project-card-media">
+                  <Image
+                    alt={card.imageAlt}
+                    height={card.imageHeight}
+                    sizes="(max-width: 900px) 45vw, 240px"
+                    src={card.image}
+                    width={card.imageWidth}
+                  />
+                </div>
+              ) : null}
 
-          <p className="section-copy">{item.body}</p>
+              <div className="project-card-body">
+                {card.title ? <h2>{card.title}</h2> : null}
+                {card.lines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
 
-          <p className="metric-chip-row section">
-            {item.metrics.map((metric) => (
-              <span className="metric-chip" key={metric}>
-                {metric}
-              </span>
-            ))}
-          </p>
-
-          {"image" in item && publicFileExists(item.image) ? (
-            <figure className="project-figure">
-              <Image
-                alt={item.imageAlt}
-                height={item.imageHeight}
-                sizes="(max-width: 860px) 100vw, 620px"
-                src={item.image}
-                width={item.imageWidth}
-              />
-            </figure>
-          ) : null}
-        </section>
-      ))}
-
-      <section>
-        <Link className="ghost-button" href="/">
-          返回首页
-        </Link>
+        <div className="about-links">
+          <Link href="/about">返回自我介绍</Link>
+        </div>
       </section>
     </main>
   );
