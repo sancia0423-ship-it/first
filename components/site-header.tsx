@@ -1,28 +1,21 @@
 import Link from "next/link";
-import { personalSiteContent } from "@/lib/personal-site-content";
 
+/**
+ * 顶部横向导航。四项均分整个页宽 —— 照夏琪设计稿里的样子，不是侧栏。
+ *
+ * 标签和顺序都按她的设计稿：主页 / 项目 / 作品 / AI学习资料。
+ */
 const navItems = [
   { label: "主页", href: "/" },
-  { label: "自我介绍", href: "/about" },
+  { label: "项目", href: "/about" },
   { label: "作品", href: "/tools" },
-  { label: "AI 学习", href: "/ai-learning" }
+  { label: "AI学习资料", href: "/ai-learning" }
 ];
 
 export function SiteHeader() {
-  const { handle, subtitle, tagline, title } = personalSiteContent.site;
-
   return (
     <header className="site-header">
-      <Link className="brand-lockup" href="/">
-        <span className="brand-name-row">
-          <strong className="brand-title">{title}</strong>
-          <span className="brand-handle">{handle}</span>
-        </span>
-        <span className="brand-subtitle">{subtitle}</span>
-        <span className="brand-tagline">{tagline}</span>
-      </Link>
-
-      <nav className="header-nav" aria-label="Primary">
+      <nav aria-label="Primary">
         {navItems.map((item) => (
           <Link className="header-link" href={item.href} key={item.href}>
             {item.label}

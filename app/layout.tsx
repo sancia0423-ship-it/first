@@ -29,6 +29,15 @@ const displayFontUrl =
   encodeURIComponent([...new Set(displayGlyphs)].join("")) +
   "&display=swap";
 
+/**
+ * 中文手写体，用在首屏的名字和签名上。同样用 text= 只取实际出现的字，
+ * 完整字体有好几 MB，这样切下来几 KB。
+ */
+const handFontUrl =
+  "https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=" +
+  encodeURIComponent([...new Set("我是夏琪温暖好奇生命力welcome、")].join("")) +
+  "&display=swap";
+
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
@@ -72,6 +81,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <link href="https://fonts.gstatic.com" rel="preconnect" crossOrigin="anonymous" />
         <link href={displayFontUrl} precedence="default" rel="stylesheet" />
+        <link href={handFontUrl} precedence="default" rel="stylesheet" />
         {children}
       </body>
     </html>

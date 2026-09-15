@@ -136,30 +136,19 @@ img {
 }
 
 /* ==========================================================================
-   Shell — fixed identity rail, single content column
+   Shell — single centred column, nav across the top
    ========================================================================== */
 
+/* 之前这里是「侧栏 + 正文」的两列网格，那是改版前留下的骨架 —— 跟夏琪的设计稿
+   不是一回事：她的导航横跨顶部，内容整体居中。 */
 .page-shell {
-  display: grid;
-  grid-template-columns: var(--rail) minmax(0, 1fr);
-  column-gap: var(--gap-lg);
-  max-width: 1080px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 34px 32px 200px;
+  padding: 0 40px 120px;
 }
 
-/* Everything that is not the header lives in the content column. */
 .page-shell > * {
-  grid-column: 2;
   min-width: 0;
-}
-
-.page-shell > .site-header {
-  grid-column: 1;
-  grid-row: 1 / span 200;
-  position: sticky;
-  top: 34px;
-  align-self: start;
 }
 
 /* ==========================================================================
@@ -167,7 +156,28 @@ img {
    ========================================================================== */
 
 .site-header {
-  display: block;
+  padding: 30px 0 0;
+  margin-bottom: 10px;
+}
+
+/* 四项均分整个页宽：首尾贴边、中间等距，跟设计稿里横跨整屏的感觉一致。 */
+.site-header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-link {
+  font-size: 15px;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .brand-lockup {
@@ -971,10 +981,6 @@ input[type="radio"]:checked {
   color: var(--ink-on-dark);
 }
 
-.page-dark .brand-title,
-.page-dark .brand-handle,
-.page-dark .brand-subtitle,
-.page-dark .brand-tagline,
 .page-dark .header-link {
   color: var(--ink-on-dark);
 }
@@ -1207,37 +1213,131 @@ input[type="radio"]:checked {
    Landing
    ========================================================================== */
 
-.hero-kicker {
-  margin: 0 0 6px;
+/* 首屏整体居中 —— 设计稿是对称构图，不是左对齐的正文列。 */
+.landing {
+  text-align: center;
+  padding-top: 4px;
+}
+
+.landing-art {
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
+
+.landing-kicker {
+  margin: -18px 0 0;
   font-family: "Noto Serif SC", var(--sans);
-  font-size: 19px;
   font-style: italic;
+  font-size: 34px;
+  line-height: 1.2;
   color: var(--ink);
 }
 
-/* 个性签名，跟在名字下面。 */
-.hero-sign {
-  margin: 14px 0 0;
-  font-size: var(--size-body);
-  letter-spacing: 0.22em;
-  color: var(--ink-muted);
+/* 中文名用手写体，字间距拉开 —— 设计稿里它是整屏最重的一笔。 */
+.landing-name {
+  margin: 2px 0 0;
+  font-family: "Ma Shan Zheng", "Noto Serif SC", var(--sans);
+  font-weight: 400;
+  font-size: 78px;
+  line-height: 1.15;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  color: var(--ink);
 }
 
-/* 主页唯一的按钮，进自我介绍。做成实心胶囊，是页面上唯一的落点。 */
+.landing-sign {
+  margin: 14px 0 0;
+  font-family: "Ma Shan Zheng", var(--sans);
+  font-size: 19px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
 .welcome-button {
   display: inline-block;
-  margin-top: 40px;
-  padding: 11px 34px;
+  margin-top: 20px;
+  padding: 13px 40px;
   border-radius: 999px;
   background: var(--ink);
   color: var(--paper);
-  font-size: var(--size-body);
-  letter-spacing: 0.08em;
+  font-family: "Ma Shan Zheng", var(--sans);
+  font-size: 19px;
+  letter-spacing: 0.06em;
   text-decoration: none;
 }
 
 .welcome-button:hover {
   opacity: 0.86;
+}
+
+/* ==========================================================================
+   Drawings gallery
+   ========================================================================== */
+
+.gallery-section {
+  padding-top: 110px;
+}
+
+/* 疏密不均是刻意的：设计稿里这些画是散落的，不是对齐的网格。
+   用 align-items + 每项不同的上边距制造错落。 */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 40px 56px;
+}
+
+.gallery-item {
+  height: auto;
+}
+
+.gallery-wide {
+  width: 250px;
+}
+
+.gallery-tall {
+  width: 150px;
+  margin-bottom: 34px;
+}
+
+.gallery-small {
+  width: 118px;
+}
+
+@media (max-width: 760px) {
+  .landing-kicker {
+    font-size: 24px;
+    margin-top: -8px;
+  }
+
+  .landing-name {
+    font-size: 46px;
+  }
+
+  .landing-sign {
+    font-size: 16px;
+  }
+
+  .gallery {
+    gap: 26px 32px;
+  }
+
+  .gallery-wide {
+    width: 180px;
+  }
+
+  .gallery-tall {
+    width: 104px;
+    margin-bottom: 20px;
+  }
+
+  .gallery-small {
+    width: 84px;
+  }
 }
 
 /* ==========================================================================
@@ -1820,9 +1920,6 @@ code {
   }
 
   .page-shell > *,
-  .page-shell > .site-header {
-    grid-column: 1;
-  }
 
   .page-shell > .site-header {
     grid-row: auto;
