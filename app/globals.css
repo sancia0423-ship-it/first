@@ -961,6 +961,62 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
+   Illustrations
+   ========================================================================== */
+
+/* 手绘插画。底色已经在图里对齐成页面色，所以四周不会出现方框。
+   一律 height:auto，按容器宽度缩放。 */
+.art {
+  display: block;
+  height: auto;
+}
+
+.art-home {
+  width: 100%;
+  max-width: 560px;
+  margin-bottom: 26px;
+}
+
+/* 灯泡那张贴右边，正文从它左侧流过 —— 她的设计里就是这个关系。 */
+.art-about {
+  float: right;
+  width: 230px;
+  margin: -20px 0 12px 28px;
+}
+
+.art-learning {
+  width: 300px;
+  margin-top: 28px;
+}
+
+/* 深色面板里的插画，靠右上角，正文绕开它。 */
+.art-tools {
+  float: right;
+  width: 180px;
+  margin: -8px -6px 10px 24px;
+}
+
+@media (max-width: 700px) {
+  .art-about,
+  .art-tools {
+    float: none;
+    margin: 20px 0;
+  }
+
+  .art-about {
+    width: 180px;
+  }
+
+  .art-tools {
+    width: 150px;
+  }
+
+  .art-learning {
+    width: 220px;
+  }
+}
+
+/* ==========================================================================
    About
    ========================================================================== */
 

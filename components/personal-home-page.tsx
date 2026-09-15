@@ -16,6 +16,16 @@ export function PersonalHomePage() {
       <SiteHeader />
 
       <section id="top">
+        <Image
+          alt=""
+          className="art art-home"
+          height={364}
+          priority
+          sizes="(max-width: 700px) 100vw, 560px"
+          src="/images/art/home.png"
+          width={900}
+        />
+
         <p className="hero-kicker">{hero.kicker}</p>
         <h1 className="page-title">{hero.titleIntro}</h1>
         <p className="hero-sign">{hero.lead}</p>

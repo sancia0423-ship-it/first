@@ -30,6 +30,15 @@ export function AboutPage() {
           <h1 className="about-title">{about.kicker}</h1>
         </div>
 
+        <Image
+          alt=""
+          className="art art-about"
+          height={493}
+          sizes="260px"
+          src="/images/art/about.png"
+          width={460}
+        />
+
         <div className="about-body">
           {about.storyParagraphs.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>

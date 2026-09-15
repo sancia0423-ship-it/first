@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
@@ -23,6 +24,14 @@ export function ToolsPage() {
 
       <section id="log">
         <div className="dark-panel">
+          <Image
+            alt=""
+            className="art art-tools"
+            height={361}
+            sizes="200px"
+            src="/images/art/tools.png"
+            width={420}
+          />
           <h2 className="dark-panel-title">{feature.logTitle}</h2>
           {feature.log.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>

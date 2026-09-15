@@ -1,33 +1,28 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 import { promptLibrary } from "@/lib/prompt-library";
 
 export function AiLearningPage() {
-  const { hero, lectures, overviewCards, practice, referenceShelf } = personalSiteContent.learning;
+  const { hero, lectures, practice, referenceShelf } = personalSiteContent.learning;
 
   return (
     <main className="page-shell portfolio-page">
       <SiteHeader />
 
-      <section className="hero-panel">
-        <div className="hero-grid">
-          <div>
-            <span className="eyebrow">{hero.kicker}</span>
-            <h1 className="page-title">{hero.title}</h1>
-            <p className="hero-copy">{hero.lead}</p>
-          </div>
+      <section id="top">
+        <h1 className="page-title">{hero.title}</h1>
+        <p className="hero-copy">{hero.lead}</p>
 
-          <div className="showcase-grid">
-            {overviewCards.map((item) => (
-              <article className="candy-card prompt-card" key={item.title}>
-                <span className="mini-label">{item.label}</span>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
+        <Image
+          alt=""
+          className="art art-learning"
+          height={238}
+          sizes="300px"
+          src="/images/art/learning.png"
+          width={480}
+        />
       </section>
 
       <section className="portfolio-section section" id="lectures">
