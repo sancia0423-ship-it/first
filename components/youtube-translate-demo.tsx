@@ -37,6 +37,10 @@ type YouTubePlayer = {
   playVideo: () => void;
 };
 
+type YouTubePlayerEvent = {
+  target: YouTubePlayer;
+};
+
 /** 字幕区的三种阅读方式。 */
 type CaptionView = "both" | "zh" | "source";
 
@@ -80,6 +84,9 @@ type YouTubeNamespace = {
     options: {
       videoId: string;
       playerVars?: Record<string, number>;
+      events?: {
+        onReady?: (event: YouTubePlayerEvent) => void;
+      };
     }
   ) => YouTubePlayer;
 };
@@ -146,7 +153,6 @@ function loadYouTubeIframeApi() {
 
 export function YouTubeTranslateDemo() {
   const [url, setUrl] = useState("");
-  const [sourceLanguage, setSourceLanguage] = useState("");
   const [result, setResult] = useState<YouTubeTranslationResult | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -315,7 +321,9 @@ export function YouTubeTranslateDemo() {
     return parsed.data;
   }
 
-  async function submit(nextUrl = url, nextSourceLanguage = sourceLanguage) {
+  // 语言固定走自动识别。示例按钮仍会显式传自己的语言码，用户自己贴的链接一律留空，
+  // 免得上一次点示例留下的 en 悄悄跟着下一个视频发出去。
+  async function submit(nextUrl = url, nextSourceLanguage = "") {
     setIsSubmitting(true);
     setError("");
     setActiveSegmentIndex(-1);
@@ -464,9 +472,18 @@ export function YouTubeTranslateDemo() {
           playerVars: {
             playsinline: 1,
             rel: 0
+          },
+          events: {
+            onReady: (event) => {
+              if (cancelled) {
+                return;
+              }
+
+              playerRef.current = event.target;
+              setPlayerVersion((version) => version + 1);
+            }
           }
         });
-        setPlayerVersion((version) => version + 1);
       })
       .catch((iframeError) => {
         const message = iframeError instanceof Error ? iframeError.message : "播放器初始化失败";
@@ -488,7 +505,17 @@ export function YouTubeTranslateDemo() {
     }
 
     const timer = window.setInterval(() => {
-      const currentTimeMs = Math.floor((playerRef.current?.getCurrentTime() ?? 0) * 1000);
+      const player = playerRef.current;
+      if (!player || typeof player.getCurrentTime !== "function") {
+        return;
+      }
+
+      const currentTime = player.getCurrentTime();
+      if (!Number.isFinite(currentTime)) {
+        return;
+      }
+
+      const currentTimeMs = Math.floor(currentTime * 1000);
       const nextIndex = result.segments.findIndex(
         (segment) => currentTimeMs >= segment.startMs && currentTimeMs <= segment.endMs + 250
       );
@@ -566,7 +593,11 @@ export function YouTubeTranslateDemo() {
   // --- 点击字幕跳转视频 --------------------------------------------------
   function seekToSegment(startMs: number) {
     const player = playerRef.current;
-    if (!player) {
+    if (
+      !player ||
+      typeof player.seekTo !== "function" ||
+      typeof player.playVideo !== "function"
+    ) {
       return;
     }
 
@@ -967,15 +998,6 @@ export function YouTubeTranslateDemo() {
                 placeholder="https://www.youtube.com/watch?v=..."
               />
             </label>
-
-            <label>
-              原字幕语言代码
-              <input
-                value={sourceLanguage}
-                onChange={(event) => setSourceLanguage(event.target.value)}
-                placeholder="留空自动，常用 en / ja / ko"
-              />
-            </label>
           </div>
 
           <div className="button-row">
@@ -1007,7 +1029,6 @@ export function YouTubeTranslateDemo() {
                   key={example.label}
                   onClick={() => {
                     setUrl(example.url);
-                    setSourceLanguage(example.sourceLanguage);
                     void submit(example.url, example.sourceLanguage);
                   }}
                   type="button"
@@ -1152,17 +1173,6 @@ export function YouTubeTranslateDemo() {
                         )}
                       </select>
                     </label>
-
-                    <div className="callout">
-                      <strong>可选字幕语言</strong>
-                      <div className="chip-row section">
-                        {result.availableTracks.map((track) => (
-                          <span className="chip static-chip" key={`${track.languageCode}-${track.label}`}>
-                            {track.languageCode} · {track.kind === "auto" ? "auto" : "manual"}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
