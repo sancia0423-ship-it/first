@@ -29,6 +29,13 @@ const displayFontUrl =
   encodeURIComponent([...new Set(displayGlyphs)].join("")) +
   "&display=swap";
 
+/**
+ * 照片墙的手写标注。Caveat 只含拉丁字符，整份也就几十 KB，不需要像中文字体
+ * 那样用 text= 切子集。
+ */
+const handFontUrl =
+  "https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap";
+
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
@@ -72,6 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <link href="https://fonts.gstatic.com" rel="preconnect" crossOrigin="anonymous" />
         <link href={displayFontUrl} precedence="default" rel="stylesheet" />
+        <link href={handFontUrl} precedence="default" rel="stylesheet" />
         {children}
       </body>
     </html>

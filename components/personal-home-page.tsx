@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { PhotoCollage, hasCollagePhotos } from "@/components/photo-collage";
 import { SiteHeader } from "@/components/site-header";
 import { personalSiteContent } from "@/lib/personal-site-content";
 
@@ -25,17 +26,21 @@ export function PersonalHomePage() {
         <h1 className="page-title">{hero.titleIntro}</h1>
         <p className="hero-copy section">{hero.lead}</p>
 
-        <figure className="site-figure landing-figure">
-          <Image
-            alt="白墙上悬挂的一只灰色喇叭"
-            height={826}
-            priority
-            sizes="(max-width: 640px) 100vw, 300px"
-            src="/images/site/speaker.jpg"
-            width={1240}
-          />
-          <figcaption>摄影：Will Handley，经作者授权使用。</figcaption>
-        </figure>
+        {hasCollagePhotos() ? (
+          <PhotoCollage />
+        ) : (
+          <figure className="site-figure landing-figure">
+            <Image
+              alt="白墙上悬挂的一只灰色喇叭"
+              height={826}
+              priority
+              sizes="(max-width: 640px) 100vw, 300px"
+              src="/images/site/speaker.jpg"
+              width={1240}
+            />
+            <figcaption>摄影：Will Handley，经作者授权使用。</figcaption>
+          </figure>
+        )}
 
         <nav aria-label="站内入口" className="entry-links">
           {entries.map((item) =>

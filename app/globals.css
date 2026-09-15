@@ -902,6 +902,63 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
+   Photo collage
+   ========================================================================== */
+
+/* 照片墙。容器定死比例，子项全部按百分比定位 —— 缩放时整组关系不变。 */
+.photo-collage {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 5 / 4;
+  /* 下面留一截给最底下那两个标注 */
+  margin: 56px 0 44px;
+}
+
+.collage-item {
+  position: absolute;
+  margin: 0;
+  /* 白边 + 极淡的投影：让它读起来是一叠照片，而不是四个贴在背景上的方块。 */
+  padding: 6px 6px 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.collage-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 手写标注单独一层，z-index 高于所有照片 —— 放进 figure 里会被上层照片压住，
+   因为 figure 的 rotate 生成了独立的层叠上下文，标注跑不出来。 */
+.collage-note {
+  position: absolute;
+  z-index: 10;
+  font-family: "Caveat", var(--sans);
+  font-size: 19px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .photo-collage {
+    max-width: 100%;
+    margin-top: 40px;
+  }
+
+  .collage-item {
+    padding: 4px 4px 6px;
+  }
+
+  .collage-note {
+    font-size: 16px;
+  }
+}
+
+/* ==========================================================================
    Landing entries
    ========================================================================== */
 
