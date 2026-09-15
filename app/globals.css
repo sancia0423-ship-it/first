@@ -340,6 +340,12 @@ img {
   letter-spacing: 0.01em;
 }
 
+/* 「快速试试」要加粗，但上面那条是三个类共用的，直接加会把另外两个也带粗。 */
+.example-label {
+  font-weight: 700;
+  color: var(--ink);
+}
+
 /* Page title — one per page, sits under the grey eyebrow.
    Set in a serif: against the neutral sans of the body it reads as more
    formal and more restrained, which suits an editorial sheet. Only the h1
@@ -979,29 +985,10 @@ input[type="radio"]:checked {
    Projects
    ========================================================================== */
 
-/* 通栏深色段：挣脱居中的内容列，铺满整个视口宽度。
-   100vw 会把滚动条宽度也算进去，所以用 100% + 负边距的写法，不会横向溢出。 */
-.bleed-dark {
-  margin-left: calc(50% - 50vw + var(--sb, 0px) / 2);
-  margin-right: calc(50% - 50vw + var(--sb, 0px) / 2);
-  width: auto;
-  background: var(--paper-dark);
-  color: var(--ink-on-dark);
-  padding: 72px 0 84px;
-  margin-top: 90px;
-}
-
-.bleed-inner {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-.bleed-dark .project-card-body h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 700;
-  text-align: center;
+/* 项目展示跟上半同底色 —— 取色确认整页都是 #d7faff，没有深色段。
+   区分靠的是白卡片，不是换背景。 */
+.projects-section {
+  padding-top: 96px;
 }
 
 /* 整页反色。导航跟着翻，所以单独给 page-shell 加一个修饰类，
@@ -1016,49 +1003,61 @@ input[type="radio"]:checked {
 }
 
 .projects-title {
-  margin: 0 0 56px;
+  margin: 0 0 44px;
   font-family: "Noto Serif SC", var(--sans);
   font-weight: 700;
-  font-size: 40px;
+  font-size: 38px;
   text-align: center;
-  color: var(--ink-on-dark);
+  color: var(--ink);
 }
 
 /* 四张卡横排，窄屏两列再到一列。minmax(0,1fr) 防止长词把列撑破。 */
+/* 四张卡等高：align-items 默认 stretch，加上卡内 flex 让正文区吃掉剩余高度，
+   图片区高度固定 —— 四张图原始比例差很多（拍立得竖、香槟杯细长、看板超高），
+   不定死图片区的话卡片高度会参差不齐。 */
 .project-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
-  align-items: start;
 }
 
+/* 白卡：取色确认卡片底是纯白，不是页面的浅蓝。 */
 .project-card {
   display: flex;
   flex-direction: column;
-  background: var(--paper);
+  background: #ffffff;
   color: var(--ink);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 36, 0, 0.07);
 }
 
 .project-card-media {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 14px 0;
+  height: 190px;
+  padding: 16px 16px 0;
 }
 
+/* contain 而不是 cover：这几张一张是照片、一张是截图、两张是线稿，
+   cover 会把线稿裁掉手脚。 */
 .project-card-media img {
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
   border-radius: 6px;
 }
 
 .project-card-body {
-  padding: 14px 16px 20px;
+  flex: 1;
+  padding: 14px 16px 22px;
 }
 
-.project-card-body h2 {
+.project-card-body h2,
+.project-card-body h3 {
   margin: 0 0 8px;
   font-size: 15px;
   font-weight: 700;

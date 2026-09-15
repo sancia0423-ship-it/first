@@ -9,7 +9,6 @@ const routes = [
   { path: "/ai-learning", priority: 0.8 },
   { path: "/tools", priority: 0.8 },
   { path: "/tools/youtube", priority: 0.7 },
-  { path: "/tools/mcp", priority: 0.6 },
   ...promptLibrary.map((entry) => ({ path: `/prompts/${entry.slug}`, priority: 0.5 }))
 ];
 

@@ -54,9 +54,8 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 通栏深色段。width:100vw + 负边距让它挣脱居中的内容列，铺满整个视口宽度。 */}
-      <section className="bleed-dark" id="projects">
-        <div className="bleed-inner">
+      <section className="projects-section" id="projects">
+        <div>
           <h2 className="projects-title">{projects.title}</h2>
 
           <div className="project-cards">
