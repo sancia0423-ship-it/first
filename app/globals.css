@@ -902,6 +902,36 @@ input[type="radio"]:checked {
 }
 
 /* ==========================================================================
+   Landing entries
+   ========================================================================== */
+
+/* 首页的入口链接。文字链而非按钮 —— 按钮有边框和内边距，七个排在一起会把
+   首页的留白全吃掉，那正好是这一页要保住的东西。 */
+.entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin-top: 72px;
+}
+
+.entry-links a {
+  font-size: var(--size-body);
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 2px;
+}
+
+.entry-links a:hover {
+  border-bottom-color: var(--ink);
+}
+
+/* 落地页只有这一张图，给它比内文配图更从容的上下距离。 */
+.landing-figure {
+  margin-top: 64px;
+}
+
+/* ==========================================================================
    Site imagery
    ========================================================================== */
 

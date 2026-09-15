@@ -23,10 +23,19 @@ export const personalSiteContent = {
       titleMiddle: "",
       titleConnector: "",
       titleOutro: "",
-      lead:
-        "我目前在悉尼大学读商业数据分析硕士，主修 Python、机器学习与数据分析。做过美团和得物的 AI 产品，也做过联合国儿童基金会的数据分析项目。我希望这个网站既能快速介绍我，也能把简历、作品、AI 学习资料和工具整合在一起。",
+      lead: "悉尼大学商业数据分析硕士在读。做过美团、得物的 AI 产品，和联合国儿童基金会的数据分析。",
       badges: []
     },
+    /** 首页只放这几个入口。是文字链，不是按钮 —— 按钮会把留白吃掉。 */
+    entries: [
+      { label: "自我介绍", href: "/about" },
+      { label: "项目经历", href: "/projects" },
+      { label: "AI 学习资料", href: "/ai-learning" },
+      { label: "小工具", href: "/tools" },
+      { label: "简历 PDF", href: "/docs/resume/xiaqi-resume.pdf" },
+      { label: "Email", href: "mailto:Sancia0423@gmail.com" },
+      { label: "LinkedIn", href: "https://www.linkedin.com/in/xiaqi77sancia/" }
+    ],
     photos: {
       kicker: "照片与日常",
       title: "这里会放我的照片、学习记录和作品截图",
@@ -51,9 +60,8 @@ export const personalSiteContent = {
     },
     about: {
       kicker: "自我介绍",
-      title: "我想做能把模型能力、用户体验和业务结果连起来的工作",
-      summary:
-        "相比单纯讲模型，我更在意怎么把模型真正接进产品、接进流程、接进业务指标。所以我的经历会同时包含 AI 产品、数据分析和落地效果。",
+      title: "悉尼大学商业数据分析硕士在读，做 AI 产品和数据分析。",
+      summary: "",
       storyBadge: "一句话介绍",
       storyTitle: "悉尼大学商分硕士在读，偏 AI 产品与数据分析。",
       storyParagraphs: [
