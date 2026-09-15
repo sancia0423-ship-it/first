@@ -21,6 +21,10 @@
   /* 配色取自夏琪在 Canva 里定的那版：浅蓝打底、墨绿写字。
      muted / faint / rule 都是墨绿按透明度压出来的同色系，不另引入灰色 ——
      混灰会让整套颜色显脏。 */
+  /* 指针位置，由 PointerDepth 写入；-1 ~ 1。没有指针时保持 0。 */
+  --mx: 0;
+  --my: 0;
+
   --paper: #d7faff;
   --ink: #002400;
   /* 都按 4.5:1 的正文对比度下限校准过：原来的 #6b856b 在浅蓝底上只有 3.66:1，
@@ -1294,9 +1298,21 @@ input[type="radio"]:checked {
   padding-top: 4px;
 }
 
+/* 舞台层负责透视和倾斜，图片层负责入场动画 ——
+   两者都要用 transform，放在同一个元素上会互相覆盖。 */
+.landing-stage {
+  perspective: 1400px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.depth-on .landing-stage {
+  transform: rotateY(calc(var(--mx) * 2.4deg)) rotateX(calc(var(--my) * -1.8deg));
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .landing-art {
   width: 100%;
-  max-width: 1000px;
   height: auto;
   margin: 0 auto;
   display: block;
@@ -1386,6 +1402,23 @@ input[type="radio"]:checked {
 .gallery-item:nth-child(5) { animation-delay: .41s, 1.1s; animation-duration: .7s, 6.2s; }
 .gallery-item:nth-child(6) { animation-delay: .50s, 2.3s; animation-duration: .7s, 7.3s; }
 
+.gallery-slot {
+  display: block;
+  will-change: transform;
+}
+
+/* 视差：位移量 = 指针偏移 × 这张画的 depth。
+   depth 大的跟手更明显，读起来就"更靠前"—— 层次感是这么来的，
+   不是靠阴影。竖直方向幅度取水平的一半，避免整片画面上下晃。 */
+.depth-on .gallery-slot {
+  transform: translate3d(
+    calc(var(--mx) * var(--depth, 1) * -13px),
+    calc(var(--my) * var(--depth, 1) * -7px),
+    0
+  );
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .gallery-wide {
   width: 250px;
 }
@@ -1397,6 +1430,10 @@ input[type="radio"]:checked {
 
 .gallery-small {
   width: 118px;
+}
+
+.gallery-slot img {
+  width: 100%;
 }
 
 @media (max-width: 760px) {
@@ -1419,6 +1456,10 @@ input[type="radio"]:checked {
 
   .gallery-wide {
     width: 180px;
+  }
+
+  .gallery-slot {
+    transform: none;
   }
 
   .gallery-tall {
