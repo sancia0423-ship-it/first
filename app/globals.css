@@ -1032,6 +1032,13 @@ input[type="radio"]:checked {
   box-shadow: 0 1px 4px rgba(0, 36, 0, 0.07);
 }
 
+/* AI 学习页的资料卡用蓝色。单独覆盖 .resource-card，
+   不跟项目页的白卡共用底色 —— 改这里不会动到 /about 上的项目卡。
+   比页面底色深一档，靠色差成形，而不是靠白色跳出来。 */
+.resource-card {
+  background: #b3ecf9;
+}
+
 .project-card-media {
   display: flex;
   align-items: center;
