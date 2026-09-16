@@ -1,15 +1,23 @@
 # sancia_aboutme
 
-夏琪（sancia）的个人主页与工具站。一个 Next.js 应用，装着三个能直接打开就用的 AI 小工具：
+夏琪（sancia）的个人主页与作品站，已上线：**https://sancia-aboutme.com**
 
-1. **YouTube 中文翻译** —— 贴一个公开视频链接，读字幕、翻成中文，支持搜索、点句跳转、
-   时间戳笔记和 SRT 下载，另有章节速览、划词解释、内容提问、自测问答
-2. **AI 产品模拟面试** —— 按岗位方向生成四道面试题，逐题五维评分、追问，并给出更强的回答结构
-3. **面经情报** —— 输入公司、岗位、方向，从公开内容召回面经，聚合成结构化准备简报，来源可追溯
+视觉全部自己设计，站点用 Next.js 从零实现。主打的是一个能直接打开就用的 AI 工具：
 
-三个工具共用同一套服务端逻辑，对外有三个外壳：网页、REST API（`/api/v1/*`，
-OpenAPI 规范由 zod schema 直接生成）、以及一个 MCP server（`mcp/server.mjs`，5 个工具）。
-所以不管从哪个入口进来，行为都一样，不会分叉。
+**越语听｜第二语言长播客理解 AI** —— 贴一个公开 YouTube 链接，读取字幕、翻成中文，
+支持搜索、点句跳转、时间戳笔记和 SRT 下载；填入自己的 API key 后还能生成章节速览、
+划词解释、就内容提问、自测问答。
+
+一条值得说的分层：**字幕在服务端取，翻译在浏览器里做。** 访客自带 key 时，翻译请求
+由浏览器直接发给模型厂商，不经过本站服务器 —— key 不落地、不进日志，在网络面板里
+可以自己验证。
+
+同一套服务端逻辑对外有三个外壳：网页、REST API（`/api/v1/*`，OpenAPI 规范由 zod
+schema 直接生成，不会跟代码脱节）、以及一个 MCP server（`mcp/server.mjs`，5 个工具，
+可接进 Claude Desktop / Cursor）。所以不管从哪个入口进来，行为都一样，不会分叉。
+
+面经情报与模拟面试两条链路仍保留在 API 与 MCP 层（供程序和 AI 调用），但按站点当前
+的设计不再提供网页入口。
 
 ## 运行方式
 
@@ -26,16 +34,15 @@ npm run lint && npm run typecheck && npm test && npm run build
 
 默认访问：
 
-- 首页：`http://localhost:3000`
-- 小工具目录：`http://localhost:3000/tools`
-- YouTube 翻译：`http://localhost:3000/tools/youtube`
-- 模拟面试：`http://localhost:3000/tools/mock`
-- 接入方式说明：`http://localhost:3000/tools/mcp`
-- 结果页示例：`http://localhost:3000/search?company=字节跳动&role=产品经理实习&direction=增长`
-- API 示例：`http://localhost:3000/api/search?company=字节跳动&role=产品经理实习&direction=增长`
-- 健康检查：`http://localhost:3000/api/health`
+- 主页：`http://localhost:3000`
+- 自我介绍：`http://localhost:3000/about`
+- 项目展示：`http://localhost:3000/projects`
+- 作品（越语听介绍）：`http://localhost:3000/tools`
+- 越语听：`http://localhost:3000/tools/youtube`
+- AI 学习资料：`http://localhost:3000/ai-learning`
+- 健康检查：`http://localhost:3000/api/v1/health`
 
-## YouTube 翻译工具是怎么搭的
+## 越语听是怎么搭的
 
 这个工具有一条明确的分层，值得单独说：**字幕在服务端取，翻译在浏览器里做。**
 

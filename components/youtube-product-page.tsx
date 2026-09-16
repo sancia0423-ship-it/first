@@ -1,5 +1,0 @@
-import { ToolsPage } from "@/components/tools-page";
-
-export function YouTubeProductPage() {
-  return <ToolsPage />;
-}
