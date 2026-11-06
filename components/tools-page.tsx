@@ -40,6 +40,8 @@ export function ToolsPage() {
         <div className="about-links">
           <Link href={feature.href}>{feature.action}</Link>
         </div>
+
+        <p className="feature-name">姐姐不对劲</p>
       </section>
     </main>
   );
