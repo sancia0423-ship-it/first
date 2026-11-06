@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>姐姐的不对劲</title>
+<meta name="description" content="网页解谜游戏《姐姐的不对劲》· 孔雀之眼的诅咒">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/apps.css">
+<link rel="stylesheet" href="css/web.css">
+<link rel="stylesheet" href="css/night.css">
+</head>
+<body>
+
+<!-- 00 封面 -->
+<main class="cover" id="cover">
+  <section class="cv-hero">
+    <div class="cv-fog f1"></div><div class="cv-fog f2"></div><div class="cv-fog f3"></div>
+    <div class="cv-feather" aria-hidden="true"></div>
+    <h1 class="cv-title"><span>孔雀之眼</span><small>不对劲的姐姐</small></h1>
+    <div class="cv-scroll">∞ 向 下 滑 动 ∞</div>
+  </section>
+  <section class="cv-paper">
+    <div class="cv-kicker">· 游 戏 玩 法 ·</div>
+    <h2 class="cv-lead"><span>网页解谜</span><span>揭开秘密</span></h2>
+    <article class="cv-card"><h3>⇀ 探 寻</h3><p>在手机和各个网站里找线索。右上角的页码就是进度，数字越大越接近真相。</p></article>
+    <article class="cv-card"><h3>⇀ 搜 索</h3><p>05 学校官网可以搜索关键词。</p></article>
+    <article class="cv-card"><h3>⇀ 记 录</h3><p>看到重要的信息，长按存进备忘录。</p></article>
+    <blockquote class="cv-epigraph">「 孔雀只在有人被献祭之后叫。 」</blockquote>
+    <p class="cv-intro">姐姐变得不对劲。她半夜出门，深夜对着一张纸反复画同一个符号。她最好的朋友方方，在一个周日的零点之后再也没有回来。</p>
+    <p class="cv-warn">（提醒：本游戏含恐怖元素与音效，建议戴耳机。）</p>
+    <button class="cv-start" id="start">开 始</button>
+    <button class="cv-continue" id="continue" hidden>继续上次的进度</button>
+    <div class="cv-sign">sancia 制作</div>
+  </section>
+</main>
+
+<!-- 手机 -->
+<div class="stage" id="stage" hidden>
+  <button class="page-badge" id="badge" aria-label="已解锁的页面">01/19</button>
+  <div class="page-panel" hidden>
+    <div class="pp-head">已解锁的页面</div>
+    <div class="page-list"></div>
+    <div class="pp-foot">
+      <button class="pp-mute" id="mute">声音：开</button>
+      <button class="pp-reset" id="reset">重新开始</button>
+    </div>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone" data-theme="dark">
+      <div class="statusbar">
+        <span class="sb-time">21:47</span>
+        <span class="sb-island"></span>
+        <span class="sb-right"><i class="sb-signal"></i>5G <i class="sb-batt"></i> 100%</span>
+      </div>
+      <div class="screen"></div>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+  <p class="fiction-note">本故事纯属虚构</p>
+</div>
+
+<script src="js/engine.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/screens/home.js"></script>
+<script src="js/screens/weixin.js"></script>
+<script src="js/screens/album.js"></script>
+<script src="js/screens/memo.js"></script>
+<script src="js/screens/web.js"></script>
+<script src="js/screens/room.js"></script>
+<script src="js/screens/night.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
