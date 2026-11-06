@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>越语听</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="mark" aria-hidden="true">▶</span>
+        <div>
+          <h1>越语听</h1>
+          <p>把 YouTube 视频变成中文可听内容</p>
+        </div>
+      </header>
+
+      <section>
+        <label for="video-url">YouTube 视频链接</label>
+        <input id="video-url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" />
+        <p id="status" role="status">正在读取当前页面…</p>
+        <button id="open" type="button">用越语听打开 <span aria-hidden="true">↗</span></button>
+      </section>
+
+      <footer>
+        <a href="https://sancia-aboutme.com/tools/youtube" target="_blank" rel="noreferrer">打开越语听网站</a>
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

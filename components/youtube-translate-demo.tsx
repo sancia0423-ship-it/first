@@ -151,8 +151,12 @@ function loadYouTubeIframeApi() {
   return youTubeApiLoader;
 }
 
-export function YouTubeTranslateDemo() {
-  const [url, setUrl] = useState("");
+export function YouTubeTranslateDemo({
+  initialUrl = ""
+}: {
+  initialUrl?: string;
+}) {
+  const [url, setUrl] = useState(initialUrl);
   const [result, setResult] = useState<YouTubeTranslationResult | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

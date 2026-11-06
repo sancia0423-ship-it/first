@@ -8,7 +8,13 @@ export const metadata: Metadata = {
   description: "读取公开视频字幕，生成中文字幕、章节速览，并可对内容提问。"
 };
 
-export default function YouTubeToolPage() {
+export default async function YouTubeToolPage({
+  searchParams
+}: {
+  searchParams: Promise<{ url?: string }>;
+}) {
+  const { url = "" } = await searchParams;
+
   return (
     <main className="page-shell">
       <SiteHeader />
@@ -28,7 +34,7 @@ export default function YouTubeToolPage() {
       </section>
 
       <section id="tool">
-        <YouTubeTranslateDemo />
+        <YouTubeTranslateDemo initialUrl={url} />
       </section>
     </main>
   );
